@@ -1,0 +1,6 @@
+com\inplabel\pedidos\controller\GuiaController.class
+com\inplabel\pedidos\controller\PedidoController.class
+com\inplabel\pedidos\controller\StatusController.class
+com\inplabel\pedidos\controller\ClienteController.class
+com\inplabel\pedidos\PedidosApplication.class
+com\inplabel\pedidos\controller\ProductoController.class
