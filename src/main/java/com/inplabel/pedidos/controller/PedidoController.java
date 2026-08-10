@@ -22,9 +22,8 @@ public class PedidoController {
     @GetMapping
     public List<Map<String, Object>> getPedidos() {
         List<Map<String, Object>> pedidos = jdbcTemplate.queryForList(
-            "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
-            "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.id_pedido DESC"
-        );
+                "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
+                        "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.id_pedido DESC");
 
         for (Map<String, Object> order : pedidos) {
             Integer idPedido = (Integer) order.get("id_pedido");
@@ -35,10 +34,9 @@ public class PedidoController {
             }
 
             List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-                "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
-                "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_pedido = ?",
-                idPedido
-            );
+                    "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
+                            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_pedido = ?",
+                    idPedido);
             order.put("detalles", detalles);
         }
 
@@ -58,9 +56,8 @@ public class PedidoController {
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO pedido (id_cliente, fecha_pedido, estado) VALUES (?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
+                    "INSERT INTO pedido (id_cliente, fecha_pedido, estado) VALUES (?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, idCliente);
             ps.setString(2, fecha);
             ps.setString(3, estado);
@@ -79,9 +76,8 @@ public class PedidoController {
                 Number cantNum = (Number) item.get("cantidad");
                 if (pIdNum != null) {
                     jdbcTemplate.update(
-                        "INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad) VALUES (?, ?, ?)",
-                        newId, pIdNum.intValue(), cantNum != null ? cantNum.intValue() : 1
-                    );
+                            "INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad) VALUES (?, ?, ?)",
+                            newId, pIdNum.intValue(), cantNum != null ? cantNum.intValue() : 1);
                 }
             }
         }
@@ -97,9 +93,8 @@ public class PedidoController {
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
 
         jdbcTemplate.update(
-            "UPDATE pedido SET fecha_pedido = ?, estado = ? WHERE id_pedido = ?",
-            fecha, estado, id
-        );
+                "UPDATE pedido SET fecha_pedido = ?, estado = ? WHERE id_pedido = ?",
+                fecha, estado, id);
 
         body.put("success", true);
         body.put("id_pedido", id);
