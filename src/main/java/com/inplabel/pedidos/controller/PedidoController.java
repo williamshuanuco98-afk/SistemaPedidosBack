@@ -66,7 +66,8 @@ public class PedidoController {
                             Integer gProdId = (Integer) gd.get("id_producto");
                             if (gProdId != null && gProdId.equals(idProd)) {
                                 Number cant = (Number) gd.get("cantidad");
-                                if (cant != null) totalDelivered += cant.intValue();
+                                if (cant != null)
+                                    totalDelivered += cant.intValue();
                             }
                         }
                     }
