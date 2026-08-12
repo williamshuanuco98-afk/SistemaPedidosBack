@@ -68,14 +68,6 @@ public class ProductoController {
         Number newId = keyHolder.getKey();
         int generatedId = newId != null ? newId.intValue() : 0;
 
-        // Also synchronize in `productos` table if it exists
-        try {
-            jdbcTemplate.update(
-                "INSERT INTO productos (id_producto, nombre_producto, categoria, tipo_producto, precio_unitario, stock, activo) VALUES (?, ?, ?, ?, 0.00, 100, 1)",
-                generatedId, nombre, tipo, tipo
-            );
-        } catch (Exception ignored) {}
-
         body.put("id_producto", generatedId);
         body.put("tipo_producto", tipo);
         body.put("categoria", tipo);
@@ -93,13 +85,6 @@ public class ProductoController {
             nombre, tipo, id
         );
 
-        try {
-            jdbcTemplate.update(
-                "UPDATE productos SET nombre_producto = ?, categoria = ?, tipo_producto = ? WHERE id_producto = ?",
-                nombre, tipo, tipo, id
-            );
-        } catch (Exception ignored) {}
-
         body.put("id_producto", id);
         body.put("tipo_producto", tipo);
         body.put("categoria", tipo);
@@ -110,10 +95,6 @@ public class ProductoController {
     @Transactional
     public Map<String, Object> deleteProducto(@PathVariable Integer id) {
         jdbcTemplate.update("DELETE FROM producto WHERE id_producto = ?", id);
-        try {
-            jdbcTemplate.update("DELETE FROM productos WHERE id_producto = ?", id);
-        } catch (Exception ignored) {}
-
         return Map.of("success", true, "id_producto", id);
     }
 }

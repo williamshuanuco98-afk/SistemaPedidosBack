@@ -35,11 +35,47 @@ public class PedidoController {
                 order.put("nro_pedido", nroPedido);
             }
 
+            // Fetch order items
             List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
                     "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
                             "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_pedido = ?",
                     idPedido);
+
+            // Fetch linked guias/shipments for partial delivery tracking
+            List<Map<String, Object>> guias = jdbcTemplate.queryForList(
+                    "SELECT g.* FROM guias g WHERE g.id_pedido = ? ORDER BY g.id_guia ASC",
+                    idPedido);
+
+            for (Map<String, Object> guia : guias) {
+                Integer idGuia = (Integer) guia.get("id_guia");
+                List<Map<String, Object>> detGuia = jdbcTemplate.queryForList(
+                        "SELECT dg.*, pr.nombre_producto FROM detalle_guias dg " +
+                                "LEFT JOIN producto pr ON dg.id_producto = pr.id_producto WHERE dg.id_guia = ?",
+                        idGuia);
+                guia.put("detalles", detGuia);
+            }
+
+            // Calculate accumulated delivered quantity for each item
+            for (Map<String, Object> item : detalles) {
+                Integer idProd = (Integer) item.get("id_producto");
+                int totalDelivered = 0;
+                for (Map<String, Object> g : guias) {
+                    List<Map<String, Object>> gDetalles = (List<Map<String, Object>>) g.get("detalles");
+                    if (gDetalles != null) {
+                        for (Map<String, Object> gd : gDetalles) {
+                            Integer gProdId = (Integer) gd.get("id_producto");
+                            if (gProdId != null && gProdId.equals(idProd)) {
+                                Number cant = (Number) gd.get("cantidad");
+                                if (cant != null) totalDelivered += cant.intValue();
+                            }
+                        }
+                    }
+                }
+                item.put("cantidad_entregada", totalDelivered);
+            }
+
             order.put("detalles", detalles);
+            order.put("guias", guias);
         }
 
         return pedidos;
