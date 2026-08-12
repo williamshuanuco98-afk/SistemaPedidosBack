@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -44,11 +46,12 @@ public class PedidoController {
     }
 
     @PostMapping
+    @Transactional
     @SuppressWarnings("unchecked")
     public Map<String, Object> addPedido(@RequestBody Map<String, Object> body) {
         Number idClienteNum = (Number) body.get("id_cliente");
         int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
-        String fecha = (String) body.getOrDefault("fecha_pedido", "2026-08-06");
+        String fecha = (String) body.getOrDefault("fecha_pedido", LocalDate.now().toString());
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
         List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
 
@@ -84,12 +87,13 @@ public class PedidoController {
 
         body.put("id_pedido", newId);
         body.put("nro_pedido", nroPedido);
+        body.put("fecha_pedido", fecha);
         return body;
     }
 
     @PutMapping("/{id}")
     public Map<String, Object> updatePedido(@PathVariable int id, @RequestBody Map<String, Object> body) {
-        String fecha = (String) body.getOrDefault("fecha_pedido", "2026-08-06");
+        String fecha = (String) body.getOrDefault("fecha_pedido", LocalDate.now().toString());
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
 
         jdbcTemplate.update(

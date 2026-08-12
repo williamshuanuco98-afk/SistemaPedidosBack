@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -40,11 +42,12 @@ public class GuiaController {
     }
 
     @PostMapping
+    @Transactional
     @SuppressWarnings("unchecked")
     public Map<String, Object> addGuia(@RequestBody Map<String, Object> body) {
         Number idClienteNum = (Number) body.get("id_cliente");
         int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
-        String fecha = (String) body.getOrDefault("fecha_guia", "2026-08-06");
+        String fecha = (String) body.getOrDefault("fecha_guia", LocalDate.now().toString());
         String nroGuia = (String) body.get("nro_guia");
         if (nroGuia == null || nroGuia.isEmpty()) {
             nroGuia = "G002-" + (System.currentTimeMillis() % 10000);
@@ -86,6 +89,7 @@ public class GuiaController {
 
         body.put("id_guia", newId);
         body.put("nro_guia", finalNroGuia);
+        body.put("fecha_guia", fecha);
         return body;
     }
 
@@ -93,7 +97,7 @@ public class GuiaController {
     public Map<String, Object> updateGuia(@PathVariable int id, @RequestBody Map<String, Object> body) {
         String nroGuia = (String) body.get("nro_guia");
         String estado = (String) body.getOrDefault("estado", "ACTIVA");
-        String fecha = (String) body.getOrDefault("fecha_guia", "2026-08-06");
+        String fecha = (String) body.getOrDefault("fecha_guia", LocalDate.now().toString());
 
         jdbcTemplate.update(
             "UPDATE guias SET nro_guia = ?, estado = ?, fecha_guia = ? WHERE id_guia = ?",
