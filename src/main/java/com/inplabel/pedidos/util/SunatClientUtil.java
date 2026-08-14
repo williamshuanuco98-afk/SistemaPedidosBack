@@ -38,7 +38,7 @@ public class SunatClientUtil {
                 response.put("success", true);
                 response.put("nro_documento", cleanRuc);
                 response.put("nombre_cliente", body.get("nombre"));
-                
+
                 String dir = (String) body.get("direccion");
                 String distrito = (String) body.get("distrito");
                 String provincia = (String) body.get("provincia");
@@ -46,7 +46,8 @@ public class SunatClientUtil {
 
                 if (dir != null && !dir.isEmpty()) {
                     if (distrito != null && !distrito.isEmpty() && !dir.contains(distrito)) {
-                        dir = dir.trim() + " - " + (departamento != null ? departamento : "") + " - " + (provincia != null ? provincia : "") + " - " + distrito;
+                        dir = dir.trim() + " - " + (departamento != null ? departamento : "") + " - "
+                                + (provincia != null ? provincia : "") + " - " + distrito;
                     }
                 }
                 response.put("direccion", dir);
