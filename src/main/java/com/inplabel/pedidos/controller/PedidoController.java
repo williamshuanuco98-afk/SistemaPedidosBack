@@ -90,17 +90,37 @@ public class PedidoController {
         int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
         String fecha = (String) body.getOrDefault("fecha_pedido", LocalDate.now().toString());
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
-        List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
+        String nroOrden = (String) body.getOrDefault("nro_orden_compra", "");
+        String observaciones = (String) body.getOrDefault("observaciones", "");
+        String establecimiento = (String) body.getOrDefault("establecimiento", "COMAS");
+
+        Object adjuntosObj = body.get("adjuntos");
+        String adjuntosJson = "";
+        if (adjuntosObj != null) {
+            try {
+                adjuntosJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(adjuntosObj);
+            } catch (Exception ignored) {
+            }
+        }
+
+        final String finalNroOrden = nroOrden;
+        final String finalAdjuntos = adjuntosJson;
+        final String finalObs = observaciones;
+        final String finalEstab = establecimiento;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO pedido (id_cliente, fecha_pedido, estado) VALUES (?, ?, ?)",
+                    "INSERT INTO pedido (id_cliente, fecha_pedido, estado, nro_orden, adjuntos, observaciones, establecimiento) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, idCliente);
             ps.setString(2, fecha);
             ps.setString(3, estado);
+            ps.setString(4, finalNroOrden);
+            ps.setString(5, finalAdjuntos);
+            ps.setString(6, finalObs);
+            ps.setString(7, finalEstab);
             return ps;
         }, keyHolder);
 
@@ -108,8 +128,48 @@ public class PedidoController {
         int newId = newIdNum != null ? newIdNum.intValue() : 0;
         String nroPedido = String.format("PED-%04d", newId);
 
-        jdbcTemplate.update("UPDATE pedido SET nro_pedido = ? WHERE id_pedido = ?", nroPedido, newId);
+        // Process disk file storage for attached PDFs
+        String storagePath = (String) body.getOrDefault("storage_path", "C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI");
+        boolean useSubfolders = Boolean.TRUE.equals(body.get("use_subfolders"));
 
+        if (adjuntosObj instanceof List) {
+            List<Map<String, Object>> filesList = (List<Map<String, Object>>) adjuntosObj;
+            for (Map<String, Object> f : filesList) {
+                String fileName = (String) f.get("name");
+                String base64Data = (String) f.get("data");
+
+                if (fileName != null && base64Data != null && base64Data.contains(",")) {
+                    try {
+                        String base64Content = base64Data.substring(base64Data.indexOf(",") + 1);
+                        byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Content);
+
+                        java.io.File targetDir = new java.io.File(storagePath);
+                        if (useSubfolders) {
+                            targetDir = new java.io.File(targetDir, nroPedido);
+                        }
+                        if (!targetDir.exists()) {
+                            targetDir.mkdirs();
+                        }
+
+                        java.io.File outFile = new java.io.File(targetDir, fileName);
+                        java.nio.file.Files.write(outFile.toPath(), decodedBytes);
+                        f.put("saved_path", outFile.getAbsolutePath());
+                    } catch (Exception ex) {
+                        System.err.println("Error al guardar archivo en disco: " + ex.getMessage());
+                    }
+                }
+            }
+            try {
+                String updatedAdjuntosJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(filesList);
+                jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido, updatedAdjuntosJson, newId);
+            } catch (Exception e) {
+                jdbcTemplate.update("UPDATE pedido SET nro_pedido = ? WHERE id_pedido = ?", nroPedido, newId);
+            }
+        } else {
+            jdbcTemplate.update("UPDATE pedido SET nro_pedido = ? WHERE id_pedido = ?", nroPedido, newId);
+        }
+
+        List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
         if (detalles != null) {
             for (Map<String, Object> item : detalles) {
                 Number pIdNum = (Number) item.get("id_producto");
