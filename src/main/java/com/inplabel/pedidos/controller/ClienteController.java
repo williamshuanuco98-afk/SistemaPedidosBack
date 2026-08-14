@@ -24,8 +24,7 @@ public class ClienteController {
     @GetMapping
     public List<Map<String, Object>> getClientes() {
         return jdbcTemplate.queryForList(
-            "SELECT id_cliente, tipo_documento, nro_documento, razon_social AS nombre_cliente, direccion FROM cliente ORDER BY id_cliente DESC"
-        );
+                "SELECT id_cliente, tipo_documento, nro_documento, razon_social AS nombre_cliente, direccion FROM cliente ORDER BY id_cliente DESC");
     }
 
     @GetMapping("/sunat/{ruc}")
@@ -48,11 +47,10 @@ public class ClienteController {
 
             String url = "https://api.apis.net.pe/v1/ruc?numero=" + cleanRuc;
             org.springframework.http.ResponseEntity<Map> apiRes = restTemplate.exchange(
-                url, 
-                org.springframework.http.HttpMethod.GET, 
-                entity, 
-                Map.class
-            );
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    entity,
+                    Map.class);
 
             if (apiRes.getBody() != null && apiRes.getBody().containsKey("nombre")) {
                 Map body = apiRes.getBody();
@@ -79,7 +77,8 @@ public class ClienteController {
                     response.put("success", true);
                     response.put("nro_documento", cleanRuc);
                     response.put("nombre_cliente", data.get("nombre_o_razon_social"));
-                    response.put("direccion", data.getOrDefault("direccion_completa", data.getOrDefault("direccion", "")));
+                    response.put("direccion",
+                            data.getOrDefault("direccion_completa", data.getOrDefault("direccion", "")));
                     response.put("estado", data.getOrDefault("estado", "ACTIVO"));
                     response.put("condicion", data.getOrDefault("condicion", "HABIDO"));
                     return response;
@@ -112,11 +111,10 @@ public class ClienteController {
 
             String url = "https://api.apis.net.pe/v1/dni?numero=" + cleanDni;
             org.springframework.http.ResponseEntity<Map> apiRes = restTemplate.exchange(
-                url, 
-                org.springframework.http.HttpMethod.GET, 
-                entity, 
-                Map.class
-            );
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    entity,
+                    Map.class);
 
             if (apiRes.getBody() != null && apiRes.getBody().containsKey("nombre")) {
                 Map body = apiRes.getBody();
@@ -147,9 +145,8 @@ public class ClienteController {
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO cliente (tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
+                    "INSERT INTO cliente (tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, tipoDoc);
             ps.setString(2, nroDoc);
             ps.setString(3, nombre);

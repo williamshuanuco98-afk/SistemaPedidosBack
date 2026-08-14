@@ -129,7 +129,8 @@ public class PedidoController {
         String nroPedido = String.format("PED-%04d", newId);
 
         // Process disk file storage for attached PDFs
-        String storagePath = (String) body.getOrDefault("storage_path", "C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI");
+        String storagePath = (String) body.getOrDefault("storage_path",
+                "C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI");
         boolean useSubfolders = Boolean.TRUE.equals(body.get("use_subfolders"));
 
         if (adjuntosObj instanceof List) {
@@ -160,8 +161,10 @@ public class PedidoController {
                 }
             }
             try {
-                String updatedAdjuntosJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(filesList);
-                jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido, updatedAdjuntosJson, newId);
+                String updatedAdjuntosJson = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .writeValueAsString(filesList);
+                jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido,
+                        updatedAdjuntosJson, newId);
             } catch (Exception e) {
                 jdbcTemplate.update("UPDATE pedido SET nro_pedido = ? WHERE id_pedido = ?", nroPedido, newId);
             }
