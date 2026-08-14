@@ -25,7 +25,8 @@ public class PedidoController {
     public List<Map<String, Object>> getPedidos() {
         try {
             jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido NOT IN (SELECT id_pedido FROM pedido)");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         List<Map<String, Object>> pedidos = jdbcTemplate.queryForList(
                 "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
