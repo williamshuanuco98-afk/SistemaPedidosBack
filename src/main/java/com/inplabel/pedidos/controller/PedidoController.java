@@ -23,6 +23,10 @@ public class PedidoController {
 
     @GetMapping
     public List<Map<String, Object>> getPedidos() {
+        try {
+            jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido NOT IN (SELECT id_pedido FROM pedido)");
+        } catch (Exception ignored) {}
+
         List<Map<String, Object>> pedidos = jdbcTemplate.queryForList(
                 "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
                         "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.id_pedido DESC");
@@ -89,8 +93,12 @@ public class PedidoController {
         Number idClienteNum = (Number) body.get("id_cliente");
         int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
         String fecha = (String) body.getOrDefault("fecha_pedido", LocalDate.now().toString());
+        String fechaEntrega = (String) body.getOrDefault("fecha_entrega", fecha);
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
         String nroOrden = (String) body.getOrDefault("nro_orden_compra", "");
+        if (nroOrden == null || nroOrden.isEmpty()) {
+            nroOrden = (String) body.getOrDefault("nro_orden", "");
+        }
         String observaciones = (String) body.getOrDefault("observaciones", "");
         String establecimiento = (String) body.getOrDefault("establecimiento", "COMAS");
 
@@ -103,6 +111,7 @@ public class PedidoController {
             }
         }
 
+        final String finalFechaEntrega = fechaEntrega;
         final String finalNroOrden = nroOrden;
         final String finalAdjuntos = adjuntosJson;
         final String finalObs = observaciones;
@@ -112,21 +121,25 @@ public class PedidoController {
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO pedido (id_cliente, fecha_pedido, estado, nro_orden, adjuntos, observaciones, establecimiento) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO pedido (id_cliente, fecha_pedido, fecha_entrega, estado, nro_orden, adjuntos, observaciones, establecimiento) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, idCliente);
             ps.setString(2, fecha);
-            ps.setString(3, estado);
-            ps.setString(4, finalNroOrden);
-            ps.setString(5, finalAdjuntos);
-            ps.setString(6, finalObs);
-            ps.setString(7, finalEstab);
+            ps.setString(3, finalFechaEntrega);
+            ps.setString(4, estado);
+            ps.setString(5, finalNroOrden);
+            ps.setString(6, finalAdjuntos);
+            ps.setString(7, finalObs);
+            ps.setString(8, finalEstab);
             return ps;
         }, keyHolder);
 
         Number newIdNum = keyHolder.getKey();
         int newId = newIdNum != null ? newIdNum.intValue() : 0;
         String nroPedido = String.format("PED-%04d", newId);
+
+        // Ensure no stale details exist for newId
+        jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido = ?", newId);
 
         // Process disk file storage for attached PDFs
         String storagePath = (String) body.getOrDefault("storage_path",
@@ -188,19 +201,26 @@ public class PedidoController {
         body.put("id_pedido", newId);
         body.put("nro_pedido", nroPedido);
         body.put("fecha_pedido", fecha);
+        body.put("fecha_entrega", finalFechaEntrega);
         return body;
     }
 
     @PutMapping("/{id}")
     public Map<String, Object> updatePedido(@PathVariable int id, @RequestBody Map<String, Object> body) {
         String fecha = (String) body.getOrDefault("fecha_pedido", LocalDate.now().toString());
+        String fechaEntrega = (String) body.get("fecha_entrega");
         String estado = (String) body.getOrDefault("estado", "PENDIENTE");
 
-        jdbcTemplate.update(
-                "UPDATE pedido SET fecha_pedido = ?, estado = ? WHERE id_pedido = ?",
-                fecha, estado, id);
+        if (fechaEntrega != null && !fechaEntrega.isEmpty()) {
+            jdbcTemplate.update(
+                    "UPDATE pedido SET fecha_pedido = ?, fecha_entrega = ?, estado = ? WHERE id_pedido = ?",
+                    fecha, fechaEntrega, estado, id);
+        } else {
+            jdbcTemplate.update(
+                    "UPDATE pedido SET fecha_pedido = ?, estado = ? WHERE id_pedido = ?",
+                    fecha, estado, id);
+        }
 
-        body.put("success", true);
         body.put("id_pedido", id);
         return body;
     }
