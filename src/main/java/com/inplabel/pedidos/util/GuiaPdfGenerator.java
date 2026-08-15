@@ -47,7 +47,7 @@ public class GuiaPdfGenerator {
 
     public byte[] generatePdfBytes(Map<String, Object> guia) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // A4 Landscape document with comfortable 22pt horizontal & 20pt vertical margins
+            // A4 Landscape document with 22pt horizontal & 20pt vertical margins
             Document document = new Document(PageSize.A4.rotate(), 22, 22, 20, 20);
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             
@@ -194,7 +194,7 @@ public class GuiaPdfGenerator {
 
         PdfPCell hContainer = new PdfPCell(headerTable);
         hContainer.setBorder(Rectangle.NO_BORDER);
-        hContainer.setPaddingBottom(5f);
+        hContainer.setPaddingBottom(7f);
         half.addCell(hContainer);
 
         // -------------------------------------------------------------
@@ -241,11 +241,11 @@ public class GuiaPdfGenerator {
 
         PdfPCell clientContainer = new PdfPCell(clientTable);
         clientContainer.setBorder(Rectangle.NO_BORDER);
-        clientContainer.setPaddingBottom(5f);
+        clientContainer.setPaddingBottom(7f);
         half.addCell(clientContainer);
 
         // -------------------------------------------------------------
-        // 3. PUNTO DE PARTIDA & PUNTO DE LLEGADA (Sin Ubigeo, Espaciado Limpio)
+        // 3. PUNTO DE PARTIDA & PUNTO DE LLEGADA (Sin Ubigeo, Buen Espaciado)
         // -------------------------------------------------------------
         PdfPTable pointsTable = new PdfPTable(2);
         pointsTable.setWidthPercentage(100);
@@ -258,14 +258,14 @@ public class GuiaPdfGenerator {
         partidaCell.setBorder(Rectangle.BOX);
         partidaCell.setBorderWidth(BORDER_THIN);
         partidaCell.setBorderColor(Color.BLACK);
-        partidaCell.setPadding(4f);
+        partidaCell.setPadding(5f);
 
         Paragraph pPartidaTitle = new Paragraph("Punto de partida", FONT_BOX_HEADER);
         pPartidaTitle.setAlignment(Element.ALIGN_CENTER);
-        pPartidaTitle.setSpacingAfter(3f);
+        pPartidaTitle.setSpacingAfter(4f);
         partidaCell.addElement(pPartidaTitle);
 
-        Paragraph pPartidaDir = new Paragraph(8.8f);
+        Paragraph pPartidaDir = new Paragraph(9.0f);
         pPartidaDir.add(new Chunk("DIRECCIÓN: ", FONT_FIELD_LABEL));
         pPartidaDir.add(new Chunk(puntoPartida, FONT_BOX_TEXT));
         partidaCell.addElement(pPartidaDir);
@@ -276,14 +276,14 @@ public class GuiaPdfGenerator {
         llegadaCell.setBorder(Rectangle.BOX);
         llegadaCell.setBorderWidth(BORDER_THIN);
         llegadaCell.setBorderColor(Color.BLACK);
-        llegadaCell.setPadding(4f);
+        llegadaCell.setPadding(5f);
 
         Paragraph pLlegadaTitle = new Paragraph("Punto de Llegada", FONT_BOX_HEADER);
         pLlegadaTitle.setAlignment(Element.ALIGN_CENTER);
-        pLlegadaTitle.setSpacingAfter(3f);
+        pLlegadaTitle.setSpacingAfter(4f);
         llegadaCell.addElement(pLlegadaTitle);
 
-        Paragraph pLlegadaDir = new Paragraph(8.8f);
+        Paragraph pLlegadaDir = new Paragraph(9.0f);
         pLlegadaDir.add(new Chunk("DIRECCIÓN: ", FONT_FIELD_LABEL));
         pLlegadaDir.add(new Chunk(puntoLlegada, FONT_BOX_TEXT));
         llegadaCell.addElement(pLlegadaDir);
@@ -291,11 +291,11 @@ public class GuiaPdfGenerator {
 
         PdfPCell pointsContainer = new PdfPCell(pointsTable);
         pointsContainer.setBorder(Rectangle.NO_BORDER);
-        pointsContainer.setPaddingBottom(5f);
+        pointsContainer.setPaddingBottom(8f);
         half.addCell(pointsContainer);
 
         // -------------------------------------------------------------
-        // 4. PRODUCTS TABLE (Green Header, 4 columns: ITEM | DESCRIPCION | U.M. | CANTIDAD)
+        // 4. PRODUCTS TABLE (Filas más altas, Sin Código 'PROD-88')
         // -------------------------------------------------------------
         PdfPTable prodTable = new PdfPTable(4);
         prodTable.setWidthPercentage(100);
@@ -313,14 +313,13 @@ public class GuiaPdfGenerator {
         if (detalles != null && !detalles.isEmpty()) {
             int idx = 1;
             for (Map<String, Object> d : detalles) {
+                // Display ONLY product name / description, without [PROD-88]
                 String nombre = (String) d.getOrDefault("nombre_producto", "Producto");
-                String codigo = (String) d.getOrDefault("codigo_producto", "");
-                String descripcion = (codigo != null && !codigo.isEmpty() ? "[" + codigo + "] " : "") + nombre;
                 Object cantObj = d.getOrDefault("cantidad", 1);
                 String cant = String.valueOf(cantObj);
 
                 prodTable.addCell(createTdCell(String.valueOf(idx++), Element.ALIGN_CENTER, false));
-                prodTable.addCell(createTdCell(descripcion, Element.ALIGN_LEFT, false));
+                prodTable.addCell(createTdCell(nombre, Element.ALIGN_LEFT, false));
                 prodTable.addCell(createTdCell("UND", Element.ALIGN_CENTER, false));
                 prodTable.addCell(createTdCell(cant, Element.ALIGN_CENTER, true));
             }
@@ -328,7 +327,7 @@ public class GuiaPdfGenerator {
             PdfPCell emptyC = new PdfPCell(new Phrase("Sin productos especificados", FONT_TABLE_TD));
             emptyC.setColspan(4);
             emptyC.setHorizontalAlignment(Element.ALIGN_CENTER);
-            emptyC.setPadding(6f);
+            emptyC.setPadding(8f);
             emptyC.setBorder(Rectangle.BOX);
             emptyC.setBorderWidth(BORDER_THIN);
             emptyC.setBorderColor(Color.BLACK);
@@ -337,29 +336,29 @@ public class GuiaPdfGenerator {
 
         PdfPCell prodContainer = new PdfPCell(prodTable);
         prodContainer.setBorder(Rectangle.NO_BORDER);
-        prodContainer.setPaddingBottom(5f);
+        prodContainer.setPaddingBottom(8f);
         half.addCell(prodContainer);
 
         // -------------------------------------------------------------
-        // 5. OBSERVACIONES BOX (Thin Borders)
+        // 5. OBSERVACIONES BOX (Sin texto de SUNAT, solo observaciones)
         // -------------------------------------------------------------
         PdfPCell obsCell = new PdfPCell();
         obsCell.setBorder(Rectangle.BOX);
         obsCell.setBorderWidth(BORDER_THIN);
         obsCell.setBorderColor(Color.BLACK);
-        obsCell.setPadding(3.5f);
+        obsCell.setPadding(4.5f);
         obsCell.setBackgroundColor(Color.WHITE);
 
         Paragraph obsTitle = new Paragraph("OBSERVACIONES:", FONT_FIELD_LABEL);
         obsCell.addElement(obsTitle);
 
         if (obs != null && !obs.trim().isEmpty() && !obs.equals("-")) {
-            Paragraph obsText = new Paragraph(obs, FONT_FIELD_VAL);
+            Paragraph obsText = new Paragraph(8.5f, obs, FONT_FIELD_VAL);
             obsCell.addElement(obsText);
+        } else {
+            Paragraph obsEmpty = new Paragraph(8.5f, "-", FONT_FIELD_VAL);
+            obsCell.addElement(obsEmpty);
         }
-
-        Paragraph disclaimer = new Paragraph("Este documento es de uso exclusivo para control interno y no tiene validez ante SUNAT.", FONT_BOX_TEXT);
-        obsCell.addElement(disclaimer);
 
         PdfPTable obsContainerTable = new PdfPTable(1);
         obsContainerTable.setWidthPercentage(100);
@@ -380,7 +379,7 @@ public class GuiaPdfGenerator {
         cell.setBorderColor(Color.BLACK);
         cell.setHorizontalAlignment(align);
         cell.setBackgroundColor(COLOR_GREEN_HEADER);
-        cell.setPadding(2.5f);
+        cell.setPadding(4f); // Taller header row
         return cell;
     }
 
@@ -390,7 +389,7 @@ public class GuiaPdfGenerator {
         cell.setBorderWidth(BORDER_THIN);
         cell.setBorderColor(Color.BLACK);
         cell.setHorizontalAlignment(align);
-        cell.setPadding(2.5f);
+        cell.setPadding(4.5f); // Taller product rows as requested
         return cell;
     }
 
