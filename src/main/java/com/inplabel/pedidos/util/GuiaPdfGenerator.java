@@ -28,23 +28,32 @@ public class GuiaPdfGenerator {
     private static final Font FONT_FIELD_LABEL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.8f, Color.BLACK);
     private static final Font FONT_FIELD_VAL = FontFactory.getFont(FontFactory.HELVETICA, 6.8f, Color.BLACK);
 
-    private static final Font FONT_BOX_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, Color.BLACK);
-    private static final Font FONT_BOX_TEXT = FontFactory.getFont(FontFactory.HELVETICA, 6f, Color.BLACK);
+    private static final Font FONT_BOX_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.8f, Color.BLACK);
+    private static final Font FONT_BOX_TEXT = FontFactory.getFont(FontFactory.HELVETICA, 6.2f, Color.BLACK);
 
     private static final Font FONT_TABLE_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, Color.BLACK);
     private static final Font FONT_TABLE_TD = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, Color.BLACK);
     private static final Font FONT_TABLE_TD_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, Color.BLACK);
 
-    private static final Font FONT_FOOTER_LEGEND = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7f, new Color(80, 80, 80));
+    private static final Font FONT_SIG_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, Color.BLACK);
+    private static final Font FONT_SIG_SUB = FontFactory.getFont(FontFactory.HELVETICA, 5.8f, new Color(50, 50, 50));
+
+    private static final Font FONT_FOOTER_BRACKET = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, new Color(80, 80, 80));
+    private static final Font FONT_FOOTER_REMITENTE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, new Color(13, 110, 253)); // Blue #0d6efd
+    private static final Font FONT_FOOTER_DESTINATARIO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, new Color(25, 135, 84)); // Green #198754
 
     private static final Color COLOR_GREEN_HEADER = new Color(209, 231, 221); // Soft pastel green #d1e7dd
     private static final float BORDER_THIN = 0.5f;
 
     public byte[] generatePdfBytes(Map<String, Object> guia) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // A4 Landscape document with compact margins
-            Document document = new Document(PageSize.A4.rotate(), 14, 14, 14, 14);
+            // A4 Landscape document with comfortable 22pt horizontal & 20pt vertical margins
+            Document document = new Document(PageSize.A4.rotate(), 22, 22, 20, 20);
             PdfWriter writer = PdfWriter.getInstance(document, baos);
+            
+            // Set Page Event to render footer legends at 42pt and signatures at 72pt (30px above legends)
+            writer.setPageEvent(new FooterAndSignaturesPageEvent());
+            
             document.open();
 
             // Two-column layout: [Left Half 48.5%] [Dotted divider 3%] [Right Half 48.5%]
@@ -54,7 +63,7 @@ public class GuiaPdfGenerator {
 
             PdfPCell leftCell = new PdfPCell();
             leftCell.setBorder(Rectangle.NO_BORDER);
-            leftCell.addElement(buildSingleGuiaHalf(guia, "REMITENTE"));
+            leftCell.addElement(buildSingleGuiaHalf(guia));
 
             PdfPCell dividerCell = new PdfPCell();
             dividerCell.setBorder(Rectangle.NO_BORDER);
@@ -62,7 +71,7 @@ public class GuiaPdfGenerator {
 
             PdfPCell rightCell = new PdfPCell();
             rightCell.setBorder(Rectangle.NO_BORDER);
-            rightCell.addElement(buildSingleGuiaHalf(guia, "CLIENTE"));
+            rightCell.addElement(buildSingleGuiaHalf(guia));
 
             containerTable.addCell(leftCell);
             containerTable.addCell(dividerCell);
@@ -108,7 +117,7 @@ public class GuiaPdfGenerator {
         }
     }
 
-    private PdfPTable buildSingleGuiaHalf(Map<String, Object> guia, String copyLegend) {
+    private PdfPTable buildSingleGuiaHalf(Map<String, Object> guia) {
         PdfPTable half = new PdfPTable(1);
         half.setWidthPercentage(100);
 
@@ -162,7 +171,7 @@ public class GuiaPdfGenerator {
         compCell.addElement(new Paragraph("Sucursal: C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - Carabayllo - Lima - Lima", FONT_COMP_INFO));
         headerTable.addCell(compCell);
 
-        // 1.3 RUC Box Cell (Exact layout: RUC, GUIA DE REMISION DE CONTROL INTERNO, NRO_GUIA)
+        // 1.3 RUC Box Cell
         PdfPCell rucCell = new PdfPCell();
         rucCell.setBorder(Rectangle.BOX);
         rucCell.setBorderWidth(BORDER_THIN);
@@ -185,7 +194,7 @@ public class GuiaPdfGenerator {
 
         PdfPCell hContainer = new PdfPCell(headerTable);
         hContainer.setBorder(Rectangle.NO_BORDER);
-        hContainer.setPaddingBottom(4f);
+        hContainer.setPaddingBottom(5f);
         half.addCell(hContainer);
 
         // -------------------------------------------------------------
@@ -199,11 +208,11 @@ public class GuiaPdfGenerator {
             clientTable.setWidths(new float[]{55f, 45f});
         } catch (Exception ignored) {}
 
-        // DESTINATARIO (Full width)
+        // DESTINATARIO
         PdfPCell cDest = new PdfPCell();
         cDest.setColspan(2);
         cDest.setBorder(Rectangle.NO_BORDER);
-        cDest.setPadding(1f);
+        cDest.setPadding(1.5f);
         Paragraph pDest = new Paragraph();
         pDest.add(new Chunk("DESTINATARIO: ", FONT_FIELD_LABEL));
         pDest.add(new Chunk(cliente, FONT_FIELD_VAL));
@@ -213,7 +222,7 @@ public class GuiaPdfGenerator {
         // RUC
         PdfPCell cRuc = new PdfPCell();
         cRuc.setBorder(Rectangle.NO_BORDER);
-        cRuc.setPadding(1f);
+        cRuc.setPadding(1.5f);
         Paragraph pRucCli = new Paragraph();
         pRucCli.add(new Chunk("RUC: ", FONT_FIELD_LABEL));
         pRucCli.add(new Chunk(ruc, FONT_FIELD_VAL));
@@ -223,7 +232,7 @@ public class GuiaPdfGenerator {
         // FECHA
         PdfPCell cFecha = new PdfPCell();
         cFecha.setBorder(Rectangle.NO_BORDER);
-        cFecha.setPadding(1f);
+        cFecha.setPadding(1.5f);
         Paragraph pFecha = new Paragraph();
         pFecha.add(new Chunk("FECHA: ", FONT_FIELD_LABEL));
         pFecha.add(new Chunk(fecha, FONT_FIELD_VAL));
@@ -232,11 +241,11 @@ public class GuiaPdfGenerator {
 
         PdfPCell clientContainer = new PdfPCell(clientTable);
         clientContainer.setBorder(Rectangle.NO_BORDER);
-        clientContainer.setPaddingBottom(4f);
+        clientContainer.setPaddingBottom(5f);
         half.addCell(clientContainer);
 
         // -------------------------------------------------------------
-        // 3. PUNTO DE PARTIDA & PUNTO DE LLEGADA BOXES (Thin Borders)
+        // 3. PUNTO DE PARTIDA & PUNTO DE LLEGADA (Sin Ubigeo, Espaciado Limpio)
         // -------------------------------------------------------------
         PdfPTable pointsTable = new PdfPTable(2);
         pointsTable.setWidthPercentage(100);
@@ -249,19 +258,17 @@ public class GuiaPdfGenerator {
         partidaCell.setBorder(Rectangle.BOX);
         partidaCell.setBorderWidth(BORDER_THIN);
         partidaCell.setBorderColor(Color.BLACK);
-        partidaCell.setPadding(3f);
+        partidaCell.setPadding(4f);
 
         Paragraph pPartidaTitle = new Paragraph("Punto de partida", FONT_BOX_HEADER);
         pPartidaTitle.setAlignment(Element.ALIGN_CENTER);
+        pPartidaTitle.setSpacingAfter(3f);
         partidaCell.addElement(pPartidaTitle);
 
-        Paragraph pPartidaDir = new Paragraph();
+        Paragraph pPartidaDir = new Paragraph(8.8f);
         pPartidaDir.add(new Chunk("DIRECCIÓN: ", FONT_FIELD_LABEL));
         pPartidaDir.add(new Chunk(puntoPartida, FONT_BOX_TEXT));
         partidaCell.addElement(pPartidaDir);
-
-        Paragraph pPartidaUbigeo = new Paragraph("UBIGEO: - -", FONT_BOX_TEXT);
-        partidaCell.addElement(pPartidaUbigeo);
         pointsTable.addCell(partidaCell);
 
         // Punto de Llegada Box
@@ -269,28 +276,26 @@ public class GuiaPdfGenerator {
         llegadaCell.setBorder(Rectangle.BOX);
         llegadaCell.setBorderWidth(BORDER_THIN);
         llegadaCell.setBorderColor(Color.BLACK);
-        llegadaCell.setPadding(3f);
+        llegadaCell.setPadding(4f);
 
         Paragraph pLlegadaTitle = new Paragraph("Punto de Llegada", FONT_BOX_HEADER);
         pLlegadaTitle.setAlignment(Element.ALIGN_CENTER);
+        pLlegadaTitle.setSpacingAfter(3f);
         llegadaCell.addElement(pLlegadaTitle);
 
-        Paragraph pLlegadaDir = new Paragraph();
+        Paragraph pLlegadaDir = new Paragraph(8.8f);
         pLlegadaDir.add(new Chunk("DIRECCIÓN: ", FONT_FIELD_LABEL));
         pLlegadaDir.add(new Chunk(puntoLlegada, FONT_BOX_TEXT));
         llegadaCell.addElement(pLlegadaDir);
-
-        Paragraph pLlegadaUbigeo = new Paragraph("UBIGEO: - -", FONT_BOX_TEXT);
-        llegadaCell.addElement(pLlegadaUbigeo);
         pointsTable.addCell(llegadaCell);
 
         PdfPCell pointsContainer = new PdfPCell(pointsTable);
         pointsContainer.setBorder(Rectangle.NO_BORDER);
-        pointsContainer.setPaddingBottom(4f);
+        pointsContainer.setPaddingBottom(5f);
         half.addCell(pointsContainer);
 
         // -------------------------------------------------------------
-        // 4. PRODUCTS TABLE (Green Header, NO PESO column: ITEM | DESCRIPCION | U.M. | CANTIDAD)
+        // 4. PRODUCTS TABLE (Green Header, 4 columns: ITEM | DESCRIPCION | U.M. | CANTIDAD)
         // -------------------------------------------------------------
         PdfPTable prodTable = new PdfPTable(4);
         prodTable.setWidthPercentage(100);
@@ -332,7 +337,7 @@ public class GuiaPdfGenerator {
 
         PdfPCell prodContainer = new PdfPCell(prodTable);
         prodContainer.setBorder(Rectangle.NO_BORDER);
-        prodContainer.setPaddingBottom(4f);
+        prodContainer.setPaddingBottom(5f);
         half.addCell(prodContainer);
 
         // -------------------------------------------------------------
@@ -356,21 +361,14 @@ public class GuiaPdfGenerator {
         Paragraph disclaimer = new Paragraph("Este documento es de uso exclusivo para control interno y no tiene validez ante SUNAT.", FONT_BOX_TEXT);
         obsCell.addElement(disclaimer);
 
-        half.addCell(obsCell);
+        PdfPTable obsContainerTable = new PdfPTable(1);
+        obsContainerTable.setWidthPercentage(100);
+        obsContainerTable.addCell(obsCell);
 
-        // -------------------------------------------------------------
-        // 6. BOTTOM FOOTER LEGEND (Placed right at the bottom)
-        // -------------------------------------------------------------
-        PdfPCell footerCell = new PdfPCell();
-        footerCell.setBorder(Rectangle.NO_BORDER);
-        footerCell.setPaddingTop(8f);
-        footerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-        Paragraph pFooter = new Paragraph("[ COPIA: " + copyLegend + " ]", FONT_FOOTER_LEGEND);
-        pFooter.setAlignment(Element.ALIGN_CENTER);
-        footerCell.addElement(pFooter);
-
-        half.addCell(footerCell);
+        PdfPCell obsContainerCell = new PdfPCell(obsContainerTable);
+        obsContainerCell.setBorder(Rectangle.NO_BORDER);
+        obsContainerCell.setPaddingBottom(6f);
+        half.addCell(obsContainerCell);
 
         return half;
     }
@@ -422,6 +420,65 @@ public class GuiaPdfGenerator {
             cb.lineTo(middleX, position.getTop());
             cb.stroke();
             cb.restoreState();
+        }
+    }
+
+    // Page Event to render footer legends at 42pt from bottom, and signatures at 72pt (30px above legends)
+    private static class FooterAndSignaturesPageEvent extends PdfPageEventHelper {
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            PdfContentByte cb = writer.getDirectContent();
+
+            // Adjusted coordinates with 22pt horizontal margins
+            float leftCenter = 215.5f;
+            float rightCenter = 626.5f;
+
+            float leftSigEmisor = 118f;
+            float leftSigDest = 313f;
+
+            float rightSigEmisor = 529f;
+            float rightSigDest = 724f;
+
+            // 1. SIGNATURES: baseline y = 72pt (30px above footer legends at 42pt)
+            float sigLineY = 90f;
+            float sigTitleY = 78f;
+            float sigSubY = 69f;
+
+            // --- Left Half Signatures ---
+            drawSignatureBlock(cb, leftSigEmisor, sigLineY, sigTitleY, sigSubY, "EMISOR", "FIRMA");
+            drawSignatureBlock(cb, leftSigDest, sigLineY, sigTitleY, sigSubY, "DESTINATARIO", "FIRMA Y DNI");
+
+            // --- Right Half Signatures ---
+            drawSignatureBlock(cb, rightSigEmisor, sigLineY, sigTitleY, sigSubY, "EMISOR", "FIRMA");
+            drawSignatureBlock(cb, rightSigDest, sigLineY, sigTitleY, sigSubY, "DESTINATARIO", "FIRMA Y DNI");
+
+            // 2. FOOTER LEGENDS at y = 42pt
+            // Left half: [ COPIA: REMITENTE ] (Remitente in Blue)
+            Phrase leftPhrase = new Phrase();
+            leftPhrase.add(new Chunk("[ COPIA: ", FONT_FOOTER_BRACKET));
+            leftPhrase.add(new Chunk("REMITENTE", FONT_FOOTER_REMITENTE));
+            leftPhrase.add(new Chunk(" ]", FONT_FOOTER_BRACKET));
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, leftPhrase, leftCenter, 42f, 0);
+
+            // Right half: [ COPIA: DESTINATARIO ] (Destinatario in Green)
+            Phrase rightPhrase = new Phrase();
+            rightPhrase.add(new Chunk("[ COPIA: ", FONT_FOOTER_BRACKET));
+            rightPhrase.add(new Chunk("DESTINATARIO", FONT_FOOTER_DESTINATARIO));
+            rightPhrase.add(new Chunk(" ]", FONT_FOOTER_BRACKET));
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, rightPhrase, rightCenter, 42f, 0);
+        }
+
+        private void drawSignatureBlock(PdfContentByte cb, float centerX, float lineY, float titleY, float subY, String title, String sub) {
+            cb.saveState();
+            cb.setColorStroke(new Color(60, 60, 60));
+            cb.setLineWidth(0.6f);
+            cb.moveTo(centerX - 48f, lineY);
+            cb.lineTo(centerX + 48f, lineY);
+            cb.stroke();
+            cb.restoreState();
+
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, new Phrase(title, FONT_SIG_TITLE), centerX, titleY, 0);
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, new Phrase(sub, FONT_SIG_SUB), centerX, subY, 0);
         }
     }
 }
