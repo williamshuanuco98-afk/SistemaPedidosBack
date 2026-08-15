@@ -1,3 +1,5 @@
+Set-Location $PSScriptRoot
+
 # Stop any existing process on port 8080
 $conns = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue
 foreach ($c in $conns) {

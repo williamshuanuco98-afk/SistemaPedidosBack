@@ -1,3 +1,11 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "code-runner.runInTerminal": true,
+    "code-runner.saveFileBeforeRun": true,
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.executorMap": {
+        "java": "cd \"c:\\Users\\User\\OneDrive\\Escritorio\\Proyectos\\SistemaWebPedidosBack\" && powershell -ExecutionPolicy Bypass -File run_backend.ps1",
+        "powershell": "powershell -ExecutionPolicy Bypass -File"
+    }
 }
