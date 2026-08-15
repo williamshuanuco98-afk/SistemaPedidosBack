@@ -3,6 +3,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "PedidosApplication",
+      "request": "launch",
+      "mainClass": "com.inplabel.pedidos.PedidosApplication",
+      "projectName": "pedidos-backend"
+    },
+    {
+      "type": "java",
       "name": "▶ Iniciar Backend Spring Boot",
       "request": "launch",
       "mainClass": "com.inplabel.pedidos.PedidosApplication",
