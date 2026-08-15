@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "▶ Iniciar Backend Spring Boot",
+      "request": "launch",
+      "mainClass": "com.inplabel.pedidos.PedidosApplication",
+      "projectName": "pedidos",
+      "args": "",
+      "vmArgs": "--enable-native-access=ALL-UNNAMED",
+      "env": {
+        "SERVER_PORT": "8080"
+      }
+    },
+    {
+      "type": "node-terminal",
+      "name": "▶ Iniciar Backend (PowerShell Script)",
+      "request": "launch",
+      "command": "powershell -ExecutionPolicy Bypass -File run_backend.ps1",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
