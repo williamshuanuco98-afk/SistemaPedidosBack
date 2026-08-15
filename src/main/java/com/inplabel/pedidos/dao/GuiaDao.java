@@ -6,6 +6,7 @@ import java.util.Map;
 public interface GuiaDao {
     void initSchema();
     List<Map<String, Object>> findAll();
+    Map<String, Object> findById(int id);
     Map<String, String> getNextNumber(String serie);
     Map<String, Object> save(Map<String, Object> body);
     Map<String, Object> anular(int id, String motivo);

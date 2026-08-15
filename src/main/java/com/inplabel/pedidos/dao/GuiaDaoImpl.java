@@ -24,6 +24,38 @@ public class GuiaDaoImpl implements GuiaDao {
     @PostConstruct
     public void initSchema() {
         try {
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS guias (" +
+                "  id_guia INT AUTO_INCREMENT PRIMARY KEY," +
+                "  id_cliente INT NOT NULL," +
+                "  id_pedido INT NULL," +
+                "  fecha_guia DATE NOT NULL," +
+                "  nro_guia VARCHAR(50) NOT NULL UNIQUE," +
+                "  estado VARCHAR(50) DEFAULT 'EMITIDA'," +
+                "  activo BOOLEAN DEFAULT TRUE," +
+                "  doc_referencia VARCHAR(255) NULL," +
+                "  punto_partida TEXT NULL," +
+                "  punto_llegada TEXT NULL," +
+                "  observaciones TEXT NULL," +
+                "  motivo_anulacion TEXT NULL," +
+                "  establecimiento VARCHAR(100) DEFAULT 'CARABAYLLO'," +
+                "  storage_path VARCHAR(500) NULL," +
+                "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")"
+            );
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS detalle_guias (" +
+                "  id_detalle INT AUTO_INCREMENT PRIMARY KEY," +
+                "  id_guia INT NOT NULL," +
+                "  id_producto INT NOT NULL," +
+                "  cantidad INT NOT NULL," +
+                "  FOREIGN KEY (id_guia) REFERENCES guias(id_guia) ON DELETE CASCADE" +
+                ")"
+            );
+        } catch (Exception e) {
+            System.err.println("Init schema table err: " + e.getMessage());
+        }
+        try {
             jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN doc_referencia VARCHAR(255)");
         } catch (Exception ignored) {}
         try {
@@ -56,7 +88,7 @@ public class GuiaDaoImpl implements GuiaDao {
         for (Map<String, Object> guia : guias) {
             Integer idGuia = (Integer) guia.get("id_guia");
             List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-                "SELECT d.*, pr.nombre_producto, pr.codigo_producto FROM detalle_guias d " +
+                "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
                 "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
                 idGuia
             );
@@ -64,6 +96,24 @@ public class GuiaDaoImpl implements GuiaDao {
         }
 
         return guias;
+    }
+
+    @Override
+    public Map<String, Object> findById(int id) {
+        List<Map<String, Object>> guias = jdbcTemplate.queryForList(
+            "SELECT g.*, c.razon_social AS nombre_cliente, c.nro_documento, c.direccion AS direccion_destino, p.nro_pedido " +
+            "FROM guias g LEFT JOIN cliente c ON g.id_cliente = c.id_cliente LEFT JOIN pedido p ON g.id_pedido = p.id_pedido WHERE g.id_guia = ?",
+            id
+        );
+        if (guias.isEmpty()) return null;
+        Map<String, Object> guia = guias.get(0);
+        List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
+            "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
+            id
+        );
+        guia.put("detalles", detalles);
+        return guia;
     }
 
     @Override
