@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Component
@@ -25,9 +24,9 @@ public class LetraPdfGenerator {
     private static final Font FONT_TEXT_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, Color.BLACK);
     private static final Font FONT_TEXT_GREEN_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, new Color(16, 140, 80));
     
-    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, Color.BLACK);
-    private static final Font FONT_CLAUSULAS = FontFactory.getFont(FontFactory.HELVETICA, 4.8f, Color.BLACK);
-    private static final Font FONT_CLAUSULAS_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 5.0f, Color.BLACK);
+    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.8f, Color.BLACK);
+    private static final Font FONT_CLAUSULAS = FontFactory.getFont(FontFactory.HELVETICA, 5.0f, Color.BLACK);
+    private static final Font FONT_CLAUSULAS_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 5.2f, Color.BLACK);
     
     private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 6.0f, new Color(70, 70, 70));
     private static final Font FONT_BOTTOM_NOTE = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(40, 40, 40));
@@ -36,14 +35,14 @@ public class LetraPdfGenerator {
 
     public byte[] generatePdfBytes(Map<String, Object> letra) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // A4 Landscape format (842 x 595 pt)
-            Document document = new Document(PageSize.A4.rotate(), 25, 25, 20, 20);
+            // A4 Portrait format (595 x 842 pt) - Vertical
+            Document document = new Document(PageSize.A4, 20, 20, 20, 20);
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
 
             PdfContentByte cb = writer.getDirectContent();
 
-            // Render single Letra box in the upper or center portion
+            // Render single Letra box
             renderLetraCambioCard(document, cb, letra);
 
             document.close();
@@ -70,7 +69,8 @@ public class LetraPdfGenerator {
                 dir.mkdirs();
             }
 
-            String filename = "LETRA_" + nroLetra.replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
+            // Nombre del PDF: exactamente el número de letra (ej: 226-2026.pdf)
+            String filename = nroLetra.replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
             File targetFile = new File(dir, filename);
 
             try (FileOutputStream fos = new FileOutputStream(targetFile)) {
@@ -109,7 +109,7 @@ public class LetraPdfGenerator {
         // -------------------------------------------------------------
         PdfPTable topHeader = new PdfPTable(2);
         topHeader.setWidthPercentage(100);
-        topHeader.setWidths(new float[]{45f, 55f});
+        topHeader.setWidths(new float[]{40f, 60f});
 
         // Logo
         PdfPCell logoCell = new PdfPCell();
@@ -119,13 +119,13 @@ public class LetraPdfGenerator {
             if (is != null) {
                 byte[] imgBytes = is.readAllBytes();
                 Image img = Image.getInstance(imgBytes);
-                img.scaleToFit(140, 50);
+                img.scaleToFit(130, 45);
                 logoCell.addElement(img);
             } else {
-                logoCell.addElement(new Paragraph("INPLABEL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(16, 185, 129))));
+                logoCell.addElement(new Paragraph("INPLABEL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(16, 185, 129))));
             }
         } catch (Exception e) {
-            logoCell.addElement(new Paragraph("INPLABEL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(16, 185, 129))));
+            logoCell.addElement(new Paragraph("INPLABEL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(16, 185, 129))));
         }
         topHeader.addCell(logoCell);
 
@@ -150,37 +150,39 @@ public class LetraPdfGenerator {
 
         // Vertical space
         Paragraph spacer = new Paragraph(" ");
-        spacer.setSpacingAfter(4f);
+        spacer.setSpacingAfter(3f);
         document.add(spacer);
 
         // -------------------------------------------------------------
-        // MAIN BODY: [Left Clauses Column (14%)] [Right Content (86%)]
+        // MAIN BODY: [Left Clauses Column (Rotated 90° Bottom-Up)] [Right Content]
         // -------------------------------------------------------------
         PdfPTable mainFrame = new PdfPTable(2);
         mainFrame.setWidthPercentage(100);
-        mainFrame.setWidths(new float[]{14f, 86f});
+        mainFrame.setWidths(new float[]{6.5f, 93.5f});
 
-        // 1. LEFT CLAUSES COLUMN
+        // 1. LEFT CLAUSES COLUMN (Escrito de abajo hacia arriba / Rotación 90°)
         PdfPCell clausesCell = new PdfPCell();
-        clausesCell.setBorder(Rectangle.NO_BORDER);
-        clausesCell.setPaddingRight(4f);
-        clausesCell.setPaddingTop(2f);
+        clausesCell.setBorder(Rectangle.BOX);
+        clausesCell.setBorderWidth(BORDER_THIN);
+        clausesCell.setRotation(90); // Rotación 90 grados: se lee de abajo para arriba
+        clausesCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        clausesCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        clausesCell.setPadding(2f);
 
-        Paragraph pClausTitle = new Paragraph("CLÁUSULAS ESPECIALES:\n", FONT_CLAUSULAS_BOLD);
         Paragraph pClausText = new Paragraph(
-            "(1) En caso de mora, esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor.\n" +
-            "(2) El plazo de su vencimiento podrá ser prorrogado por el tenedor, por el plazo que este señale, sin que sea necesaria la intervención del obligado principal ni de los solidarios.\n" +
-            "(3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias.\n" +
+            "CLÁUSULAS ESPECIALES: (1) En caso de mora, esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor. " +
+            "(2) El plazo de su vencimiento podrá ser prorrogado por el tenedor, por el plazo que este señale, sin que sea necesaria la intervención del obligado principal ni de los solidarios. " +
+            "(3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias. " +
             "(4) Las partes se someten a la competencia de los jueces del Distrito Judicial de Lima.",
             FONT_CLAUSULAS
         );
-        clausesCell.addElement(pClausTitle);
         clausesCell.addElement(pClausText);
         mainFrame.addCell(clausesCell);
 
         // 2. RIGHT CONTENT CONTAINER
         PdfPCell bodyCell = new PdfPCell();
         bodyCell.setBorder(Rectangle.NO_BORDER);
+        bodyCell.setPaddingLeft(3f);
 
         PdfPTable rightTable = new PdfPTable(1);
         rightTable.setWidthPercentage(100);
@@ -188,7 +190,7 @@ public class LetraPdfGenerator {
         // 2.1 TOP GRID: NUMERO DE LETRA | REF GIRADOR | LUGAR | FECHA GIRO | FECHA VENC | MONEDA E IMPORTE
         PdfPTable gridTable = new PdfPTable(6);
         gridTable.setWidthPercentage(100);
-        gridTable.setWidths(new float[]{16f, 16f, 13f, 18f, 19f, 18f});
+        gridTable.setWidths(new float[]{17f, 17f, 14f, 17f, 18f, 17f});
 
         // Row 1: Headers
         gridTable.addCell(createThCell("NUMERO DE LETRA"));
@@ -221,15 +223,15 @@ public class LetraPdfGenerator {
         
         PdfPCell bannerCell = new PdfPCell(pBanner);
         bannerCell.setBorder(Rectangle.NO_BORDER);
-        bannerCell.setPaddingTop(3f);
-        bannerCell.setPaddingBottom(3f);
+        bannerCell.setPaddingTop(2f);
+        bannerCell.setPaddingBottom(2f);
         rightTable.addCell(bannerCell);
 
         // 2.3 AMOUNT IN WORDS BOX
         PdfPCell montoLetrasCell = new PdfPCell(new Phrase(montoLetras.toUpperCase(), FONT_MONTO_LETRAS));
         montoLetrasCell.setBorder(Rectangle.BOX);
         montoLetrasCell.setBorderWidth(BORDER_THIN);
-        montoLetrasCell.setPadding(4.5f);
+        montoLetrasCell.setPadding(4f);
         montoLetrasCell.setBackgroundColor(new Color(250, 250, 250));
         rightTable.addCell(montoLetrasCell);
 
@@ -237,14 +239,14 @@ public class LetraPdfGenerator {
         Paragraph pSub = new Paragraph("Valor que sentará(n) en cuenta según aviso de sus Ss. Ss. en el siguiente lugar de pago:", FONT_TEXT_REGULAR);
         PdfPCell subCell = new PdfPCell(pSub);
         subCell.setBorder(Rectangle.NO_BORDER);
-        subCell.setPaddingTop(3f);
-        subCell.setPaddingBottom(3f);
+        subCell.setPaddingTop(2f);
+        subCell.setPaddingBottom(2f);
         rightTable.addCell(subCell);
 
-        // 2.5 LOWER TWO-COLUMN BLOCK: [Cliente & Avalista (55%)] | [Banco & Firma (45%)]
+        // 2.5 LOWER TWO-COLUMN BLOCK: [Cliente & Avalista (53%)] | [Banco & Firma (47%)]
         PdfPTable lowerTable = new PdfPTable(2);
         lowerTable.setWidthPercentage(100);
-        lowerTable.setWidths(new float[]{55f, 45f});
+        lowerTable.setWidths(new float[]{53f, 47f});
 
         // --- LEFT LOWER: GIRADO A & AVALISTA ---
         PdfPCell lowerLeftCell = new PdfPCell();
@@ -255,7 +257,7 @@ public class LetraPdfGenerator {
         // Girado A (Cliente)
         PdfPTable clientDetails = new PdfPTable(2);
         clientDetails.setWidthPercentage(100);
-        clientDetails.setWidths(new float[]{20f, 80f});
+        clientDetails.setWidths(new float[]{22f, 78f});
 
         addDetailRow(clientDetails, "GIRADO A:", cliente);
         addDetailRow(clientDetails, "RUC:", ruc);
@@ -265,14 +267,14 @@ public class LetraPdfGenerator {
 
         // Divider
         Paragraph avalSep = new Paragraph("__________________________________________________________________", FontFactory.getFont(FontFactory.HELVETICA, 4.0f, Color.LIGHT_GRAY));
-        avalSep.setSpacingBefore(3f);
-        avalSep.setSpacingAfter(3f);
+        avalSep.setSpacingBefore(2f);
+        avalSep.setSpacingAfter(2f);
         lowerLeftCell.addElement(avalSep);
 
         // Avalista Section
         PdfPTable avalDetails = new PdfPTable(2);
         avalDetails.setWidthPercentage(100);
-        avalDetails.setWidths(new float[]{20f, 80f});
+        avalDetails.setWidths(new float[]{22f, 78f});
 
         addDetailRow(avalDetails, "AVALISTA:", ".....................................................................................................");
         addDetailRow(avalDetails, "D.I/R.U.C:", "............................  TELEFONO: .........................");
@@ -318,7 +320,7 @@ public class LetraPdfGenerator {
         // Signature Line
         Paragraph pSigLine = new Paragraph("........................................................................................", FontFactory.getFont(FontFactory.HELVETICA, 6.0f, Color.BLACK));
         pSigLine.setAlignment(Element.ALIGN_CENTER);
-        pSigLine.setSpacingBefore(12f);
+        pSigLine.setSpacingBefore(10f);
         Paragraph pSigLabel = new Paragraph("FIRMA", FONT_TEXT_BOLD);
         pSigLabel.setAlignment(Element.ALIGN_CENTER);
         
@@ -340,7 +342,7 @@ public class LetraPdfGenerator {
 
         // Bottom Note
         Paragraph pBottom = new Paragraph("No escribir ni firmar debajo de esta línea", FONT_BOTTOM_NOTE);
-        pBottom.setSpacingBefore(6f);
+        pBottom.setSpacingBefore(4f);
         document.add(pBottom);
     }
 

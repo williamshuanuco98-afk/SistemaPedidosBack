@@ -203,10 +203,10 @@ public class LetraCambioController {
                 letraPdfGenerator.savePdfToDisk(letra, storageDir, useSubfolders);
             }
 
-            String filename = "LETRA_" + ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
+            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfBytes);
         } catch (Exception e) {
@@ -223,5 +223,11 @@ public class LetraCambioController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PutMapping("/lote/{idLote}/anular")
+    public ResponseEntity<?> anularLoteLetras(@PathVariable String idLote) {
+        int updated = jdbcTemplate.update("UPDATE letras_cambio SET estado = 'ANULADA' WHERE id_lote = ?", idLote);
+        return ResponseEntity.ok(Map.of("success", true, "anuladas", updated, "message", "Lote de letras anulado correctamente"));
     }
 }
