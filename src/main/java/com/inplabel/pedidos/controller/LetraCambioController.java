@@ -215,6 +215,23 @@ public class LetraCambioController {
         }
     }
 
+    @GetMapping(value = "/{id}/html", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<?> getLetraHtml(@PathVariable int id) {
+        try {
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?", id);
+            if (list.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Map<String, Object> letra = list.get(0);
+            String html = letraPdfGenerator.generateHtml(letra);
+            return ResponseEntity.ok(html);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error al generar HTML de Letra: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/anular")
     public ResponseEntity<?> anularLetra(@PathVariable int id) {
         int updated = jdbcTemplate.update("UPDATE letras_cambio SET estado = 'ANULADA' WHERE id_letra = ?", id);
