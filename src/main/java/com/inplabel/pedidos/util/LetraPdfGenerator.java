@@ -16,35 +16,29 @@ import java.util.Map;
 public class LetraPdfGenerator {
 
     private static final Font FONT_COMP_ADDR = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.BLACK);
-    private static final Font FONT_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.8f, Color.BLACK);
+    private static final Font FONT_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.0f, Color.BLACK);
     private static final Font FONT_TD_VAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, Color.BLACK);
     private static final Font FONT_TD_SMALL = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.BLACK);
     
-    private static final Font FONT_TEXT_REGULAR = FontFactory.getFont(FontFactory.HELVETICA, 7.0f, Color.BLACK);
-    private static final Font FONT_TEXT_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, Color.BLACK);
-    private static final Font FONT_TEXT_GREEN_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 7.5f, new Color(16, 140, 80));
+    private static final Font FONT_TEXT_REGULAR = FontFactory.getFont(FontFactory.HELVETICA, 7.2f, Color.BLACK);
+    private static final Font FONT_TEXT_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
+    private static final Font FONT_TEXT_GREEN_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 7.8f, new Color(16, 140, 80));
     
-    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
-    private static final Font FONT_CLAUSULAS = FontFactory.getFont(FontFactory.HELVETICA, 4.8f, Color.BLACK);
-    private static final Font FONT_CLAUSULAS_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 5.2f, Color.BLACK);
-    private static final Font FONT_SIDE_LABEL = FontFactory.getFont(FontFactory.HELVETICA, 5.8f, Color.BLACK);
-    
-    private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 6.2f, new Color(60, 60, 60));
-    private static final Font FONT_BOTTOM_NOTE = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(40, 40, 40));
+    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.8f, Color.BLACK);
+    private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(60, 60, 60));
+    private static final Font FONT_BOTTOM_NOTE = FontFactory.getFont(FontFactory.HELVETICA, 6.8f, new Color(40, 40, 40));
 
-    private static final Color HEADER_BG_GREEN = new Color(226, 235, 216); // Verde salvia exacto del modelo
-    private static final float BORDER_THIN = 0.55f;
+    private static final Color HEADER_BG_GREEN = new Color(226, 235, 216);
+    private static final float BORDER_THIN = 0.6f;
 
     public byte[] generatePdfBytes(Map<String, Object> letra) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // A4 Portrait format (595.28 x 841.89 pt) - Vertical exacto como en la foto
-            Document document = new Document(PageSize.A4, 20, 20, 20, 20);
-            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            // A4 Portrait format (595.28 x 841.89 pt) - 1 Sola Página garantizada
+            Document document = new Document(PageSize.A4, 25, 25, 20, 20);
+            PdfWriter.getInstance(document, baos);
             document.open();
 
-            PdfContentByte cb = writer.getDirectContent();
-
-            renderLetraCambioCard(document, cb, letra);
+            renderLetraCard(document, letra);
 
             document.close();
             return baos.toByteArray();
@@ -70,7 +64,6 @@ public class LetraPdfGenerator {
                 dir.mkdirs();
             }
 
-            // Nombre del PDF: exactamente el número de letra (ej: 226-2026.pdf)
             String filename = nroLetra.replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
             File targetFile = new File(dir, filename);
 
@@ -85,7 +78,7 @@ public class LetraPdfGenerator {
         }
     }
 
-    private void renderLetraCambioCard(Document document, PdfContentByte cb, Map<String, Object> letra) throws Exception {
+    private void renderLetraCard(Document document, Map<String, Object> letra) throws Exception {
         String nroLetra = (String) letra.getOrDefault("nro_letra", "261-2026");
         String refGirador = (String) letra.getOrDefault("ref_girador", "FF02 - 630");
         String lugarGiro = (String) letra.getOrDefault("lugar_giro", "LIMA");
@@ -105,14 +98,11 @@ public class LetraPdfGenerator {
         String ruc = (String) letra.getOrDefault("nro_documento", "-");
         String direccion = (String) letra.getOrDefault("direccion_cliente", "LIMA - LIMA");
 
-        // -------------------------------------------------------------
-        // TOP HEADER: [Logo Left] [Company Info Right]
-        // -------------------------------------------------------------
+        // 1. TOP HEADER: [Logo Left] [Company Info Right]
         PdfPTable topHeader = new PdfPTable(2);
         topHeader.setWidthPercentage(100);
         topHeader.setWidths(new float[]{40f, 60f});
 
-        // Logo
         PdfPCell logoCell = new PdfPCell();
         logoCell.setBorder(Rectangle.NO_BORDER);
         try {
@@ -120,7 +110,7 @@ public class LetraPdfGenerator {
             if (is != null) {
                 byte[] imgBytes = is.readAllBytes();
                 Image img = Image.getInstance(imgBytes);
-                img.scaleToFit(140, 48);
+                img.scaleToFit(140, 44);
                 logoCell.addElement(img);
             } else {
                 logoCell.addElement(new Paragraph("INPLABEL", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(16, 185, 129))));
@@ -130,7 +120,6 @@ public class LetraPdfGenerator {
         }
         topHeader.addCell(logoCell);
 
-        // Address & Phones
         PdfPCell addrCell = new PdfPCell();
         addrCell.setBorder(Rectangle.NO_BORDER);
         addrCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -149,225 +138,180 @@ public class LetraPdfGenerator {
 
         document.add(topHeader);
 
-        // Vertical space
+        // Spacer
         Paragraph spacer = new Paragraph(" ");
         spacer.setSpacingAfter(2f);
         document.add(spacer);
 
-        // -------------------------------------------------------------
-        // MAIN BOX: [Clauses Left (Rotated 90°)] [Right Body]
-        // -------------------------------------------------------------
-        PdfPTable mainFrame = new PdfPTable(2);
-        mainFrame.setWidthPercentage(100);
-        mainFrame.setWidths(new float[]{4.2f, 95.8f});
+        // 2. MAIN TABLE (2 Columns: Col 1: Clauses 4.2%, Col 2: Body 95.8%)
+        PdfPTable mainTable = new PdfPTable(2);
+        mainTable.setWidthPercentage(100);
+        mainTable.setWidths(new float[]{4.2f, 95.8f});
 
-        // 1. LEFT CLAUSES (Texto vertical de abajo hacia arriba)
+        // Left Clauses using PdfPCellEvent to prevent table pagination splits
         PdfPCell clausesCell = new PdfPCell();
         clausesCell.setBorder(Rectangle.BOX);
         clausesCell.setBorderWidth(BORDER_THIN);
-        clausesCell.setRotation(90); // Rotado 90°: corre de abajo hacia arriba
-        clausesCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        clausesCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        clausesCell.setPadding(2f);
+        clausesCell.setCellEvent(new PdfPCellEvent() {
+            @Override
+            public void cellLayout(PdfPCell cell, Rectangle rect, PdfContentByte[] canvases) {
+                PdfContentByte cb = canvases[PdfPTable.TEXTCANVAS];
+                cb.saveState();
+                cb.beginText();
+                try {
+                    BaseFont bf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                    cb.setFontAndSize(bf, 4.6f);
+                    cb.setColorFill(Color.BLACK);
+                    
+                    String text = "CLÁUSULAS ESPECIALES: (1) En caso de mora , esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor. (2) El plazo de su vencimiento podrá ser prorrogrado por el tenedor, por el plazo que este señale, sin que sea necesaria la intervención del obligado principal ni de los solidarios. (3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias. (4) Las partes se someten a la competencia de los jueces del DIstrito Judicial de Lima.";
+                    
+                    float x = rect.getLeft() + (rect.getWidth() / 2f) + 1.5f;
+                    float y = rect.getBottom() + 4f;
+                    cb.showTextAligned(Element.ALIGN_LEFT, text, x, y, 90f);
+                } catch (Exception ignored) {}
+                cb.endText();
+                cb.restoreState();
+            }
+        });
+        mainTable.addCell(clausesCell);
 
-        Paragraph pClaus = new Paragraph();
-        pClaus.add(new Chunk("CLÁUSULAS ESPECIALES: ", FONT_CLAUSULAS_BOLD));
-        pClaus.add(new Chunk(
-            "(1) En caso de mora , esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor. " +
-            "(2) El plazo de su vencimiento podrá ser prorrogrado por el tenedor, por el plazo que este señale, sin que sea necesaria la intervención del obligado principal ni de los solidarios. " +
-            "(3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias. " +
-            "(4) Las partes se someten a la competencia de los jueces del DIstrito Judicial de Lima.",
-            FONT_CLAUSULAS
-        ));
-        clausesCell.addElement(pClaus);
-        mainFrame.addCell(clausesCell);
+        PdfPTable rightBody = new PdfPTable(1);
+        rightBody.setWidthPercentage(100);
 
-        // 2. RIGHT BODY CONTAINER
-        PdfPCell rightBodyCell = new PdfPCell();
-        rightBodyCell.setBorder(Rectangle.NO_BORDER);
+        // Upper Section: Tag + Grid
+        PdfPTable upperSection = new PdfPTable(7);
+        upperSection.setWidthPercentage(100);
+        upperSection.setWidths(new float[]{2.2f, 16.3f, 16.3f, 13.5f, 17.5f, 18.0f, 16.2f});
 
-        PdfPTable bodyInner = new PdfPTable(1);
-        bodyInner.setWidthPercentage(100);
+        PdfPCell tagCell = new PdfPCell();
+        tagCell.setBorder(Rectangle.BOX);
+        tagCell.setBorderWidth(BORDER_THIN);
+        tagCell.setRowspan(5);
+        tagCell.setCellEvent(new PdfPCellEvent() {
+            @Override
+            public void cellLayout(PdfPCell cell, Rectangle rect, PdfContentByte[] canvases) {
+                PdfContentByte cb = canvases[PdfPTable.TEXTCANVAS];
+                cb.saveState();
+                cb.beginText();
+                try {
+                    BaseFont bf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                    cb.setFontAndSize(bf, 5.8f);
+                    cb.setColorFill(Color.BLACK);
+                    float x = rect.getLeft() + (rect.getWidth() / 2f) + 1.8f;
+                    float y = rect.getBottom() + (rect.getHeight() / 2f) - 15f;
+                    cb.showTextAligned(Element.ALIGN_LEFT, "Aceptante(s)", x, y, 90f);
+                } catch (Exception ignored) {}
+                cb.endText();
+                cb.restoreState();
+            }
+        });
+        upperSection.addCell(tagCell);
 
-        // 2.1 UPPER SECTION WITH "Aceptante(s)" SIDE TAG
-        PdfPTable upperWithTag = new PdfPTable(2);
-        upperWithTag.setWidthPercentage(100);
-        upperWithTag.setWidths(new float[]{2.0f, 98.0f});
+        upperSection.addCell(createThCell("NUMERO DE LETRA"));
+        upperSection.addCell(createThCell("REF. DEL GIRADOR"));
+        upperSection.addCell(createThCell("LUGAR DE GIRO"));
+        upperSection.addCell(createDateThCell("FECHA DE GIRO"));
+        upperSection.addCell(createDateThCell("FECHA DE VENCIMIENTO"));
+        upperSection.addCell(createThCell("MONEDA E IMPORTE"));
 
-        // "Aceptante(s)" vertical cell
-        PdfPCell aceptanteTag = new PdfPCell();
-        aceptanteTag.setBorder(Rectangle.BOX);
-        aceptanteTag.setBorderWidth(BORDER_THIN);
-        aceptanteTag.setRotation(90);
-        aceptanteTag.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        aceptanteTag.setHorizontalAlignment(Element.ALIGN_CENTER);
-        aceptanteTag.setPadding(1f);
-        aceptanteTag.addElement(new Paragraph("Aceptante(s)", FONT_SIDE_LABEL));
-        upperWithTag.addCell(aceptanteTag);
+        upperSection.addCell(createTdCell(nroLetra, Element.ALIGN_CENTER, FONT_TD_VAL));
+        upperSection.addCell(createTdCell(refGirador, Element.ALIGN_CENTER, FONT_TD_VAL));
+        upperSection.addCell(createTdCell(lugarGiro, Element.ALIGN_CENTER, FONT_TD_VAL));
+        upperSection.addCell(createDateValuesCell(giroParts[0], giroParts[1], giroParts[2]));
+        upperSection.addCell(createDateValuesCell(vencParts[0], vencParts[1], vencParts[2]));
+        upperSection.addCell(createTdCell(montoFormatted, Element.ALIGN_CENTER, FONT_TD_VAL));
 
-        // Right side of upper part: Grid + Banner + MontoLetras + LugarPago
-        PdfPCell upperRightCell = new PdfPCell();
-        upperRightCell.setBorder(Rectangle.NO_BORDER);
-
-        PdfPTable upperContent = new PdfPTable(1);
-        upperContent.setWidthPercentage(100);
-
-        // 2.1.1 UPPER GRID: NUMERO DE LETRA | REF GIRADOR | LUGAR | FECHA GIRO | FECHA VENC | MONEDA E IMPORTE
-        PdfPTable gridTable = new PdfPTable(6);
-        gridTable.setWidthPercentage(100);
-        gridTable.setWidths(new float[]{16.5f, 16.5f, 13.5f, 18f, 18.5f, 17f});
-
-        gridTable.addCell(createThCell("NUMERO DE LETRA"));
-        gridTable.addCell(createThCell("REF. DEL GIRADOR"));
-        gridTable.addCell(createThCell("LUGAR DE GIRO"));
-        gridTable.addCell(createDateThCell("FECHA DE GIRO"));
-        gridTable.addCell(createDateThCell("FECHA DE VENCIMIENTO"));
-        gridTable.addCell(createThCell("MONEDA E IMPORTE"));
-
-        gridTable.addCell(createTdCell(nroLetra, Element.ALIGN_CENTER, FONT_TD_VAL, 16f));
-        gridTable.addCell(createTdCell(refGirador, Element.ALIGN_CENTER, FONT_TD_VAL, 16f));
-        gridTable.addCell(createTdCell(lugarGiro, Element.ALIGN_CENTER, FONT_TD_VAL, 16f));
-        gridTable.addCell(createDateValuesCell(giroParts[0], giroParts[1], giroParts[2]));
-        gridTable.addCell(createDateValuesCell(vencParts[0], vencParts[1], vencParts[2]));
-        gridTable.addCell(createTdCell(montoFormatted, Element.ALIGN_CENTER, FONT_TD_VAL, 16f));
-
-        PdfPCell gridContainer = new PdfPCell(gridTable);
-        gridContainer.setBorder(Rectangle.NO_BORDER);
-        upperContent.addCell(gridContainer);
-
-        // 2.1.2 ORDER OF PAYMENT BANNER
-        Paragraph pBanner = new Paragraph();
-        pBanner.add(new Chunk("Por esta ", FONT_TEXT_REGULAR));
-        pBanner.add(new Chunk("LETRA DE CAMBIO", FONT_TEXT_BOLD));
-        pBanner.add(new Chunk(", se serivá(n) pagar a la orden de ", FONT_TEXT_REGULAR));
-        pBanner.add(new Chunk("INDUSTRIAS PLASTICOS BELSA S.A.C.", FONT_TEXT_GREEN_BOLD));
-        pBanner.add(new Chunk(" la cantidad de:", FONT_TEXT_REGULAR));
-        
-        PdfPCell bannerCell = new PdfPCell(pBanner);
+        PdfPCell bannerCell = new PdfPCell(new Phrase("Por esta LETRA DE CAMBIO, se servirá(n) pagar a la orden de INDUSTRIAS PLASTICOS BELSA S.A.C. la cantidad de:", FONT_TEXT_REGULAR));
+        bannerCell.setColspan(6);
         bannerCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
         bannerCell.setBorderWidth(BORDER_THIN);
-        bannerCell.setPadding(2.5f);
-        upperContent.addCell(bannerCell);
+        bannerCell.setPadding(2f);
+        upperSection.addCell(bannerCell);
 
-        // 2.1.3 AMOUNT IN WORDS BOX
         PdfPCell montoLetrasCell = new PdfPCell(new Phrase(montoLetras.toUpperCase(), FONT_MONTO_LETRAS));
+        montoLetrasCell.setColspan(6);
         montoLetrasCell.setBorder(Rectangle.BOX);
         montoLetrasCell.setBorderWidth(BORDER_THIN);
-        montoLetrasCell.setPadding(3.5f);
-        montoLetrasCell.setMinimumHeight(16f);
-        upperContent.addCell(montoLetrasCell);
+        montoLetrasCell.setPadding(3f);
+        upperSection.addCell(montoLetrasCell);
 
-        // 2.1.4 PLACE OF PAYMENT NOTE
-        Paragraph pSub = new Paragraph("Valor que sentará(n) en cuenta según aviso de sus Ss. Ss. en el siguiete lugar de pago:", FONT_TEXT_REGULAR);
-        PdfPCell subCell = new PdfPCell(pSub);
+        PdfPCell subCell = new PdfPCell(new Phrase("Valor que sentará(n) en cuenta según aviso de sus Ss. Ss. en el siguiete lugar de pago:", FONT_TEXT_REGULAR));
+        subCell.setColspan(6);
         subCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT | Rectangle.BOTTOM);
         subCell.setBorderWidth(BORDER_THIN);
-        subCell.setPadding(2.0f);
-        upperContent.addCell(subCell);
+        subCell.setPadding(1.5f);
+        upperSection.addCell(subCell);
 
-        upperRightCell.addElement(upperContent);
-        upperWithTag.addCell(upperRightCell);
+        rightBody.addCell(new PdfPCell(upperSection));
 
-        PdfPCell upperTotalCell = new PdfPCell(upperWithTag);
-        upperTotalCell.setBorder(Rectangle.NO_BORDER);
-        bodyInner.addCell(upperTotalCell);
+        // Lower Section: [Girado/Avalista Left 55%] [Banco/Firma Right 45%]
+        PdfPTable lowerSection = new PdfPTable(2);
+        lowerSection.setWidthPercentage(100);
+        lowerSection.setWidths(new float[]{55f, 45f});
 
-        // 2.2 LOWER SECTION: [Girado/Avalista Left] [Banco/Firma Right]
-        PdfPTable lowerTable = new PdfPTable(2);
-        lowerTable.setWidthPercentage(100);
-        lowerTable.setWidths(new float[]{55f, 45f});
+        // --- LOWER LEFT ---
+        PdfPTable leftGrid = new PdfPTable(3);
+        leftGrid.setWidthPercentage(100);
+        leftGrid.setWidths(new float[]{4.0f, 18.0f, 78.0f});
 
-        // --- LOWER LEFT BLOCK (Girado A + Por Aval + Avalista) ---
-        PdfPCell lowerLeftCell = new PdfPCell();
+        PdfPCell d1 = new PdfPCell(new Phrase("")); d1.setBorder(Rectangle.NO_BORDER); leftGrid.addCell(d1);
+        leftGrid.addCell(createLabelCell("GIRADO A:"));
+        leftGrid.addCell(createValueCell(cliente));
+
+        PdfPCell d2 = new PdfPCell(new Phrase("")); d2.setBorder(Rectangle.NO_BORDER); leftGrid.addCell(d2);
+        leftGrid.addCell(createLabelCell("RUC:"));
+        leftGrid.addCell(createValueCell(ruc));
+
+        PdfPCell d3 = new PdfPCell(new Phrase("")); d3.setBorder(Rectangle.NO_BORDER); leftGrid.addCell(d3);
+        leftGrid.addCell(createLabelCell("DIRECCION:"));
+        leftGrid.addCell(createValueCell(direccion));
+
+        PdfPCell porAvalCell = new PdfPCell();
+        porAvalCell.setBorder(Rectangle.TOP | Rectangle.RIGHT);
+        porAvalCell.setBorderWidth(BORDER_THIN);
+        porAvalCell.setRowspan(3);
+        porAvalCell.setCellEvent(new PdfPCellEvent() {
+            @Override
+            public void cellLayout(PdfPCell cell, Rectangle rect, PdfContentByte[] canvases) {
+                PdfContentByte cb = canvases[PdfPTable.TEXTCANVAS];
+                cb.saveState();
+                cb.beginText();
+                try {
+                    BaseFont bf = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+                    cb.setFontAndSize(bf, 5.8f);
+                    cb.setColorFill(Color.BLACK);
+                    float x = rect.getLeft() + (rect.getWidth() / 2f) + 1.8f;
+                    float y = rect.getBottom() + (rect.getHeight() / 2f) - 10f;
+                    cb.showTextAligned(Element.ALIGN_LEFT, "Por Aval", x, y, 90f);
+                } catch (Exception ignored) {}
+                cb.endText();
+                cb.restoreState();
+            }
+        });
+        leftGrid.addCell(porAvalCell);
+
+        PdfPCell cAvLabel = createLabelCell("AVALISTA:"); cAvLabel.setBorder(Rectangle.TOP); cAvLabel.setBorderWidth(BORDER_THIN); leftGrid.addCell(cAvLabel);
+        PdfPCell cAvVal = createValueCell("....................................................................................................."); cAvVal.setBorder(Rectangle.TOP); cAvVal.setBorderWidth(BORDER_THIN); leftGrid.addCell(cAvVal);
+
+        leftGrid.addCell(createLabelCell("D.I/R.U.C:"));
+        leftGrid.addCell(createValueCell(".................................... TELEFONO: ...................."));
+
+        leftGrid.addCell(createLabelCell("DIRECCION:"));
+        leftGrid.addCell(createValueCell("....................................................................................................."));
+
+        PdfPCell lowerLeftCell = new PdfPCell(leftGrid);
         lowerLeftCell.setBorder(Rectangle.BOX);
         lowerLeftCell.setBorderWidth(BORDER_THIN);
-        lowerLeftCell.setPadding(0);
+        lowerSection.addCell(lowerLeftCell);
 
-        PdfPTable leftInner = new PdfPTable(1);
-        leftInner.setWidthPercentage(100);
+        // --- LOWER RIGHT ---
+        PdfPTable rightGrid = new PdfPTable(1);
+        rightGrid.setWidthPercentage(100);
 
-        // Girado A (Cliente)
-        PdfPCell giradoCell = new PdfPCell();
-        giradoCell.setBorder(Rectangle.NO_BORDER);
-        giradoCell.setPadding(3.0f);
+        PdfPCell cDebit = new PdfPCell(new Phrase("Importe a debitar en cuenta del Aceptante del Banco:....................................", FONT_TEXT_REGULAR));
+        cDebit.setBorder(Rectangle.NO_BORDER);
+        rightGrid.addCell(cDebit);
 
-        PdfPTable clientDetails = new PdfPTable(2);
-        clientDetails.setWidthPercentage(100);
-        clientDetails.setWidths(new float[]{18f, 82f});
-        addDetailRow(clientDetails, "GIRADO A:", cliente);
-        addDetailRow(clientDetails, "RUC:", ruc);
-        addDetailRow(clientDetails, "DIRECCION:", direccion);
-        giradoCell.addElement(clientDetails);
-        leftInner.addCell(giradoCell);
-
-        // Horizontal divider between Girado and Avalista
-        PdfPCell sepCell = new PdfPCell();
-        sepCell.setBorder(Rectangle.TOP);
-        sepCell.setBorderWidth(BORDER_THIN);
-        sepCell.setPadding(0);
-
-        // Avalista with "Por Aval" tag
-        PdfPTable avalWithTag = new PdfPTable(2);
-        avalWithTag.setWidthPercentage(100);
-        avalWithTag.setWidths(new float[]{3.8f, 96.2f});
-
-        PdfPCell porAvalTag = new PdfPCell();
-        porAvalTag.setBorder(Rectangle.RIGHT);
-        porAvalTag.setBorderWidth(BORDER_THIN);
-        porAvalTag.setRotation(90);
-        porAvalTag.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        porAvalTag.setHorizontalAlignment(Element.ALIGN_CENTER);
-        porAvalTag.setPadding(1f);
-        porAvalTag.addElement(new Paragraph("Por Aval", FONT_SIDE_LABEL));
-        avalWithTag.addCell(porAvalTag);
-
-        PdfPCell avalContent = new PdfPCell();
-        avalContent.setBorder(Rectangle.NO_BORDER);
-        avalContent.setPadding(2.5f);
-
-        PdfPTable avalDetails = new PdfPTable(2);
-        avalDetails.setWidthPercentage(100);
-        avalDetails.setWidths(new float[]{18f, 82f});
-        addDetailRow(avalDetails, "AVALISTA:", ".....................................................................................................");
-        
-        PdfPCell docTelCell = new PdfPCell();
-        docTelCell.setBorder(Rectangle.NO_BORDER);
-        docTelCell.setPadding(1.0f);
-        PdfPTable docTelTable = new PdfPTable(4);
-        docTelTable.setWidthPercentage(100);
-        docTelTable.setWidths(new float[]{18f, 32f, 18f, 32f});
-        docTelTable.addCell(createLabelCell("D.I/R.U.C:"));
-        docTelTable.addCell(createValueCell("...................................................."));
-        docTelTable.addCell(createLabelCell("TELEFONO:"));
-        docTelTable.addCell(createValueCell("...................................................."));
-        
-        PdfPCell dtCont = new PdfPCell(docTelTable);
-        dtCont.setColspan(2);
-        dtCont.setBorder(Rectangle.NO_BORDER);
-        avalDetails.addCell(dtCont);
-
-        addDetailRow(avalDetails, "DIRECCION:", ".....................................................................................................");
-
-        avalContent.addElement(avalDetails);
-        avalWithTag.addCell(avalContent);
-
-        sepCell.addElement(avalWithTag);
-        leftInner.addCell(sepCell);
-
-        lowerLeftCell.addElement(leftInner);
-        lowerTable.addCell(lowerLeftCell);
-
-        // --- LOWER RIGHT BLOCK (Banco, Empresa, Firma) ---
-        PdfPCell lowerRightCell = new PdfPCell();
-        lowerRightCell.setBorder(Rectangle.BOX);
-        lowerRightCell.setBorderWidth(BORDER_THIN);
-        lowerRightCell.setPadding(3.0f);
-
-        // Bank Line
-        Paragraph pBankNote = new Paragraph("Importe a debitar en cuenta del Aceptante del Banco:.................................................", FONT_TEXT_REGULAR);
-        lowerRightCell.addElement(pBankNote);
-
-        // Bank Grid
         PdfPTable bankGrid = new PdfPTable(4);
         bankGrid.setWidthPercentage(100);
         bankGrid.setWidths(new float[]{25f, 25f, 40f, 10f});
@@ -375,70 +319,67 @@ public class LetraPdfGenerator {
         bankGrid.addCell(createThCell("OFICINA"));
         bankGrid.addCell(createThCell("NUMERO DE CUENTA"));
         bankGrid.addCell(createThCell("D.C."));
+        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL));
+        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL));
+        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL));
+        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL));
+        rightGrid.addCell(new PdfPCell(bankGrid));
 
-        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL, 10f));
-        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL, 10f));
-        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL, 10f));
-        bankGrid.addCell(createTdCell(" ", Element.ALIGN_CENTER, FONT_TD_SMALL, 10f));
-        lowerRightCell.addElement(bankGrid);
-
-        // Company Banner
-        Paragraph pCompName = new Paragraph("INDUSTRIAS PLASTICOS BELSA S.A.C.", FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 8.5f, new Color(16, 140, 80)));
-        pCompName.setAlignment(Element.ALIGN_CENTER);
-        pCompName.setSpacingBefore(2f);
-        Paragraph pCompRuc = new Paragraph("RUC: 20544368827", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, Color.BLACK));
-        pCompRuc.setAlignment(Element.ALIGN_CENTER);
-        lowerRightCell.addElement(pCompName);
-        lowerRightCell.addElement(pCompRuc);
-
-        // Signature Line
-        Paragraph pSigLine = new Paragraph("....................................................................................................", FontFactory.getFont(FontFactory.HELVETICA, 6.0f, Color.BLACK));
-        pSigLine.setAlignment(Element.ALIGN_CENTER);
-        pSigLine.setSpacingBefore(10f);
-        Paragraph pSigLabel = new Paragraph("FIRMA", FONT_TEXT_BOLD);
-        pSigLabel.setAlignment(Element.ALIGN_CENTER);
+        // Clean signature table
+        PdfPTable signTable = new PdfPTable(1);
+        signTable.setWidthPercentage(100);
         
-        Paragraph pRepLabel = new Paragraph("Nombre del representante(S)", FONT_SUBTITLE);
-        Paragraph pDoiLabel = new Paragraph("D.O.I", FONT_SUBTITLE);
+        PdfPCell s1 = new PdfPCell(new Phrase("INDUSTRIAS PLASTICOS BELSA S.A.C.", FONT_TEXT_GREEN_BOLD));
+        s1.setBorder(Rectangle.NO_BORDER); s1.setHorizontalAlignment(Element.ALIGN_CENTER);
+        signTable.addCell(s1);
+        
+        PdfPCell s2 = new PdfPCell(new Phrase("RUC: 20544368827", FONT_TEXT_BOLD));
+        s2.setBorder(Rectangle.NO_BORDER); s2.setHorizontalAlignment(Element.ALIGN_CENTER);
+        signTable.addCell(s2);
+        
+        PdfPCell s3 = new PdfPCell(new Phrase("....................................................................................................", FontFactory.getFont(FontFactory.HELVETICA, 5.5f)));
+        s3.setBorder(Rectangle.NO_BORDER); s3.setHorizontalAlignment(Element.ALIGN_CENTER);
+        s3.setPaddingTop(8f);
+        signTable.addCell(s3);
+        
+        PdfPCell s4 = new PdfPCell(new Phrase("FIRMA", FONT_TEXT_BOLD));
+        s4.setBorder(Rectangle.NO_BORDER); s4.setHorizontalAlignment(Element.ALIGN_CENTER);
+        signTable.addCell(s4);
+        
+        PdfPCell s5 = new PdfPCell(new Phrase("Nombre del representante(S)\nD.O.I", FONT_SUBTITLE));
+        s5.setBorder(Rectangle.NO_BORDER);
+        signTable.addCell(s5);
 
-        lowerRightCell.addElement(pSigLine);
-        lowerRightCell.addElement(pSigLabel);
-        lowerRightCell.addElement(pRepLabel);
-        lowerRightCell.addElement(pDoiLabel);
+        rightGrid.addCell(new PdfPCell(signTable));
 
-        lowerTable.addCell(lowerRightCell);
+        PdfPCell lowerRightCell = new PdfPCell(rightGrid);
+        lowerRightCell.setBorder(Rectangle.BOX);
+        lowerRightCell.setBorderWidth(BORDER_THIN);
+        lowerRightCell.setPadding(2f);
+        lowerSection.addCell(lowerRightCell);
 
-        PdfPCell lowerTotalCell = new PdfPCell(lowerTable);
-        lowerTotalCell.setBorder(Rectangle.NO_BORDER);
-        bodyInner.addCell(lowerTotalCell);
+        rightBody.addCell(new PdfPCell(lowerSection));
 
-        rightBodyCell.addElement(bodyInner);
-        mainFrame.addCell(rightBodyCell);
+        mainTable.addCell(new PdfPCell(rightBody));
+        document.add(mainTable);
 
-        document.add(mainFrame);
-
-        // Bottom Note
+        // Footnote
         Paragraph pBottom = new Paragraph("No escribir ni firmar debajo de esta linea", FONT_BOTTOM_NOTE);
         pBottom.setSpacingBefore(2f);
         document.add(pBottom);
     }
 
-    private void addDetailRow(PdfPTable table, String label, String value) {
-        table.addCell(createLabelCell(label));
-        table.addCell(createValueCell(value));
-    }
-
     private PdfPCell createLabelCell(String text) {
         PdfPCell c = new PdfPCell(new Phrase(text, FONT_TEXT_BOLD));
         c.setBorder(Rectangle.NO_BORDER);
-        c.setPadding(1.2f);
+        c.setPadding(1f);
         return c;
     }
 
     private PdfPCell createValueCell(String text) {
         PdfPCell c = new PdfPCell(new Phrase(text, FONT_TEXT_REGULAR));
         c.setBorder(Rectangle.NO_BORDER);
-        c.setPadding(1.2f);
+        c.setPadding(1f);
         return c;
     }
 
@@ -448,19 +389,18 @@ public class LetraPdfGenerator {
         cell.setBorderWidth(BORDER_THIN);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        cell.setPadding(2.5f);
+        cell.setPadding(2f);
         cell.setBackgroundColor(HEADER_BG_GREEN);
         return cell;
     }
 
-    private PdfPCell createTdCell(String text, int align, Font font, float minHeight) {
+    private PdfPCell createTdCell(String text, int align, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setBorder(Rectangle.BOX);
         cell.setBorderWidth(BORDER_THIN);
         cell.setHorizontalAlignment(align);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        cell.setPadding(2.5f);
-        if (minHeight > 0) cell.setMinimumHeight(minHeight);
+        cell.setPadding(2f);
         return cell;
     }
 
@@ -500,7 +440,7 @@ public class LetraPdfGenerator {
         PdfPCell container = new PdfPCell(nested);
         container.setBorder(Rectangle.BOX);
         container.setBorderWidth(BORDER_THIN);
-        container.setPadding(0.8f);
+        container.setPadding(0.5f);
         container.setBackgroundColor(HEADER_BG_GREEN);
         return container;
     }
@@ -531,8 +471,7 @@ public class LetraPdfGenerator {
         PdfPCell container = new PdfPCell(nested);
         container.setBorder(Rectangle.BOX);
         container.setBorderWidth(BORDER_THIN);
-        container.setPadding(1.5f);
-        container.setMinimumHeight(16f);
+        container.setPadding(1f);
         return container;
     }
 
