@@ -17,7 +17,14 @@ $targetJars = @(
   "org\slf4j\slf4j-api\2.0.13\slf4j-api-2.0.13.jar",
   "com\fasterxml\jackson\core\jackson-databind\2.15.4\jackson-databind-2.15.4.jar",
   "com\fasterxml\jackson\core\jackson-core\2.15.4\jackson-core-2.15.4.jar",
-  "com\fasterxml\jackson\core\jackson-annotations\2.15.4\jackson-annotations-2.15.4.jar"
+  "com\fasterxml\jackson\core\jackson-annotations\2.15.4\jackson-annotations-2.15.4.jar",
+  "org\apache\poi\poi\5.2.4\poi-5.2.4.jar",
+  "org\apache\poi\poi-ooxml\5.2.4\poi-ooxml-5.2.4.jar",
+  "org\apache\poi\poi-ooxml-lite\5.2.4\poi-ooxml-lite-5.2.4.jar",
+  "org\apache\xmlbeans\xmlbeans\5.1.1\xmlbeans-5.1.1.jar",
+  "org\apache\commons\commons-compress\1.24.0\commons-compress-1.24.0.jar",
+  "org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar",
+  "commons-io\commons-io\2.15.1\commons-io-2.15.1.jar"
 )
 
 $m2Base = "C:\Users\User\.m2\repository"
@@ -41,6 +48,9 @@ Set-Content -Path "options.txt" -Value @("-parameters", "--release", "21", "-cp"
 
 javac "@options.txt" "@sources.txt"
 if ($LASTEXITCODE -eq 0) {
+  if (Test-Path "src\main\resources") {
+    Copy-Item -Path "src\main\resources\*" -Destination "target\classes\" -Recurse -Force
+  }
   Write-Host ">>> COMPILATION SUCCEEDED! <<<"
 } else {
   Write-Host ">>> COMPILATION FAILED! <<<"

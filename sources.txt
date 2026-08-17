@@ -31,5 +31,6 @@ C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\StatusServiceImpl.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\FileStorageUtil.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\GuiaPdfGenerator.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\LetraExcelGenerator.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\LetraPdfGenerator.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\SunatClientUtil.java

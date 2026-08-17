@@ -52,7 +52,14 @@ $requiredJars = @(
   "com\fasterxml\jackson\core\jackson-annotations\2.15.4\jackson-annotations-2.15.4.jar",
   "com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.15.4\jackson-datatype-jdk8-2.15.4.jar",
   "com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.15.4\jackson-datatype-jsr310-2.15.4.jar",
-  "com\fasterxml\jackson\module\jackson-module-parameter-names\2.15.4\jackson-module-parameter-names-2.15.4.jar"
+  "com\fasterxml\jackson\module\jackson-module-parameter-names\2.15.4\jackson-module-parameter-names-2.15.4.jar",
+  "org\apache\poi\poi\5.2.4\poi-5.2.4.jar",
+  "org\apache\poi\poi-ooxml\5.2.4\poi-ooxml-5.2.4.jar",
+  "org\apache\poi\poi-ooxml-lite\5.2.4\poi-ooxml-lite-5.2.4.jar",
+  "org\apache\xmlbeans\xmlbeans\5.1.1\xmlbeans-5.1.1.jar",
+  "org\apache\commons\commons-compress\1.24.0\commons-compress-1.24.0.jar",
+  "org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar",
+  "commons-io\commons-io\2.15.1\commons-io-2.15.1.jar"
 )
 
 $cpList = @("target/classes")

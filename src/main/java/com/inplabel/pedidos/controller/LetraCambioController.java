@@ -1,5 +1,6 @@
 package com.inplabel.pedidos.controller;
 
+import com.inplabel.pedidos.util.LetraExcelGenerator;
 import com.inplabel.pedidos.util.LetraPdfGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +28,9 @@ public class LetraCambioController {
 
     @Autowired
     private LetraPdfGenerator letraPdfGenerator;
+
+    @Autowired
+    private LetraExcelGenerator letraExcelGenerator;
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getLetras(
@@ -244,6 +248,60 @@ public class LetraCambioController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Error al generar HTML de Letra: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/excel")
+    public ResponseEntity<?> getLetraExcel(
+            @PathVariable int id,
+            @RequestParam(required = false) String storageDir,
+            @RequestParam(required = false, defaultValue = "true") boolean useSubfolders) {
+
+        try {
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?", id);
+            if (list.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Map<String, Object> letra = list.get(0);
+            byte[] excelBytes = letraExcelGenerator.generateExcelBytes(letra);
+
+            if (storageDir != null && !storageDir.trim().isEmpty()) {
+                letraExcelGenerator.saveExcelToDisk(letra, storageDir, useSubfolders);
+            }
+
+            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".xlsx";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(excelBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error al generar Excel de Letra: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/lote/{idLote}/excel")
+    public ResponseEntity<?> getLoteLetrasExcel(@PathVariable String idLote) {
+        try {
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_lote = ? ORDER BY id_letra ASC", idLote);
+            if (list.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] excelBytes = letraExcelGenerator.generateExcelBatchBytes(list);
+            String filename = "Lote_" + idLote.replaceAll("[^a-zA-Z0-9-_]", "_") + ".xlsx";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(excelBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error al generar Excel del Lote de Letras: " + e.getMessage());
         }
     }
 
