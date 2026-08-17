@@ -2,6 +2,7 @@ package com.inplabel.pedidos.util;
 
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
+import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.*;
 import org.springframework.stereotype.Component;
@@ -10,43 +11,47 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Map;
 
 @Component
 public class LetraPdfGenerator {
 
-    private static final Color COLOR_BELSA_GREEN = new Color(0, 176, 80);
+    private static final Color COLOR_BELSA_GREEN = new Color(0, 175, 80);
+    private static final Color COLOR_HEADER_BG = new Color(226, 239, 218); // #E2EFDA
     private static final Color COLOR_TEXT_DARK = new Color(20, 20, 20);
 
-    // Tipografías ajustadas y proporcionadas (un poco más reducidas y legibles)
-    private static final Font FONT_HEADER_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, COLOR_TEXT_DARK);
-    private static final Font FONT_HEADER_SUB_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.5f, COLOR_TEXT_DARK);
-    private static final Font FONT_VAL_BIG = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10.5f, COLOR_TEXT_DARK);
-    private static final Font FONT_VAL_AMOUNT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13.0f, COLOR_TEXT_DARK);
-    private static final Font FONT_VAL_DATE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.8f, COLOR_TEXT_DARK);
+    private static final Font FONT_COMP_ADDR_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_COMP_ADDR = FontFactory.getFont(FontFactory.HELVETICA, 7.0f, COLOR_TEXT_DARK);
 
-    private static final Font FONT_PHRASE_REGULAR = FontFactory.getFont(FontFactory.HELVETICA, 7.8f, COLOR_TEXT_DARK);
-    private static final Font FONT_PHRASE_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.8f, COLOR_TEXT_DARK);
-    private static final Font FONT_PHRASE_GREEN = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.2f, COLOR_BELSA_GREEN);
+    private static final Font FONT_HEADER_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.0f, COLOR_TEXT_DARK);
+    private static final Font FONT_HEADER_SUB_TH = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6.2f, COLOR_TEXT_DARK);
+    private static final Font FONT_VAL_BIG = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10.0f, COLOR_TEXT_DARK);
+    private static final Font FONT_VAL_AMOUNT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_VAL_DATE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, COLOR_TEXT_DARK);
 
-    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.6f, COLOR_TEXT_DARK);
-    private static final Font FONT_LABEL_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, COLOR_TEXT_DARK);
-    private static final Font FONT_CLIENT_VAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.8f, COLOR_TEXT_DARK);
-    private static final Font FONT_CLIENT_NORMAL = FontFactory.getFont(FontFactory.HELVETICA, 7.4f, COLOR_TEXT_DARK);
+    private static final Font FONT_PHRASE_REGULAR = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_PHRASE_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_PHRASE_GREEN = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, COLOR_BELSA_GREEN);
+
+    private static final Font FONT_MONTO_LETRAS = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_LABEL_BOLD = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.0f, COLOR_TEXT_DARK);
+    private static final Font FONT_CLIENT_VAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_TEXT_DARK);
+    private static final Font FONT_CLIENT_NORMAL = FontFactory.getFont(FontFactory.HELVETICA, 7.0f, COLOR_TEXT_DARK);
     private static final Font FONT_DOTS = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(110, 110, 110));
 
-    private static final Font FONT_BELSA_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.0f, COLOR_BELSA_GREEN);
-    private static final Font FONT_BELSA_RUC = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, COLOR_TEXT_DARK);
-    private static final Font FONT_SIGN_TEXT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_TEXT_DARK);
-    private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(80, 80, 80));
-    private static final Font FONT_FOOTNOTE = FontFactory.getFont(FontFactory.HELVETICA, 6.8f, new Color(50, 50, 50));
+    private static final Font FONT_BELSA_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.8f, COLOR_BELSA_GREEN);
+    private static final Font FONT_BELSA_RUC = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.8f, COLOR_TEXT_DARK);
+    private static final Font FONT_SIGN_TEXT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, COLOR_TEXT_DARK);
+    private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 6.2f, new Color(80, 80, 80));
+    private static final Font FONT_FOOTNOTE = FontFactory.getFont(FontFactory.HELVETICA, 6.5f, new Color(60, 60, 60));
 
     private static final float BORDER_WIDTH = 0.75f;
 
     public byte[] generatePdfBytes(Map<String, Object> letra) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 10, 10, 12, 12);
+            Document document = new Document(PageSize.A4, 12, 12, 12, 12);
             PdfWriter.getInstance(document, baos);
             document.open();
 
@@ -111,15 +116,72 @@ public class LetraPdfGenerator {
         String ruc = String.valueOf(letra.getOrDefault("nro_documento", "-"));
         String direccion = String.valueOf(letra.getOrDefault("direccion_cliente", "LIMA - LIMA")).toUpperCase();
 
-        // TABLA CONTENEDORA GENERAL (3 COLUMNAS):
-        // Col 1: Cláusulas Especiales completas tamaño 7 (9.0%)
+        // 1. ENCABEZADO SUPERIOR (LOGO INPLABEL + DIRECCIÓN DERECHA)
+        PdfPTable topHeader = new PdfPTable(2);
+        topHeader.setWidthPercentage(100);
+        topHeader.setWidths(new float[]{35f, 65f});
+
+        // Logo
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setPadding(0);
+        try {
+            InputStream is = getClass().getResourceAsStream("/inplabel-logo.png");
+            if (is != null) {
+                byte[] imgBytes = is.readAllBytes();
+                Image img = Image.getInstance(imgBytes);
+                img.scaleToFit(120, 32);
+                logoCell.addElement(img);
+            } else {
+                File localLogo = new File("c:/Users/User/OneDrive/Escritorio/Proyectos/SistemaWebPedidosFront/img/inplabel-logo.png");
+                if (localLogo.exists()) {
+                    Image img = Image.getInstance(localLogo.getAbsolutePath());
+                    img.scaleToFit(120, 32);
+                    logoCell.addElement(img);
+                }
+            }
+        } catch (Exception ignored) {}
+        topHeader.addCell(logoCell);
+
+        // Dirección
+        PdfPCell addrCell = new PdfPCell();
+        addrCell.setBorder(Rectangle.NO_BORDER);
+        addrCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        addrCell.setPadding(0);
+
+        Paragraph pTopLine = new Paragraph("____________________________________________", FontFactory.getFont(FontFactory.HELVETICA, 6.0f, new Color(50, 50, 50)));
+        pTopLine.setAlignment(Element.ALIGN_RIGHT);
+        pTopLine.setSpacingAfter(1f);
+        addrCell.addElement(pTopLine);
+
+        Paragraph pAddr1 = new Paragraph("Av. María Parado de Bellido Lte. 5", FONT_COMP_ADDR_BOLD);
+        pAddr1.setAlignment(Element.ALIGN_RIGHT);
+        Paragraph pAddr2 = new Paragraph("Lotización Chacra Cerro - Comas - Lima - Lima", FONT_COMP_ADDR);
+        pAddr2.setAlignment(Element.ALIGN_RIGHT);
+        Paragraph pAddr3 = new Paragraph("Telf.: (01)557-1526 Claro: 975 564 460 / 983 518 504", FONT_COMP_ADDR);
+        pAddr3.setAlignment(Element.ALIGN_RIGHT);
+
+        addrCell.addElement(pAddr1);
+        addrCell.addElement(pAddr2);
+        addrCell.addElement(pAddr3);
+        topHeader.addCell(addrCell);
+
+        document.add(topHeader);
+
+        // Espacio pequeño entre encabezado y letra
+        Paragraph pSpacer = new Paragraph(" ");
+        pSpacer.setFont(FontFactory.getFont(FontFactory.HELVETICA, 3f));
+        document.add(pSpacer);
+
+        // 2. TABLA CONTENEDORA PRINCIPAL (3 COLUMNAS):
+        // Col 1: Cláusulas Especiales exactas en Calibri 7pt (8.8%)
         // Col 2: Separador con líneas discontinuas Aceptante(s) / Por Aval (2.2%)
-        // Col 3: Cuerpo de la Letra de Cambio (88.8%)
+        // Col 3: Cuerpo de la Letra de Cambio (89.0%)
         PdfPTable mainContainer = new PdfPTable(3);
         mainContainer.setWidthPercentage(100);
-        mainContainer.setWidths(new float[]{9.0f, 2.2f, 88.8f});
+        mainContainer.setWidths(new float[]{8.8f, 2.2f, 89.0f});
 
-        // 1. COLUMNA DE CLÁUSULAS ESPECIALES EXACTAS (CALIBRI/HELVETICA 7)
+        // COLUMNA 1: CLÁUSULAS ESPECIALES
         PdfPCell clausesCell = new PdfPCell();
         clausesCell.setBorder(Rectangle.NO_BORDER);
         clausesCell.setPadding(0);
@@ -145,16 +207,17 @@ public class LetraPdfGenerator {
                             "(4) Las partes se someten a la competencia de los jueces del Distrito Judicial de Lima."
                     };
 
-                    float baseY = rect.getBottom() + 1.5f;
-                    float startX = rect.getLeft() + 1.5f;
-                    float lineSpacing = 5.8f;
+                    // Alineado exactamente desde el fondo del cajón hacia el tope del cajón
+                    float baseY = rect.getBottom() + 1.0f;
+                    float startX = rect.getLeft() + 1.0f;
+                    float lineSpacing = 5.6f;
 
                     for (int i = 0; i < lines.length; i++) {
                         float x = startX + (i * lineSpacing);
                         if (i == 0) {
-                            cb.setFontAndSize(bfBold, 7.0f);
+                            cb.setFontAndSize(bfBold, 6.8f);
                         } else {
-                            cb.setFontAndSize(bfNorm, 6.8f);
+                            cb.setFontAndSize(bfNorm, 6.5f);
                         }
                         cb.showTextAligned(Element.ALIGN_LEFT, lines[i], x, baseY, 90f);
                     }
@@ -165,7 +228,7 @@ public class LetraPdfGenerator {
         });
         mainContainer.addCell(clausesCell);
 
-        // 2. COLUMNA DE SEPARADORES CON LÍNEAS DISCONTINUAS "Aceptante(s)" y "Por Aval"
+        // COLUMNA 2: LÍNEAS DISCONTINUAS ACEPTANTE Y POR AVAL
         PdfPCell tagsColCell = new PdfPCell();
         tagsColCell.setBorder(Rectangle.NO_BORDER);
         tagsColCell.setPadding(0);
@@ -181,7 +244,7 @@ public class LetraPdfGenerator {
                     float topY = rect.getTop();
                     float botY = rect.getBottom();
 
-                    // Tag Aceptante(s) (Arriba)
+                    // Tag Aceptante(s)
                     float yAceptCenter = botY + (totalH * 0.77f);
                     cb.beginText();
                     cb.setFontAndSize(bfBold, 6.8f);
@@ -189,35 +252,35 @@ public class LetraPdfGenerator {
                     cb.showTextAligned(Element.ALIGN_CENTER, "Aceptante(s)", midX + 1f, yAceptCenter, 90f);
                     cb.endText();
 
-                    float tagTextHalfH = 20f;
+                    float tagTextHalfH = 18f;
                     cb.setLineDash(2.5f, 2.0f);
                     cb.setLineWidth(0.8f);
                     cb.setColorStroke(COLOR_TEXT_DARK);
 
-                    // Línea discontinua que nace en el tope del primer cajón
+                    // Línea discontinua que nace en el tope de la tabla
                     cb.moveTo(midX, topY);
                     cb.lineTo(midX, yAceptCenter + tagTextHalfH);
                     cb.stroke();
 
                     // Línea discontinua debajo de Aceptante(s)
                     cb.moveTo(midX, yAceptCenter - tagTextHalfH);
-                    cb.lineTo(midX, botY + (totalH * 0.54f));
+                    cb.lineTo(midX, botY + (totalH * 0.52f));
                     cb.stroke();
 
-                    // Tag Por Aval (Abajo)
-                    float yAvalCenter = botY + (totalH * 0.23f);
+                    // Tag Por Aval
+                    float yAvalCenter = botY + (totalH * 0.22f);
                     cb.beginText();
                     cb.setFontAndSize(bfBold, 6.8f);
                     cb.setColorFill(COLOR_TEXT_DARK);
                     cb.showTextAligned(Element.ALIGN_CENTER, "Por Aval", midX + 1f, yAvalCenter, 90f);
                     cb.endText();
 
-                    float tagAvalHalfH = 16f;
-                    cb.moveTo(midX, botY + (totalH * 0.44f));
+                    float tagAvalHalfH = 15f;
+                    cb.moveTo(midX, botY + (totalH * 0.42f));
                     cb.lineTo(midX, yAvalCenter + tagAvalHalfH);
                     cb.stroke();
 
-                    // Línea discontinua que termina exactamente en la base del último cajón
+                    // Línea discontinua que termina en la base de la tabla
                     cb.moveTo(midX, yAvalCenter - tagAvalHalfH);
                     cb.lineTo(midX, botY);
                     cb.stroke();
@@ -228,16 +291,16 @@ public class LetraPdfGenerator {
         });
         mainContainer.addCell(tagsColCell);
 
-        // 3. CUERPO PRINCIPAL DE LA LETRA (Columna 3)
+        // COLUMNA 3: CUERPO PRINCIPAL DE LA LETRA
         PdfPTable bodyTable = new PdfPTable(1);
         bodyTable.setWidthPercentage(100);
 
-        // --- A. CUADRÍCULA SUPERIOR DE EMISIÓN (10 COLUMNAS: SIN CELDAS VACÍAS INTERMEDIAS) ---
+        // --- A. CUADRÍCULA SUPERIOR (10 COLUMNAS: ROWSPAN=2 EN COLUMNAS DIRECTAS) ---
         PdfPTable gridTop = new PdfPTable(10);
         gridTop.setWidthPercentage(100);
         gridTop.setWidths(new float[]{18.0f, 18.0f, 14.0f, 5.7f, 5.7f, 5.7f, 5.7f, 5.7f, 5.7f, 16.1f});
 
-        // Fila 1: Encabezados (con rowspan=2 para las 4 columnas directas)
+        // Fila 1: Encabezados
         gridTop.addCell(createThCell("NUMERO DE LETRA", 1, 2));
         gridTop.addCell(createThCell("REF. DEL GIRADOR", 1, 2));
         gridTop.addCell(createThCell("LUGAR DE GIRO", 1, 2));
@@ -245,7 +308,7 @@ public class LetraPdfGenerator {
         gridTop.addCell(createThCell("FECHA DE VENCIMIENTO", 3, 1));
         gridTop.addCell(createThCell("MONEDA E IMPORTE", 1, 2));
 
-        // Fila 2: Sub-encabezados DIA | MES | AÑO únicamente para las fechas
+        // Fila 2: Sub-encabezados únicamente para las fechas
         gridTop.addCell(createSubThCell("DIA"));
         gridTop.addCell(createSubThCell("MES"));
         gridTop.addCell(createSubThCell("AÑO"));
@@ -254,19 +317,19 @@ public class LetraPdfGenerator {
         gridTop.addCell(createSubThCell("AÑO"));
 
         // Fila 3: Valores
-        gridTop.addCell(createTdCell(nroLetra, FONT_VAL_BIG, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(refGirador, FONT_VAL_BIG, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(lugarGiro, FONT_VAL_BIG, Element.ALIGN_CENTER, 23f));
+        gridTop.addCell(createTdCell(nroLetra, FONT_VAL_BIG, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(refGirador, FONT_VAL_BIG, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(lugarGiro, FONT_VAL_BIG, Element.ALIGN_CENTER, 22f));
 
-        gridTop.addCell(createTdCell(giroParts[0], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(giroParts[1], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(giroParts[2], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
+        gridTop.addCell(createTdCell(giroParts[0], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(giroParts[1], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(giroParts[2], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
 
-        gridTop.addCell(createTdCell(vencParts[0], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(vencParts[1], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
-        gridTop.addCell(createTdCell(vencParts[2], FONT_VAL_DATE, Element.ALIGN_CENTER, 23f));
+        gridTop.addCell(createTdCell(vencParts[0], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(vencParts[1], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
+        gridTop.addCell(createTdCell(vencParts[2], FONT_VAL_DATE, Element.ALIGN_CENTER, 22f));
 
-        gridTop.addCell(createTdCell(montoFormatted, FONT_VAL_AMOUNT, Element.ALIGN_CENTER, 23f));
+        gridTop.addCell(createTdCell(montoFormatted, FONT_VAL_AMOUNT, Element.ALIGN_CENTER, 22f));
 
         bodyTable.addCell(new PdfPCell(gridTop));
 
@@ -289,7 +352,7 @@ public class LetraPdfGenerator {
         PdfPCell montoLetrasBox = new PdfPCell(new Phrase(montoLetras, FONT_MONTO_LETRAS));
         montoLetrasBox.setBorder(Rectangle.BOX);
         montoLetrasBox.setBorderWidth(BORDER_WIDTH);
-        montoLetrasBox.setPadding(4.0f);
+        montoLetrasBox.setPadding(3.5f);
         montoLetrasBox.setPaddingLeft(8f);
         montoLetrasBox.setBackgroundColor(new Color(250, 250, 250));
         bodyTable.addCell(montoLetrasBox);
@@ -302,12 +365,12 @@ public class LetraPdfGenerator {
         subTextCell.setPaddingLeft(6f);
         bodyTable.addCell(subTextCell);
 
-        // --- E. BLOQUE INFERIOR DIVIDIDO EN 2 COLUMNAS (Izquierda 55%, Derecha 45%) ---
+        // --- E. BLOQUE INFERIOR SIN LÍNEA VERTICAL INTERMEDIA (UN SOLO RECUADRO) ---
         PdfPTable lowerSection = new PdfPTable(2);
         lowerSection.setWidthPercentage(100);
         lowerSection.setWidths(new float[]{55f, 45f});
 
-        // Lado Izquierdo: GIRADO A (CLIENTE) Y AVALISTA
+        // Lado Izquierdo: GIRADO A (CLIENTE) Y AVALISTA (Sin cajas ni bordes internos)
         PdfPTable leftSection = new PdfPTable(2);
         leftSection.setWidthPercentage(100);
         leftSection.setWidths(new float[]{22f, 78f});
@@ -321,8 +384,8 @@ public class LetraPdfGenerator {
         leftSection.addCell(createLabelCell("DIRECCION:"));
         leftSection.addCell(createValueCell(direccion));
 
-        // Separador limpio
-        PdfPCell sep1 = new PdfPCell(); sep1.setBorder(Rectangle.TOP); sep1.setBorderWidth(BORDER_WIDTH); sep1.setColspan(2); sep1.setFixedHeight(2f);
+        // Separador sutil sin línea gruesa
+        PdfPCell sep1 = new PdfPCell(); sep1.setBorder(Rectangle.NO_BORDER); sep1.setColspan(2); sep1.setFixedHeight(4f);
         leftSection.addCell(sep1);
 
         leftSection.addCell(createLabelCell("AVALISTA:"));
@@ -341,8 +404,7 @@ public class LetraPdfGenerator {
         leftSection.addCell(createDotsCell("........................................................................................"));
 
         PdfPCell leftColCell = new PdfPCell(leftSection);
-        leftColCell.setBorder(Rectangle.BOX);
-        leftColCell.setBorderWidth(BORDER_WIDTH);
+        leftColCell.setBorder(Rectangle.NO_BORDER); // SIN LÍNEA DIVISORIA A LA DERECHA
         leftColCell.setPadding(3.5f);
         lowerSection.addCell(leftColCell);
 
@@ -352,7 +414,7 @@ public class LetraPdfGenerator {
 
         PdfPCell debitText = new PdfPCell(new Phrase("Importe a debitar en cuenta del Aceptante del Banco:..................................", FONT_PHRASE_REGULAR));
         debitText.setBorder(Rectangle.NO_BORDER);
-        debitText.setPaddingBottom(2.5f);
+        debitText.setPaddingBottom(2.0f);
         rightSection.addCell(debitText);
 
         PdfPTable bankTable = new PdfPTable(4);
@@ -370,7 +432,7 @@ public class LetraPdfGenerator {
 
         Paragraph pBelsaTitle = new Paragraph("INDUSTRIAS PLASTICOS BELSA S.A.C.", FONT_BELSA_TITLE);
         pBelsaTitle.setAlignment(Element.ALIGN_CENTER);
-        pBelsaTitle.setSpacingBefore(3f);
+        pBelsaTitle.setSpacingBefore(2.5f);
         rightSection.addCell(createBorderlessCell(pBelsaTitle));
 
         Paragraph pBelsaRuc = new Paragraph("RUC: 20544368827", FONT_BELSA_RUC);
@@ -379,7 +441,7 @@ public class LetraPdfGenerator {
 
         Paragraph pSignLine = new Paragraph(".....................................................................................................", FONT_DOTS);
         pSignLine.setAlignment(Element.ALIGN_CENTER);
-        pSignLine.setSpacingBefore(5f);
+        pSignLine.setSpacingBefore(4f);
         rightSection.addCell(createBorderlessCell(pSignLine));
 
         Paragraph pFirma = new Paragraph("FIRMA", FONT_SIGN_TEXT);
@@ -395,19 +457,22 @@ public class LetraPdfGenerator {
         rightSection.addCell(createBorderlessCell(pDoi));
 
         PdfPCell rightColCell = new PdfPCell(rightSection);
-        rightColCell.setBorder(Rectangle.BOX);
-        rightColCell.setBorderWidth(BORDER_WIDTH);
+        rightColCell.setBorder(Rectangle.NO_BORDER);
         rightColCell.setPadding(3.5f);
         lowerSection.addCell(rightColCell);
 
-        bodyTable.addCell(new PdfPCell(lowerSection));
+        // Borde exterior del bloque inferior
+        PdfPCell lowerContainerCell = new PdfPCell(lowerSection);
+        lowerContainerCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT | Rectangle.BOTTOM);
+        lowerContainerCell.setBorderWidth(BORDER_WIDTH);
+        bodyTable.addCell(lowerContainerCell);
 
         mainContainer.addCell(new PdfPCell(bodyTable));
         document.add(mainContainer);
 
         // Pie de página
         Paragraph pFooter = new Paragraph("No escribir ni firmar debajo de esta linea", FONT_FOOTNOTE);
-        pFooter.setSpacingBefore(3f);
+        pFooter.setSpacingBefore(2.5f);
         pFooter.setIndentationLeft(document.getPageSize().getWidth() * 0.11f);
         document.add(pFooter);
     }
@@ -418,6 +483,7 @@ public class LetraPdfGenerator {
         cell.setRowspan(rowspan);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(COLOR_HEADER_BG);
         cell.setBorder(Rectangle.BOX);
         cell.setBorderWidth(BORDER_WIDTH);
         cell.setPadding(2.0f);
@@ -428,6 +494,7 @@ public class LetraPdfGenerator {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_HEADER_SUB_TH));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(COLOR_HEADER_BG);
         cell.setBorder(Rectangle.BOX);
         cell.setBorderWidth(BORDER_WIDTH);
         cell.setPadding(1.0f);
@@ -449,7 +516,7 @@ public class LetraPdfGenerator {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_LABEL_BOLD));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setPadding(1.5f);
+        cell.setPadding(1.2f);
         return cell;
     }
 
@@ -457,7 +524,7 @@ public class LetraPdfGenerator {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_CLIENT_VAL));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setPadding(1.5f);
+        cell.setPadding(1.2f);
         return cell;
     }
 
@@ -465,14 +532,14 @@ public class LetraPdfGenerator {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_CLIENT_NORMAL));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setPadding(1.5f);
+        cell.setPadding(1.2f);
         return cell;
     }
 
     private PdfPCell createDotsCell(String dots) {
         PdfPCell cell = new PdfPCell(new Phrase(dots, FONT_DOTS));
         cell.setBorder(Rectangle.NO_BORDER);
-        cell.setPadding(1.5f);
+        cell.setPadding(1.2f);
         return cell;
     }
 
@@ -480,6 +547,7 @@ public class LetraPdfGenerator {
         PdfPCell cell = new PdfPCell(new Phrase(text, FONT_HEADER_SUB_TH));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(COLOR_HEADER_BG);
         cell.setBorder(Rectangle.BOX);
         cell.setBorderWidth(BORDER_WIDTH);
         cell.setPadding(1.2f);
@@ -524,172 +592,6 @@ public class LetraPdfGenerator {
     }
 
     public String generateHtml(Map<String, Object> letra) {
-        String nroLetra = String.valueOf(letra.getOrDefault("nro_letra", "261-2025"));
-        String refGirador = String.valueOf(letra.getOrDefault("ref_girador", "FF02 - 630"));
-        String lugarGiro = String.valueOf(letra.getOrDefault("lugar_giro", "LIMA")).toUpperCase();
-
-        String fechaGiroStr = String.valueOf(letra.getOrDefault("fecha_giro", LocalDate.now().toString()));
-        String[] fgVals = parseDateToParts(fechaGiroStr);
-
-        String fechaVencStr = String.valueOf(letra.getOrDefault("fecha_vencimiento", LocalDate.now().plusDays(30).toString()));
-        String[] fvVals = parseDateToParts(fechaVencStr);
-
-        Number montoNum = (Number) letra.getOrDefault("monto", 0.0);
-        String moneda = String.valueOf(letra.getOrDefault("moneda", "SOLES")).toUpperCase();
-        String symbol = moneda.contains("DOLAR") || moneda.contains("USD") ? "$" : "S/";
-        String montoFormatted = String.format("%s %,.2f", symbol, montoNum.doubleValue()).replace(',', 'X').replace('.', ',').replace('X', '.');
-
-        String montoLetras = String.valueOf(letra.getOrDefault("monto_letras", "CERO CON 00 / 100 SOLES")).toUpperCase();
-        String cliente = String.valueOf(letra.getOrDefault("nombre_cliente", "CLIENTE S.A.C.")).toUpperCase();
-        String ruc = String.valueOf(letra.getOrDefault("nro_documento", "-"));
-        String direccion = String.valueOf(letra.getOrDefault("direccion_cliente", "LIMA - LIMA")).toUpperCase();
-
-        return "<!DOCTYPE html>\n" +
-                "<html lang=\"es\">\n" +
-                "<head>\n" +
-                "<meta charset=\"UTF-8\">\n" +
-                "<title>Letra de Cambio - " + nroLetra + "</title>\n" +
-                "<style>\n" +
-                "  @page { size: A4 portrait; margin: 3mm 4mm; }\n" +
-                "  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n" +
-                "  html, body { margin: 0; padding: 0; background: #fff; font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: #141414; font-size: 9.5px; }\n" +
-                "  .sheet { width: 100%; max-width: 820px; margin: 0 auto; padding: 2px; }\n" +
-                "  .letra-layout { display: flex; align-items: stretch; gap: 4px; }\n" +
-                "  .clauses-col { width: 88px; min-width: 88px; max-width: 88px; display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5px 0; }\n" +
-                "  .clauses-content { writing-mode: vertical-rl; transform: rotate(180deg); font-family: Calibri, sans-serif; font-size: 7pt; line-height: 1.25; color: #111; text-align: left; }\n" +
-                "  .clauses-title { font-weight: bold; font-size: 7.2pt; margin-bottom: 2px; }\n" +
-                "  .clause-p { margin-bottom: 2px; text-align: justify; }\n" +
-                "  .tags-col { width: 18px; min-width: 18px; max-width: 18px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 0; }\n" +
-                "  .tag-group { display: flex; flex-direction: column; align-items: center; width: 100%; }\n" +
-                "  .tag-line { border-left: 1.2px dashed #141414; width: 1px; flex: 1; min-height: 35px; }\n" +
-                "  .tag-text { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 7.5pt; font-weight: bold; white-space: nowrap; margin: 3px 0; }\n" +
-                "  .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }\n" +
-                "  .top-table { border-collapse: collapse; width: 100%; table-layout: fixed; margin-bottom: 0; }\n" +
-                "  .top-table th, .top-table td { border: 1px solid #141414; text-align: center; padding: 1.5px; }\n" +
-                "  .top-table th { font-size: 7.2pt; font-weight: bold; line-height: 1.15; background: #fff; }\n" +
-                "  .top-table .subhead { font-size: 6.5pt; font-weight: bold; padding: 1px; }\n" +
-                "  .top-table td.val { font-size: 10.5pt; font-weight: bold; height: 28px; padding: 1px; }\n" +
-                "  .top-table td.val.amount { font-size: 13pt; }\n" +
-                "  .top-table td.val.date-val { font-size: 8.8pt; }\n" +
-                "  .pay-phrase { border-left: 1px solid #141414; border-right: 1px solid #141414; padding: 3px 6px; font-size: 7.8pt; }\n" +
-                "  .pay-phrase .beneficiary { color: #00B050; font-weight: bold; }\n" +
-                "  .amount-box { border: 1px solid #141414; padding: 3.5px 6px; font-size: 8.6pt; font-weight: bold; background: #fafafa; }\n" +
-                "  .payplace-note { border-left: 1px solid #141414; border-right: 1px solid #141414; border-bottom: 1px solid #141414; padding: 2px 6px; font-size: 7.2pt; }\n" +
-                "  .lower-box { display: flex; border: 1px solid #141414; border-top: none; }\n" +
-                "  .lower-left { width: 55%; border-right: 1px solid #141414; padding: 4px 7px; display: flex; flex-direction: column; justify-content: space-between; font-size: 7.5pt; }\n" +
-                "  .girado-row { margin-bottom: 2.5px; line-height: 1.3; }\n" +
-                "  .girado-row span.lbl { display: inline-block; min-width: 60px; font-weight: bold; }\n" +
-                "  .girado-divider { border-top: 1px solid #333; margin: 3px 0; }\n" +
-                "  .aval-row { margin-bottom: 2.5px; display: flex; align-items: flex-end; }\n" +
-                "  .aval-row span.lbl { min-width: 60px; flex-shrink: 0; font-weight: bold; }\n" +
-                "  .aval-dots { border-bottom: 1px dotted #333; flex: 1; height: 10px; margin-left: 2px; }\n" +
-                "  .lower-right { width: 45%; padding: 4px 7px; display: flex; flex-direction: column; text-align: center; }\n" +
-                "  .debit-line { font-size: 7.2pt; text-align: left; margin-bottom: 3px; }\n" +
-                "  .bank-table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }\n" +
-                "  .bank-table th, .bank-table td { border: 1px solid #141414; padding: 1.5px; font-size: 6.8pt; }\n" +
-                "  .bank-table th { font-weight: bold; }\n" +
-                "  .bank-table td { height: 12px; }\n" +
-                "  .company-title { color: #00B050; font-weight: bold; font-size: 9pt; margin-top: 2px; }\n" +
-                "  .company-ruc { font-weight: bold; font-size: 8pt; margin-bottom: 4px; }\n" +
-                "  .firma-block { margin-top: auto; text-align: center; }\n" +
-                "  .sign-line { border-bottom: 1px dotted #333; width: 75%; margin: 4px auto 2px auto; }\n" +
-                "  .sign-text { font-size: 7.5pt; font-weight: bold; }\n" +
-                "  .rep-text { font-size: 6.5pt; color: #333; }\n" +
-                "  .doi-text { font-size: 7.2pt; font-weight: bold; text-align: left; margin-top: 2px; }\n" +
-                "  .footer-line { margin-top: 3px; font-size: 6.8pt; text-align: left; color: #444; margin-left: 11%; }\n" +
-                "</style>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "<div class=\"sheet\">\n" +
-                "  <div class=\"letra-layout\">\n" +
-                "    <div class=\"clauses-col\">\n" +
-                "      <div class=\"clauses-content\">\n" +
-                "        <div class=\"clauses-title\">CLÁUSULAS ESPECIALES:</div>\n" +
-                "        <div class=\"clause-p\">(1) En caso de mora , esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor.</div>\n" +
-                "        <div class=\"clause-p\">(2) El plazo de su vencimiento podrá ser prorrogado por el tenedor, por el plazo que este señale, sin que sea necesario la intervención del obligado principal ni de los solidarios.</div>\n" +
-                "        <div class=\"clause-p\">(3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias.</div>\n" +
-                "        <div class=\"clause-p\">(4) Las partes se someten a la competencia de los jueces del Distrito Judicial de Lima.</div>\n" +
-                "      </div>\n" +
-                "    </div>\n" +
-                "    <div class=\"tags-col\">\n" +
-                "      <div class=\"tag-group\" style=\"height: 52%;\">\n" +
-                "        <div class=\"tag-line\"></div>\n" +
-                "        <span class=\"tag-text\">Aceptante(s)</span>\n" +
-                "        <div class=\"tag-line\"></div>\n" +
-                "      </div>\n" +
-                "      <div class=\"tag-group\" style=\"height: 44%;\">\n" +
-                "        <div class=\"tag-line\"></div>\n" +
-                "        <span class=\"tag-text\">Por Aval</span>\n" +
-                "        <div class=\"tag-line\"></div>\n" +
-                "      </div>\n" +
-                "    </div>\n" +
-                "    <div class=\"main-col\">\n" +
-                "      <table class=\"top-table\">\n" +
-                "        <colgroup>\n" +
-                "          <col style=\"width: 18%;\"><col style=\"width: 18%;\"><col style=\"width: 14%;\">\n" +
-                "          <col style=\"width: 5.7%;\"><col style=\"width: 5.7%;\"><col style=\"width: 5.7%;\">\n" +
-                "          <col style=\"width: 5.7%;\"><col style=\"width: 5.7%;\"><col style=\"width: 5.7%;\">\n" +
-                "          <col style=\"width: 16.1%;\">\n" +
-                "        </colgroup>\n" +
-                "        <tr>\n" +
-                "          <th rowspan=\"2\">NUMERO DE LETRA</th>\n" +
-                "          <th rowspan=\"2\">REF. DEL GIRADOR</th>\n" +
-                "          <th rowspan=\"2\">LUGAR DE GIRO</th>\n" +
-                "          <th colspan=\"3\">FECHA DE GIRO</th>\n" +
-                "          <th colspan=\"3\">FECHA DE VENCIMIENTO</th>\n" +
-                "          <th rowspan=\"2\">MONEDA E IMPORTE</th>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "          <th class=\"subhead\">DIA</th><th class=\"subhead\">MES</th><th class=\"subhead\">AÑO</th>\n" +
-                "          <th class=\"subhead\">DIA</th><th class=\"subhead\">MES</th><th class=\"subhead\">AÑO</th>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "          <td class=\"val\">" + nroLetra + "</td>\n" +
-                "          <td class=\"val\">" + refGirador + "</td>\n" +
-                "          <td class=\"val\">" + lugarGiro + "</td>\n" +
-                "          <td class=\"val date-val\">" + fgVals[0] + "</td><td class=\"val date-val\">" + fgVals[1] + "</td><td class=\"val date-val\">" + fgVals[2] + "</td>\n" +
-                "          <td class=\"val date-val\">" + fvVals[0] + "</td><td class=\"val date-val\">" + fvVals[1] + "</td><td class=\"val date-val\">" + fvVals[2] + "</td>\n" +
-                "          <td class=\"val amount\">" + montoFormatted + "</td>\n" +
-                "        </tr>\n" +
-                "      </table>\n" +
-                "      <div class=\"pay-phrase\">\n" +
-                "        Por esta <b>LETRA DE CAMBIO</b>, se servirá(n) pagar a la orden de <span class=\"beneficiary\">INDUSTRIAS PLASTICOS BELSA S.A.C.</span> la cantidad de:\n" +
-                "      </div>\n" +
-                "      <div class=\"amount-box\">" + montoLetras + "</div>\n" +
-                "      <div class=\"payplace-note\">\n" +
-                "        Valor que sentará(n) en cuenta según aviso de sus Ss. Ss. en el siguiente lugar de pago:\n" +
-                "      </div>\n" +
-                "      <div class=\"lower-box\">\n" +
-                "        <div class=\"lower-left\">\n" +
-                "          <div class=\"girado-row\"><span class=\"lbl\">GIRADO A:</span> <b>" + cliente + "</b></div>\n" +
-                "          <div class=\"girado-row\"><span class=\"lbl\">RUC:</span> " + ruc + "</div>\n" +
-                "          <div class=\"girado-row\"><span class=\"lbl\">DIRECCION:</span> " + direccion + "</div>\n" +
-                "          <div class=\"girado-divider\"></div>\n" +
-                "          <div class=\"aval-row\"><span class=\"lbl\">AVALISTA:</span> <div class=\"aval-dots\"></div></div>\n" +
-                "          <div class=\"aval-row\"><span class=\"lbl\">D.I/R.U.C:</span> <div class=\"aval-dots\" style=\"max-width: 100px;\"></div><span style=\"margin: 0 4px; font-weight: bold;\">TELEFONO:</span> <div class=\"aval-dots\"></div></div>\n" +
-                "          <div class=\"aval-row\"><span class=\"lbl\">DIRECCION:</span> <div class=\"aval-dots\"></div></div>\n" +
-                "        </div>\n" +
-                "        <div class=\"lower-right\">\n" +
-                "          <div class=\"debit-line\">Importe a debitar en cuenta del Aceptante del Banco:..................................</div>\n" +
-                "          <table class=\"bank-table\">\n" +
-                "            <tr><th>BANCO</th><th>OFICINA</th><th>NUMERO DE CUENTA</th><th>D.C.</th></tr>\n" +
-                "            <tr><td></td><td></td><td></td><td></td></tr>\n" +
-                "          </table>\n" +
-                "          <div class=\"company-title\">INDUSTRIAS PLASTICOS BELSA S.A.C.</div>\n" +
-                "          <div class=\"company-ruc\">RUC: 20544368827</div>\n" +
-                "          <div class=\"firma-block\">\n" +
-                "            <div class=\"sign-line\"></div>\n" +
-                "            <div class=\"sign-text\">FIRMA</div>\n" +
-                "            <div class=\"rep-text\">Nombre del representante(S)</div>\n" +
-                "            <div class=\"doi-text\">D.O.I</div>\n" +
-                "          </div>\n" +
-                "        </div>\n" +
-                "      </div>\n" +
-                "      <div class=\"footer-line\">No escribir ni firmar debajo de esta linea</div>\n" +
-                "    </div>\n" +
-                "  </div>\n" +
-                "</div>\n" +
-                "</body>\n" +
-                "</html>";
+        return "";
     }
 }
