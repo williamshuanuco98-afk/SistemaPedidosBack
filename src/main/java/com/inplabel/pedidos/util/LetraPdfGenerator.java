@@ -453,17 +453,17 @@ public class LetraPdfGenerator {
                 "  html, body { margin: 0; padding: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; color: #141414; font-size: 10px; }\n" +
                 "  .sheet { width: 100%; max-width: 780px; margin: 0 auto; padding: 4px 6px; page-break-inside: avoid; break-inside: avoid; }\n" +
                 "  .letra-layout { display: flex; align-items: flex-end; gap: 8px; page-break-inside: avoid; break-inside: avoid; }\n" +
-                "  .clauses-col { width: 82px; min-width: 82px; max-width: 82px; display: flex; flex-direction: column; justify-content: flex-end; height: 318px; margin-bottom: 20px; }\n" +
-                "  .clauses-content { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 6.1px; line-height: 1.30; letter-spacing: 0.05px; height: 100%; max-height: 318px; overflow: hidden; color: #111; }\n" +
-                "  .clauses-title { font-weight: bold; font-size: 6.6px; margin-bottom: 2px; }\n" +
+                "  .clauses-col { width: 95px; min-width: 95px; max-width: 95px; display: flex; flex-direction: column; justify-content: flex-end; height: 282px; margin-bottom: 20px; }\n" +
+                "  .clauses-content { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 5.8px; line-height: 1.25; letter-spacing: 0.05px; height: 100%; max-height: 282px; overflow: hidden; color: #111; }\n" +
+                "  .clauses-title { font-weight: bold; font-size: 6.2px; margin-bottom: 2px; }\n" +
                 "  .clause-p { margin-bottom: 2px; text-align: justify; }\n" +
                 "  .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }\n" +
                 "  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }\n" +
                 "  .logo-img { height: 48px; object-fit: contain; }\n" +
                 "  .company-address { text-align: right; font-size: 8.8px; line-height: 1.35; border-top: 1.5px solid #333; padding-top: 3px; min-width: 330px; }\n" +
                 "  .upper-section { display: flex; align-items: stretch; gap: 6px; margin-bottom: 4px; }\n" +
-                "  .side-signature-container { width: 24px; min-width: 24px; display: flex; align-items: center; justify-content: space-between; }\n" +
-                "  .side-line { width: 1px; height: 85%; background-color: #222; margin-right: 4px; }\n" +
+                "  .side-signature-container { width: 24px; min-width: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; }\n" +
+                "  .side-line { width: 1px; height: 62px; border-left: 1.2px dashed #141414; }\n" +
                 "  .side-tag-text { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 8.5px; font-weight: bold; white-space: nowrap; text-align: center; }\n" +
                 "  .top-table { flex: 1; border-collapse: collapse; width: 100%; table-layout: fixed; }\n" +
                 "  .top-table th, .top-table td { border: 1.5px solid #141414; text-align: center; padding: 1px 2px; }\n" +
