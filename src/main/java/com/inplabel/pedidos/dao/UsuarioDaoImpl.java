@@ -39,15 +39,14 @@ public class UsuarioDaoImpl implements UsuarioDao {
             // Asegurar que la tabla exista
             jdbcTemplate.execute(
                     "CREATE TABLE IF NOT EXISTS usuarios (" +
-                    "id_usuario INT AUTO_INCREMENT PRIMARY KEY, " +
-                    "username VARCHAR(50) NOT NULL UNIQUE, " +
-                    "password VARCHAR(255) NOT NULL, " +
-                    "salt VARCHAR(100) NOT NULL, " +
-                    "nombre_completo VARCHAR(100) NOT NULL, " +
-                    "rol VARCHAR(20) NOT NULL, " +
-                    "activo BOOLEAN DEFAULT TRUE, " +
-                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
-            );
+                            "id_usuario INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "username VARCHAR(50) NOT NULL UNIQUE, " +
+                            "password VARCHAR(255) NOT NULL, " +
+                            "salt VARCHAR(100) NOT NULL, " +
+                            "nombre_completo VARCHAR(100) NOT NULL, " +
+                            "rol VARCHAR(20) NOT NULL, " +
+                            "activo BOOLEAN DEFAULT TRUE, " +
+                            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
             initDefaultUsers();
         } catch (Exception e) {
             System.err.println("Advertencia al inicializar tabla de usuarios: " + e.getMessage());
@@ -62,8 +61,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
         List<Usuario> list = jdbcTemplate.query(
                 "SELECT * FROM usuarios WHERE username = ? AND activo = TRUE LIMIT 1",
                 rowMapper,
-                username.trim().toLowerCase()
-        );
+                username.trim().toLowerCase());
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
@@ -83,8 +81,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
                 hash,
                 salt,
                 nombreCompleto.trim(),
-                rol.trim().toUpperCase()
-        );
+                rol.trim().toUpperCase());
 
         return findByUsername(username).orElse(null);
     }
@@ -95,8 +92,7 @@ public class UsuarioDaoImpl implements UsuarioDao {
         String hash = PasswordUtil.hashPassword(newRawPassword, salt);
         int rows = jdbcTemplate.update(
                 "UPDATE usuarios SET password = ?, salt = ? WHERE id_usuario = ?",
-                hash, salt, idUsuario
-        );
+                hash, salt, idUsuario);
         return rows > 0;
     }
 
