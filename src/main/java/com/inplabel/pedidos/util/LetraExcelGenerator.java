@@ -27,22 +27,25 @@ public class LetraExcelGenerator {
             if (resource.exists()) {
                 return resource.getInputStream();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         try {
             File fallback = new File(FALLBACK_DESKTOP_PATH);
             if (fallback.exists()) {
                 return new FileInputStream(fallback);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        throw new RuntimeException("No se encontró la plantilla de Excel en " + TEMPLATE_PATH + " ni en " + FALLBACK_DESKTOP_PATH);
+        throw new RuntimeException(
+                "No se encontró la plantilla de Excel en " + TEMPLATE_PATH + " ni en " + FALLBACK_DESKTOP_PATH);
     }
 
     public byte[] generateExcelBytes(Map<String, Object> letra) {
         try (InputStream is = getTemplateInputStream();
-             Workbook workbook = new XSSFWorkbook(is);
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                Workbook workbook = new XSSFWorkbook(is);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.getSheetAt(0);
             fillSheetWithLetra(sheet, letra);
@@ -60,15 +63,16 @@ public class LetraExcelGenerator {
         }
 
         try (InputStream is = getTemplateInputStream();
-             Workbook templateWorkbook = new XSSFWorkbook(is);
-             Workbook targetWorkbook = new XSSFWorkbook();
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                Workbook templateWorkbook = new XSSFWorkbook(is);
+                Workbook targetWorkbook = new XSSFWorkbook();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             Sheet templateSheet = templateWorkbook.getSheetAt(0);
 
             for (int i = 0; i < letras.size(); i++) {
                 Map<String, Object> letra = letras.get(i);
-                String nroLetra = String.valueOf(letra.getOrDefault("nro_letra", "Letra_" + (i + 1))).replaceAll("[^a-zA-Z0-9-_]", "_");
+                String nroLetra = String.valueOf(letra.getOrDefault("nro_letra", "Letra_" + (i + 1)))
+                        .replaceAll("[^a-zA-Z0-9-_]", "_");
                 String sheetName = WorkbookUtil.createSafeSheetName((i + 1) + "_" + nroLetra);
 
                 Sheet newSheet = targetWorkbook.createSheet(sheetName);
@@ -88,11 +92,13 @@ public class LetraExcelGenerator {
             byte[] bytes = generateExcelBytes(letra);
             String nroLetra = (String) letra.getOrDefault("nro_letra", "LETRA");
 
-            String targetDir = (baseDir != null && !baseDir.trim().isEmpty()) ? baseDir.trim() : "C:\\Inplabel\\Letras_Excel";
+            String targetDir = (baseDir != null && !baseDir.trim().isEmpty()) ? baseDir.trim()
+                    : "C:\\Inplabel\\Letras_Excel";
 
             if (useSubfolders) {
                 LocalDate now = LocalDate.now();
-                targetDir = targetDir + File.separator + now.getYear() + File.separator + String.format("%02d", now.getMonthValue());
+                targetDir = targetDir + File.separator + now.getYear() + File.separator
+                        + String.format("%02d", now.getMonthValue());
             }
 
             File dir = new File(targetDir);
@@ -122,13 +128,15 @@ public class LetraExcelGenerator {
         String fechaGiroStr = String.valueOf(letra.getOrDefault("fecha_giro", LocalDate.now().toString()));
         String[] giroParts = parseDateToParts(fechaGiroStr);
 
-        String fechaVencStr = String.valueOf(letra.getOrDefault("fecha_vencimiento", LocalDate.now().plusDays(30).toString()));
+        String fechaVencStr = String
+                .valueOf(letra.getOrDefault("fecha_vencimiento", LocalDate.now().plusDays(30).toString()));
         String[] vencParts = parseDateToParts(fechaVencStr);
 
         Number montoNum = (Number) letra.getOrDefault("monto", 0.0);
         String moneda = String.valueOf(letra.getOrDefault("moneda", "SOLES")).toUpperCase();
         String symbol = moneda.contains("DOLAR") || moneda.contains("USD") ? "$" : "S/";
-        String montoFormatted = String.format("%s %,.2f", symbol, montoNum.doubleValue()).replace(',', 'X').replace('.', ',').replace('X', '.');
+        String montoFormatted = String.format("%s %,.2f", symbol, montoNum.doubleValue()).replace(',', 'X')
+                .replace('.', ',').replace('X', '.');
 
         String montoLetras = String.valueOf(letra.getOrDefault("monto_letras", "")).toUpperCase();
         String cliente = String.valueOf(letra.getOrDefault("nombre_cliente", "CLIENTE")).toUpperCase();
@@ -149,7 +157,8 @@ public class LetraExcelGenerator {
         setCellValue(sheet, 3, 8, giroParts[1]);
         setCellValue(sheet, 3, 9, giroParts[2]);
 
-        // 5. FECHA DE VENCIMIENTO (Día: K4, Mes: L4, Año: M4) -> Fila 3, Columnas 10, 11, 12
+        // 5. FECHA DE VENCIMIENTO (Día: K4, Mes: L4, Año: M4) -> Fila 3, Columnas 10,
+        // 11, 12
         setCellValue(sheet, 3, 10, vencParts[0]);
         setCellValue(sheet, 3, 11, vencParts[1]);
         setCellValue(sheet, 3, 12, vencParts[2]);
@@ -160,7 +169,8 @@ public class LetraExcelGenerator {
         // 7. IMPORTE EN LETRAS -> Celda B6 (Fila 5, Columna 1)
         setCellValue(sheet, 5, 1, montoLetras);
 
-        // 8. CLIENTE / RAZÓN SOCIAL -> C8 (Fila 7, Columna 2) y si hace falta espacio C9 (Fila 8, Columna 2)
+        // 8. CLIENTE / RAZÓN SOCIAL -> C8 (Fila 7, Columna 2) y si hace falta espacio
+        // C9 (Fila 8, Columna 2)
         if (cliente.length() > 48) {
             int splitIdx = findBestSplitIndex(cliente, 48);
             String line1 = cliente.substring(0, splitIdx).trim();
@@ -174,7 +184,8 @@ public class LetraExcelGenerator {
         // 9. RUC DEL CLIENTE -> Celda C10 (Fila 9, Columna 2)
         setCellValue(sheet, 9, 2, ruc);
 
-        // 10. DIRECCIÓN FISCAL -> C11 (Fila 10, Columna 2) y si hace falta espacio C12 (Fila 11, Columna 2)
+        // 10. DIRECCIÓN FISCAL -> C11 (Fila 10, Columna 2) y si hace falta espacio C12
+        // (Fila 11, Columna 2)
         if (direccion.length() > 48) {
             int splitIdx = findBestSplitIndex(direccion, 48);
             String line1 = direccion.substring(0, splitIdx).trim();
@@ -187,11 +198,14 @@ public class LetraExcelGenerator {
     }
 
     private int findBestSplitIndex(String text, int target) {
-        if (text.length() <= target) return text.length();
+        if (text.length() <= target)
+            return text.length();
         int lastSpace = text.lastIndexOf(' ', target);
-        if (lastSpace > 15) return lastSpace;
+        if (lastSpace > 15)
+            return lastSpace;
         int lastDash = text.lastIndexOf('-', target);
-        if (lastDash > 15) return lastDash + 1;
+        if (lastDash > 15)
+            return lastDash + 1;
         return target;
     }
 
@@ -213,16 +227,17 @@ public class LetraExcelGenerator {
                 String clean = dateStr.trim().split("T")[0];
                 String[] parts = clean.split("-");
                 if (parts.length == 3) {
-                    return new String[]{
+                    return new String[] {
                             String.format("%02d", Integer.parseInt(parts[2])),
                             String.format("%02d", Integer.parseInt(parts[1])),
                             parts[0]
                     };
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         LocalDate now = LocalDate.now();
-        return new String[]{
+        return new String[] {
                 String.format("%02d", now.getDayOfMonth()),
                 String.format("%02d", now.getMonthValue()),
                 String.valueOf(now.getYear())

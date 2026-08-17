@@ -71,7 +71,8 @@ public class SunatClientUtil {
             if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
                 Map body = apiRes.getBody();
                 Map<String, Object> parsed = parseDecolectaRucResponse(cleanRuc, body);
-                if (parsed != null) return parsed;
+                if (parsed != null)
+                    return parsed;
             }
         } catch (Exception e) {
             // Intento con siguiente endpoint
@@ -92,7 +93,8 @@ public class SunatClientUtil {
             if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
                 Map body = apiRes.getBody();
                 Map<String, Object> parsed = parseDecolectaRucResponse(cleanRuc, body);
-                if (parsed != null) return parsed;
+                if (parsed != null)
+                    return parsed;
             }
         } catch (Exception e) {
             // Intento con fallback APIs
@@ -116,18 +118,21 @@ public class SunatClientUtil {
                     Map<String, Object> result = new HashMap<>();
                     result.put("success", true);
                     result.put("nro_documento", cleanRuc);
-                    
-                    String nombre = (String) (body.get("nombre") != null ? body.get("nombre") :
-                                    body.get("razonSocial") != null ? body.get("razonSocial") : body.get("razon_social"));
+
+                    String nombre = (String) (body.get("nombre") != null ? body.get("nombre")
+                            : body.get("razonSocial") != null ? body.get("razonSocial") : body.get("razon_social"));
                     result.put("nombre_cliente", nombre);
 
-                    String dir = (String) (body.get("direccion") != null ? body.get("direccion") : body.get("domicilio_fiscal"));
+                    String dir = (String) (body.get("direccion") != null ? body.get("direccion")
+                            : body.get("domicilio_fiscal"));
                     String dist = (String) body.get("distrito");
                     String prov = (String) body.get("provincia");
                     String dpto = (String) body.get("departamento");
 
-                    if (dir != null && !dir.isEmpty() && dist != null && !dist.isEmpty() && !dir.toUpperCase().contains(dist.toUpperCase())) {
-                        dir = dir.trim() + " - " + (dpto != null ? dpto : "") + " - " + (prov != null ? prov : "") + " - " + dist;
+                    if (dir != null && !dir.isEmpty() && dist != null && !dist.isEmpty()
+                            && !dir.toUpperCase().contains(dist.toUpperCase())) {
+                        dir = dir.trim() + " - " + (dpto != null ? dpto : "") + " - " + (prov != null ? prov : "")
+                                + " - " + dist;
                     }
                     result.put("direccion", dir != null ? dir.trim() : "");
                     result.put("estado", body.getOrDefault("estado", "ACTIVO"));
@@ -153,12 +158,15 @@ public class SunatClientUtil {
             if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
                 Map body = apiRes.getBody();
                 Map data = body.containsKey("data") && body.get("data") instanceof Map ? (Map) body.get("data") : body;
-                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social") || data.containsKey("nombre"))) {
+                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social")
+                        || data.containsKey("nombre"))) {
                     Map<String, Object> result = new HashMap<>();
                     result.put("success", true);
                     result.put("nro_documento", cleanRuc);
-                    result.put("nombre_cliente", data.getOrDefault("nombre_o_razon_social", data.getOrDefault("razon_social", data.get("nombre"))));
-                    result.put("direccion", data.getOrDefault("direccion_completa", data.getOrDefault("direccion", "")));
+                    result.put("nombre_cliente", data.getOrDefault("nombre_o_razon_social",
+                            data.getOrDefault("razon_social", data.get("nombre"))));
+                    result.put("direccion",
+                            data.getOrDefault("direccion_completa", data.getOrDefault("direccion", "")));
                     result.put("estado", data.getOrDefault("estado", "ACTIVO"));
                     result.put("condicion", data.getOrDefault("condicion", "HABIDO"));
                     return result;
@@ -174,11 +182,12 @@ public class SunatClientUtil {
     }
 
     private Map<String, Object> parseDecolectaRucResponse(String cleanRuc, Map body) {
-        if (body == null) return null;
-        
+        if (body == null)
+            return null;
+
         // Decolecta can return data directly or inside "data"
         Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
-        
+
         String nombre = null;
         if (data.containsKey("razon_social") && data.get("razon_social") != null) {
             nombre = data.get("razon_social").toString();
@@ -214,8 +223,10 @@ public class SunatClientUtil {
 
         if (!dir.isEmpty() && !distrito.isEmpty() && !dir.toUpperCase().contains(distrito.toUpperCase())) {
             StringBuilder ubigeoStr = new StringBuilder();
-            if (!departamento.isEmpty()) ubigeoStr.append(departamento).append(" - ");
-            if (!provincia.isEmpty()) ubigeoStr.append(provincia).append(" - ");
+            if (!departamento.isEmpty())
+                ubigeoStr.append(departamento).append(" - ");
+            if (!provincia.isEmpty())
+                ubigeoStr.append(provincia).append(" - ");
             ubigeoStr.append(distrito);
             dir = dir + " - " + ubigeoStr.toString();
         }
@@ -263,17 +274,18 @@ public class SunatClientUtil {
             ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
             if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
                 Map body = apiRes.getBody();
-                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
-                
+                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data")
+                        : body;
+
                 String nombres = data.get("nombres") != null ? data.get("nombres").toString() : "";
-                String apPaterno = data.get("apellido_paterno") != null ? data.get("apellido_paterno").toString() : 
-                                   data.get("apellidoPaterno") != null ? data.get("apellidoPaterno").toString() : "";
-                String apMaterno = data.get("apellido_materno") != null ? data.get("apellido_materno").toString() : 
-                                   data.get("apellidoMaterno") != null ? data.get("apellidoMaterno").toString() : "";
-                
-                String nombreCompleto = data.get("nombre_completo") != null ? data.get("nombre_completo").toString() :
-                                        data.get("nombre") != null ? data.get("nombre").toString() :
-                                        (nombres + " " + apPaterno + " " + apMaterno).trim();
+                String apPaterno = data.get("apellido_paterno") != null ? data.get("apellido_paterno").toString()
+                        : data.get("apellidoPaterno") != null ? data.get("apellidoPaterno").toString() : "";
+                String apMaterno = data.get("apellido_materno") != null ? data.get("apellido_materno").toString()
+                        : data.get("apellidoMaterno") != null ? data.get("apellidoMaterno").toString() : "";
+
+                String nombreCompleto = data.get("nombre_completo") != null ? data.get("nombre_completo").toString()
+                        : data.get("nombre") != null ? data.get("nombre").toString()
+                                : (nombres + " " + apPaterno + " " + apMaterno).trim();
 
                 if (!nombreCompleto.isEmpty()) {
                     response.put("success", true);
@@ -322,4 +334,3 @@ public class SunatClientUtil {
         return response;
     }
 }
-
