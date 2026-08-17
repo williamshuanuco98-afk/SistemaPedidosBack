@@ -40,7 +40,8 @@ public class LetraCambioController {
 
         if (search != null && !search.trim().isEmpty()) {
             String q = "%" + search.trim() + "%";
-            sql.append("AND (nro_letra LIKE ? OR ref_girador LIKE ? OR nombre_cliente LIKE ? OR nro_documento LIKE ?) ");
+            sql.append(
+                    "AND (nro_letra LIKE ? OR ref_girador LIKE ? OR nombre_cliente LIKE ? OR nro_documento LIKE ?) ");
             params.add(q);
             params.add(q);
             params.add(q);
@@ -74,8 +75,7 @@ public class LetraCambioController {
         Integer maxCorrelativo = jdbcTemplate.queryForObject(
                 "SELECT MAX(numero_correlativo) FROM letras_cambio WHERE anio = ?",
                 Integer.class,
-                currentYear
-        );
+                currentYear);
 
         int next = (maxCorrelativo != null && maxCorrelativo > 0) ? maxCorrelativo + 1 : 1;
 
@@ -105,27 +105,31 @@ public class LetraCambioController {
             List<Map<String, Object>> createdLetras = new ArrayList<>();
 
             for (Map<String, Object> letraData : letras) {
-                int idCliente = letraData.get("id_cliente") != null ? ((Number) letraData.get("id_cliente")).intValue() : 0;
+                int idCliente = letraData.get("id_cliente") != null ? ((Number) letraData.get("id_cliente")).intValue()
+                        : 0;
                 String nombreCliente = (String) letraData.getOrDefault("nombre_cliente", "CLIENTE S.A.C.");
                 String nroDocumento = (String) letraData.getOrDefault("nro_documento", "-");
                 String direccionCliente = (String) letraData.getOrDefault("direccion_cliente", "LIMA");
-                
+
                 int correlativo = ((Number) letraData.getOrDefault("numero_correlativo", 1)).intValue();
                 int anio = ((Number) letraData.getOrDefault("anio", LocalDate.now().getYear())).intValue();
-                String nroLetra = (String) letraData.getOrDefault("nro_letra", String.format("%03d-%d", correlativo, anio));
-                
+                String nroLetra = (String) letraData.getOrDefault("nro_letra",
+                        String.format("%03d-%d", correlativo, anio));
+
                 String refGirador = (String) letraData.getOrDefault("ref_girador", "-");
                 String lugarGiro = (String) letraData.getOrDefault("lugar_giro", "LIMA");
                 String fechaGiro = (String) letraData.getOrDefault("fecha_giro", LocalDate.now().toString());
                 int diasCredito = ((Number) letraData.getOrDefault("dias_credito", 30)).intValue();
-                String fechaVencimiento = (String) letraData.getOrDefault("fecha_vencimiento", LocalDate.now().plusDays(diasCredito).toString());
-                
+                String fechaVencimiento = (String) letraData.getOrDefault("fecha_vencimiento",
+                        LocalDate.now().plusDays(diasCredito).toString());
+
                 String moneda = (String) letraData.getOrDefault("moneda", "SOLES");
                 Number montoObj = (Number) letraData.getOrDefault("monto", 0.0);
                 double monto = montoObj.doubleValue();
                 String montoLetras = (String) letraData.getOrDefault("monto_letras", "");
 
-                String insertSql = "INSERT INTO letras_cambio (id_lote, id_cliente, nombre_cliente, nro_documento, direccion_cliente, " +
+                String insertSql = "INSERT INTO letras_cambio (id_lote, id_cliente, nombre_cliente, nro_documento, direccion_cliente, "
+                        +
                         "nro_letra, numero_correlativo, anio, ref_girador, lugar_giro, fecha_giro, dias_credito, " +
                         "fecha_vencimiento, moneda, monto, monto_letras, estado, fecha_creacion) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?)";
@@ -179,7 +183,8 @@ public class LetraCambioController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(Map.of("error", "Error al registrar lote de letras: " + e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Error al registrar lote de letras: " + e.getMessage()));
         }
     }
 
@@ -190,7 +195,8 @@ public class LetraCambioController {
             @RequestParam(required = false, defaultValue = "true") boolean useSubfolders) {
 
         try {
-            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?", id);
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?",
+                    id);
             if (list.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -203,7 +209,8 @@ public class LetraCambioController {
                 letraPdfGenerator.savePdfToDisk(letra, storageDir, useSubfolders);
             }
 
-            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
+            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_")
+                    + ".pdf";
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
@@ -221,7 +228,8 @@ public class LetraCambioController {
     @GetMapping(value = "/{id}/html", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<?> getLetraHtml(@PathVariable int id) {
         try {
-            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?", id);
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?",
+                    id);
             if (list.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -252,6 +260,7 @@ public class LetraCambioController {
     @PutMapping("/lote/{idLote}/anular")
     public ResponseEntity<?> anularLoteLetras(@PathVariable String idLote) {
         int updated = jdbcTemplate.update("UPDATE letras_cambio SET estado = 'ANULADA' WHERE id_lote = ?", idLote);
-        return ResponseEntity.ok(Map.of("success", true, "anuladas", updated, "message", "Lote de letras anulado correctamente"));
+        return ResponseEntity
+                .ok(Map.of("success", true, "anuladas", updated, "message", "Lote de letras anulado correctamente"));
     }
 }
