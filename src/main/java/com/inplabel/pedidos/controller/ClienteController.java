@@ -2,8 +2,11 @@ package com.inplabel.pedidos.controller;
 
 import com.inplabel.pedidos.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +44,17 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
-    public Map<String, Object> deleteCliente(@PathVariable int id) {
-        return clienteService.deleteCliente(id);
+    public ResponseEntity<?> deleteCliente(
+            @PathVariable int id,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+
+        if (role != null && "OPERACIONES".equalsIgnoreCase(role.trim())) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Acceso denegado: El rol OPERACIONES no tiene permisos para eliminar clientes.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
+        return ResponseEntity.ok(clienteService.deleteCliente(id));
     }
 }

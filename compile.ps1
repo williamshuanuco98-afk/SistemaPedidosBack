@@ -2,6 +2,7 @@ $targetJars = @(
   "org\springframework\boot\spring-boot\3.2.5\spring-boot-3.2.5.jar",
   "org\springframework\boot\spring-boot-autoconfigure\3.2.5\spring-boot-autoconfigure-3.2.5.jar",
   "org\springframework\boot\spring-boot-starter-web\3.2.5\spring-boot-starter-web-3.2.5.jar",
+  "org\apache\tomcat\embed\tomcat-embed-core\10.1.20\tomcat-embed-core-10.1.20.jar",
   "org\springframework\boot\spring-boot-starter-jdbc\3.2.5\spring-boot-starter-jdbc-3.2.5.jar",
   "org\springframework\spring-web\6.1.6\spring-web-6.1.6.jar",
   "org\springframework\spring-webmvc\6.1.6\spring-webmvc-6.1.6.jar",

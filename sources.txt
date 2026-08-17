@@ -1,4 +1,5 @@
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\PedidosApplication.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\AuthController.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\ClienteController.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\GuiaController.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\LetraCambioController.java
@@ -15,10 +16,16 @@ C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\ProductoDaoImpl.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDao.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDaoImpl.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\UsuarioDao.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\UsuarioDaoImpl.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\Cliente.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\GuiaDetalle.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\PedidoDetalle.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\Producto.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\Usuario.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\security\PasswordUtil.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\security\RateLimitingFilter.java
+C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\security\WebSecurityConfig.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteService.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteServiceImpl.java
 C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\GuiaService.java
