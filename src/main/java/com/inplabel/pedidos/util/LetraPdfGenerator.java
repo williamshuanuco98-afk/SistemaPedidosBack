@@ -448,95 +448,92 @@ public class LetraPdfGenerator {
                 "<meta charset=\"UTF-8\">\n" +
                 "<title>Letra de Cambio - " + nroLetra + "</title>\n" +
                 "<style>\n" +
-                "  :root{\n" +
-                "    --green:#008c5a;\n" +
-                "    --black:#141414;\n" +
-                "    --lightgreen:#deebde;\n" +
-                "    --border:#141414;\n" +
-                "  }\n" +
-                "  @page { size: A4 portrait; margin: 10mm 12mm; }\n" +
-                "  *{ box-sizing:border-box; }\n" +
-                "  body{\n" +
-                "    margin:0; padding:0; background:#fff;\n" +
-                "    font-family:\"DejaVu Sans\",\"Segoe UI\",Arial,sans-serif;\n" +
-                "    color:var(--black); display:flex; justify-content:center;\n" +
-                "  }\n" +
-                "  .sheet{ background:#fff; width:100%; max-width:820px; padding:10px 15px; position:relative; }\n" +
-                "  .header{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:14px; }\n" +
-                "  .logo-block{ display:flex; align-items:center; }\n" +
-                "  .logo-img{ height:50px; object-fit:contain; }\n" +
-                "  .company-address{ text-align:right; font-size:11px; line-height:1.45; padding-top:4px; border-top:2px solid #444; min-width:340px; }\n" +
-                "  .doc-body{ display:flex; }\n" +
-                "  .side-label-wrap{ position:relative; width:24px; flex-shrink:0; border:2px solid var(--border); border-right:none; display:flex; align-items:center; justify-content:center; background:#fafafa; }\n" +
-                "  .side-label-wrap .txt{ writing-mode: vertical-rl; transform: rotate(180deg); white-space:nowrap; font-size:9.5px; font-weight:700; text-align:center; }\n" +
-                "  .clauses-outer{ position:relative; width:38px; flex-shrink:0; border:2px solid var(--border); border-right:none; padding:6px 2px; display:flex; align-items:center; justify-content:center; }\n" +
-                "  .clauses-inner{ writing-mode: vertical-rl; transform: rotate(180deg); font-size:7.2px; line-height:1.15; color:#111; text-align:left; }\n" +
-                "  .clauses-inner b{ font-size:7.5px; }\n" +
-                "  .main-col{ flex:1; min-width:0; }\n" +
-                "  table.topinfo{ border-collapse:collapse; width:100%; table-layout:fixed; }\n" +
-                "  table.topinfo th, table.topinfo td{ border:2px solid var(--border); text-align:center; padding:4px 2px; }\n" +
-                "  table.topinfo th{ font-size:10px; font-weight:700; background:#f0f5ee; }\n" +
-                "  table.topinfo td.value{ font-size:13.5px; font-weight:700; padding:8px 2px; }\n" +
-                "  table.topinfo td.value.amount{ font-size:15px; }\n" +
-                "  table.topinfo .subhead{ font-size:9px; font-weight:700; background:#f0f5ee; padding:2px 1px; }\n" +
-                "  .pay-phrase{ margin:10px 0 6px 0; font-size:12px; padding-left:4px; }\n" +
-                "  .pay-phrase b{ font-weight:700; }\n" +
-                "  .pay-phrase .beneficiary{ color:var(--green); font-weight:700; font-style:italic; }\n" +
-                "  .amount-words{ border:2px solid var(--border); padding:8px 10px; font-size:12.5px; font-weight:700; margin-bottom:8px; background:#fff; }\n" +
-                "  .payplace-note{ font-size:11px; margin-bottom:8px; padding-left:4px; }\n" +
-                "  .bottom-table{ display:grid; grid-template-columns: 1fr 310px; border:2px solid var(--border); }\n" +
-                "  .bt-left{ border-right:2px solid var(--border); padding:10px 12px; position:relative; }\n" +
-                "  .bt-row{ display:flex; gap:10px; margin-bottom:8px; font-size:11px; }\n" +
-                "  .bt-row .lbl{ font-weight:700; min-width:75px; flex-shrink:0; }\n" +
-                "  .bt-divider{ border-top:1px solid #333; margin:8px 0 10px 0; }\n" +
-                "  .dots{ border-bottom:1px dotted #333; flex:1; display:inline-block; min-width:40px; margin-left:4px; height:13px; }\n" +
-                "  .bt-row.inline{ align-items:flex-end; }\n" +
-                "  .bt-row.avalista .dots{ margin-left:8px; }\n" +
-                "  .bt-right{ padding:8px 10px; display:flex; flex-direction:column; }\n" +
-                "  .debit-note{ font-size:9.5px; margin-bottom:6px; }\n" +
-                "  table.banktable{ border-collapse:collapse; width:100%; margin-bottom:6px; }\n" +
-                "  table.banktable th, table.banktable td{ border:1.5px solid var(--border); font-size:9px; text-align:center; padding:3px 1px; font-weight:700; }\n" +
-                "  table.banktable th{ background:#f0f5ee; }\n" +
-                "  table.banktable td.blank{ height:20px; }\n" +
-                "  .beneficiary-name{ color:var(--green); font-weight:700; font-style:italic; text-align:center; font-size:12px; margin-top:6px; }\n" +
-                "  .beneficiary-ruc{ text-align:center; font-weight:700; font-size:11px; margin-bottom:14px; }\n" +
-                "  .firma{ text-align:center; margin-top:auto; }\n" +
-                "  .firma .line{ border-bottom:1px dotted #333; width:80%; margin:0 auto 3px auto; }\n" +
-                "  .firma .caption{ font-weight:700; font-size:10.5px; }\n" +
-                "  .firma .rep{ font-size:9.5px; margin-top:1px; }\n" +
-                "  .doi{ font-weight:700; font-size:10px; margin-top:4px; text-align:left; }\n" +
-                "  .footer-line{ border-top:1.5px solid var(--border); margin-top:12px; padding-top:4px; font-size:10.5px; }\n" +
+                "  @page { size: A4 portrait; margin: 4mm 6mm; }\n" +
+                "  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }\n" +
+                "  html, body { margin: 0; padding: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; color: #141414; font-size: 10px; }\n" +
+                "  .sheet { width: 100%; max-width: 780px; margin: 0 auto; padding: 4px 6px; page-break-inside: avoid; break-inside: avoid; }\n" +
+                "  .letra-layout { display: flex; align-items: flex-end; gap: 8px; page-break-inside: avoid; break-inside: avoid; }\n" +
+                "  .clauses-col { width: 82px; min-width: 82px; max-width: 82px; display: flex; flex-direction: column; justify-content: flex-end; height: 318px; margin-bottom: 20px; }\n" +
+                "  .clauses-content { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 6.1px; line-height: 1.30; letter-spacing: 0.05px; height: 100%; max-height: 318px; overflow: hidden; color: #111; }\n" +
+                "  .clauses-title { font-weight: bold; font-size: 6.6px; margin-bottom: 2px; }\n" +
+                "  .clause-p { margin-bottom: 2px; text-align: justify; }\n" +
+                "  .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }\n" +
+                "  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }\n" +
+                "  .logo-img { height: 48px; object-fit: contain; }\n" +
+                "  .company-address { text-align: right; font-size: 8.8px; line-height: 1.35; border-top: 1.5px solid #333; padding-top: 3px; min-width: 330px; }\n" +
+                "  .upper-section { display: flex; align-items: stretch; gap: 6px; margin-bottom: 4px; }\n" +
+                "  .side-signature-container { width: 24px; min-width: 24px; display: flex; align-items: center; justify-content: space-between; }\n" +
+                "  .side-line { width: 1px; height: 85%; background-color: #222; margin-right: 4px; }\n" +
+                "  .side-tag-text { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 8.5px; font-weight: bold; white-space: nowrap; text-align: center; }\n" +
+                "  .top-table { flex: 1; border-collapse: collapse; width: 100%; table-layout: fixed; }\n" +
+                "  .top-table th, .top-table td { border: 1.5px solid #141414; text-align: center; padding: 1px 2px; }\n" +
+                "  .top-table th { font-size: 7.6px; font-weight: bold; background: #E2EFDA !important; line-height: 1.15; height: 16px; }\n" +
+                "  .top-table .subhead { font-size: 7.2px; font-weight: bold; background: #E2EFDA !important; padding: 1px; height: 14px; }\n" +
+                "  .top-table td.val { font-size: 12.5px; font-weight: bold; height: 30px; padding: 2px; }\n" +
+                "  .top-table td.val.amount { font-size: 14.5px; }\n" +
+                "  .pay-phrase { padding: 4px 0 3px 30px; font-size: 10.5px; }\n" +
+                "  .pay-phrase .beneficiary { color: #00AF50; font-weight: bold; font-style: italic; }\n" +
+                "  .amount-row-container { display: flex; gap: 6px; margin-bottom: 3px; }\n" +
+                "  .amount-spacer { width: 24px; min-width: 24px; }\n" +
+                "  .amount-box { flex: 1; border: 1.5px solid #141414; padding: 5px 8px; font-size: 11px; font-weight: bold; background: #fff; }\n" +
+                "  .payplace-note { padding: 1px 0 4px 30px; font-size: 9.2px; }\n" +
+                "  .lower-section { display: flex; align-items: stretch; gap: 6px; }\n" +
+                "  .lower-box { flex: 1; display: flex; border: 1.5px solid #141414; }\n" +
+                "  .lower-left { width: 55%; border-right: 1.5px solid #141414; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between; font-size: 8.5px; font-weight: normal; }\n" +
+                "  .girado-row { margin-bottom: 4px; line-height: 1.35; font-weight: normal; }\n" +
+                "  .girado-row span.lbl { display: inline-block; min-width: 70px; font-weight: normal; }\n" +
+                "  .girado-divider { border-top: 1px solid #333; margin: 6px 0; }\n" +
+                "  .aval-row { margin-bottom: 4px; display: flex; align-items: flex-end; font-weight: normal; }\n" +
+                "  .aval-row span.lbl { min-width: 70px; flex-shrink: 0; font-weight: normal; }\n" +
+                "  .aval-dots { border-bottom: 1px dotted #333; flex: 1; height: 11px; margin-left: 2px; }\n" +
+                "  .lower-right { width: 45%; padding: 6px 10px; display: flex; flex-direction: column; text-align: center; }\n" +
+                "  .debit-line { font-size: 8px; text-align: left; margin-bottom: 4px; }\n" +
+                "  .bank-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }\n" +
+                "  .bank-table th, .bank-table td { border: 1.5px solid #141414; padding: 2px; font-size: 7.5px; }\n" +
+                "  .bank-table th { background: #E2EFDA !important; font-weight: bold; }\n" +
+                "  .bank-table td { height: 18px; }\n" +
+                "  .company-title { color: #00AF50; font-weight: bold; font-style: italic; font-size: 11px; margin-top: 4px; }\n" +
+                "  .company-ruc { font-weight: bold; font-size: 9.5px; margin-bottom: 6px; }\n" +
+                "  .firma-block { margin-top: auto; text-align: center; }\n" +
+                "  .sign-line { border-bottom: 1px dotted #333; width: 75%; margin: 8px auto 2px auto; }\n" +
+                "  .sign-text { font-size: 9px; font-weight: bold; }\n" +
+                "  .rep-text { font-size: 8px; color: #333; }\n" +
+                "  .doi-text { font-size: 8.5px; font-weight: bold; text-align: left; margin-top: 2px; }\n" +
+                "  .footer-line { border-top: 1.5px solid #141414; margin-top: 6px; padding-top: 3px; font-size: 8.5px; text-align: left; }\n" +
                 "</style>\n" +
                 "</head>\n" +
                 "<body>\n" +
                 "<div class=\"sheet\">\n" +
-                "  <div class=\"header\">\n" +
-                "    <div class=\"logo-block\"><img src=\"img/inplabel-logo.png\" alt=\"Inplabel\" class=\"logo-img\" onerror=\"this.style.display='none'\"></div>\n" +
-                "    <div class=\"company-address\">\n" +
-                "      <b>Av. María Parado de Bellido Lte. 5</b><br>\n" +
-                "      Lotización Chacra Cerro - Comas - Lima - Lima<br>\n" +
-                "      Telf.: (01)557-1526 Claro: 975 564 460 / 983 518 504\n" +
-                "    </div>\n" +
-                "  </div>\n" +
-                "  <div class=\"doc-body\">\n" +
-                "    <div class=\"clauses-outer\">\n" +
-                "      <div class=\"clauses-inner\">\n" +
-                "        <b>CLÁUSULAS ESPECIALES:</b>\n" +
-                "        (1) En caso de mora, esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor.\n" +
-                "        (2) El plazo de su vencimiento podrá ser prorrogado por el tenedor, por el plazo que este señale, sin que sea necesario la intervención del obligado principal ni de los solidarios.\n" +
-                "        (3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias.\n" +
-                "        (4) Las partes se someten a la competencia de los jueces del Distrito Judicial de Lima.\n" +
+                "  <div class=\"letra-layout\">\n" +
+                "    <div class=\"clauses-col\">\n" +
+                "      <div class=\"clauses-content\">\n" +
+                "        <div class=\"clauses-title\">CLÁUSULAS ESPECIALES:</div>\n" +
+                "        <div class=\"clause-p\">(1) En caso de mora , esta letra de cambio generará las tasas de interés compensatorio y moratorio más altas que la ley permita a su último Tenedor.</div>\n" +
+                "        <div class=\"clause-p\">(2) El plazo de su vencimiento podrá ser prorrogado por el tenedor, por el plazo que este señale, sin que sea necesario la intervención del obligado principal ni de los solidarios.</div>\n" +
+                "        <div class=\"clause-p\">(3) Las partes acuerdan consignar la cláusula \"sin protesto\" y por tanto no se requerirá de esta diligencia para el ejercicio de las acciones cambiarias.</div>\n" +
+                "        <div class=\"clause-p\">(4) Las partes se someten a la competencia de los jueces del Distrito Judicial de Lima.</div>\n" +
                 "      </div>\n" +
                 "    </div>\n" +
                 "    <div class=\"main-col\">\n" +
-                "      <div style=\"display:flex;\">\n" +
-                "        <div class=\"side-label-wrap\"><span class=\"txt\">Aceptante(s)</span></div>\n" +
-                "        <table class=\"topinfo\">\n" +
+                "      <div class=\"header\">\n" +
+                "        <img src=\"img/inplabel-logo.png\" alt=\"Inplabel\" class=\"logo-img\" onerror=\"this.style.display='none'\">\n" +
+                "        <div class=\"company-address\">\n" +
+                "          <b>Av. María Parado de Bellido Lte. 5</b><br>\n" +
+                "          Lotización Chacra Cerro - Comas - Lima - Lima<br>\n" +
+                "          Telf.: (01)557-1526 Claro: 975 564 460 / 983 518 504\n" +
+                "        </div>\n" +
+                "      </div>\n" +
+                "      <div class=\"upper-section\">\n" +
+                "        <div class=\"side-signature-container\">\n" +
+                "          <div class=\"side-line\" title=\"Línea de firma Aceptante\"></div>\n" +
+                "          <span class=\"side-tag-text\">Aceptante(s)</span>\n" +
+                "        </div>\n" +
+                "        <table class=\"top-table\">\n" +
                 "          <colgroup>\n" +
-                "            <col style=\"width:17%\"><col style=\"width:16%\"><col style=\"width:13%\">\n" +
-                "            <col style=\"width:7.5%\"><col style=\"width:7.5%\"><col style=\"width:7.5%\">\n" +
-                "            <col style=\"width:7.5%\"><col style=\"width:7.5%\"><col style=\"width:7.5%\">\n" +
-                "            <col style=\"width:16.5%\">\n" +
+                "            <col style=\"width: 17%;\"><col style=\"width: 16%;\"><col style=\"width: 13%;\">\n" +
+                "            <col style=\"width: 6%;\"><col style=\"width: 6%;\"><col style=\"width: 6%;\">\n" +
+                "            <col style=\"width: 6%;\"><col style=\"width: 6%;\"><col style=\"width: 6%;\">\n" +
+                "            <col style=\"width: 18%;\">\n" +
                 "          </colgroup>\n" +
                 "          <tr>\n" +
                 "            <th rowspan=\"2\">NUMERO DE LETRA</th><th rowspan=\"2\">REF. DEL GIRADOR</th><th rowspan=\"2\">LUGAR DE GIRO</th>\n" +
@@ -547,49 +544,59 @@ public class LetraPdfGenerator {
                 "            <th class=\"subhead\">DIA</th><th class=\"subhead\">MES</th><th class=\"subhead\">AÑO</th>\n" +
                 "          </tr>\n" +
                 "          <tr>\n" +
-                "            <td class=\"value\">" + nroLetra + "</td><td class=\"value\">" + refGirador + "</td><td class=\"value\">" + lugarGiro + "</td>\n" +
-                "            <td class=\"value\">" + fgVals[0] + "</td><td class=\"value\">" + fgVals[1] + "</td><td class=\"value\">" + fgVals[2] + "</td>\n" +
-                "            <td class=\"value\">" + fvVals[0] + "</td><td class=\"value\">" + fvVals[1] + "</td><td class=\"value\">" + fvVals[2] + "</td>\n" +
-                "            <td class=\"value amount\">" + montoFormatted + "</td>\n" +
+                "            <td class=\"val\">" + nroLetra + "</td><td class=\"val\">" + refGirador + "</td><td class=\"val\">" + lugarGiro + "</td>\n" +
+                "            <td class=\"val\">" + fgVals[0] + "</td><td class=\"val\">" + fgVals[1] + "</td><td class=\"val\">" + fgVals[2] + "</td>\n" +
+                "            <td class=\"val\">" + fvVals[0] + "</td><td class=\"val\">" + fvVals[1] + "</td><td class=\"val\">" + fvVals[2] + "</td>\n" +
+                "            <td class=\"val amount\">" + montoFormatted + "</td>\n" +
                 "          </tr>\n" +
                 "        </table>\n" +
                 "      </div>\n" +
                 "      <div class=\"pay-phrase\">\n" +
                 "        Por esta <b>LETRA DE CAMBIO</b>, se servirá(n) pagar a la orden de <span class=\"beneficiary\">INDUSTRIAS PLASTICOS BELSA S.A.C.</span> la cantidad de:\n" +
                 "      </div>\n" +
-                "      <div class=\"amount-words\">" + montoLetras + "</div>\n" +
+                "      <div class=\"amount-row-container\">\n" +
+                "        <div class=\"amount-spacer\"></div>\n" +
+                "        <div class=\"amount-box\">" + montoLetras + "</div>\n" +
+                "      </div>\n" +
                 "      <div class=\"payplace-note\">\n" +
                 "        Valor que sentará(n) en cuenta según aviso de sus Ss. Ss. en el siguiente lugar de pago:\n" +
                 "      </div>\n" +
-                "      <div style=\"display:flex;\">\n" +
-                "        <div class=\"side-label-wrap\"><span class=\"txt\">Por Aval</span></div>\n" +
-                "        <div class=\"bottom-table\" style=\"flex:1;\">\n" +
-                "          <div class=\"bt-left\">\n" +
-                "            <div class=\"bt-row\"><span class=\"lbl\">GIRADO A:</span><span><b>" + cliente + "</b></span></div>\n" +
-                "            <div class=\"bt-row\"><span class=\"lbl\">RUC:</span><span>" + ruc + "</span></div>\n" +
-                "            <div class=\"bt-row\"><span class=\"lbl\">DIRECCION:</span><span>" + direccion + "</span></div>\n" +
-                "            <div class=\"bt-divider\"></div>\n" +
-                "            <div class=\"bt-row inline avalista\"><span class=\"lbl\">AVALISTA:</span><span class=\"dots\"></span></div>\n" +
-                "            <div class=\"bt-row inline avalista\">\n" +
-                "              <span class=\"lbl\" style=\"min-width:60px;\">D.I/R.U.C:</span><span class=\"dots\" style=\"max-width:110px;\"></span>\n" +
-                "              <span class=\"lbl\" style=\"min-width:65px; margin-left:10px;\">TELEFONO:</span><span class=\"dots\"></span>\n" +
+                "      <div class=\"lower-section\">\n" +
+                "        <div class=\"side-signature-container\">\n" +
+                "          <div class=\"side-line\" title=\"Línea de firma Por Aval\"></div>\n" +
+                "          <span class=\"side-tag-text\">Por Aval</span>\n" +
+                "        </div>\n" +
+                "        <div class=\"lower-box\">\n" +
+                "          <div class=\"lower-left\">\n" +
+                "            <div>\n" +
+                "              <div class=\"girado-row\"><span class=\"lbl\">GIRADO A:</span> " + cliente + "</div>\n" +
+                "              <div class=\"girado-row\"><span class=\"lbl\">RUC:</span> " + ruc + "</div>\n" +
+                "              <div class=\"girado-row\"><span class=\"lbl\">DIRECCION:</span> " + direccion + "</div>\n" +
                 "            </div>\n" +
-                "            <div class=\"bt-row inline avalista\"><span class=\"lbl\">DIRECCION:</span><span class=\"dots\"></span></div>\n" +
+                "            <div class=\"girado-divider\"></div>\n" +
+                "            <div>\n" +
+                "              <div class=\"aval-row\"><span class=\"lbl\">AVALISTA:</span> <span class=\"aval-dots\"></span></div>\n" +
+                "              <div class=\"aval-row\">\n" +
+                "                <span class=\"lbl\" style=\"min-width:55px;\">D.I/R.U.C:</span> <span class=\"aval-dots\" style=\"max-width:110px;\"></span>\n" +
+                "                <span class=\"lbl\" style=\"min-width:65px; margin-left:10px;\">TELEFONO:</span> <span class=\"aval-dots\"></span>\n" +
+                "              </div>\n" +
+                "              <div class=\"aval-row\"><span class=\"lbl\">DIRECCION:</span> <span class=\"aval-dots\"></span></div>\n" +
+                "            </div>\n" +
                 "          </div>\n" +
-                "          <div class=\"bt-right\">\n" +
-                "            <div class=\"debit-note\">Importe a debitar en cuenta del Aceptante del Banco: ..............................</div>\n" +
-                "            <table class=\"banktable\">\n" +
+                "          <div class=\"lower-right\">\n" +
+                "            <div class=\"debit-line\">Importe a debitar en cuenta del Aceptante del Banco: ..............................</div>\n" +
+                "            <table class=\"bank-table\">\n" +
                 "              <tr><th>BANCO</th><th>OFICINA</th><th>NUMERO DE CUENTA</th><th>D.C.</th></tr>\n" +
-                "              <tr><td class=\"blank\"></td><td class=\"blank\"></td><td class=\"blank\"></td><td class=\"blank\"></td></tr>\n" +
+                "              <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n" +
                 "            </table>\n" +
-                "            <div class=\"beneficiary-name\">INDUSTRIAS PLASTICOS BELSA S.A.C.</div>\n" +
-                "            <div class=\"beneficiary-ruc\">RUC: 20544368827</div>\n" +
-                "            <div class=\"firma\">\n" +
-                "              <div class=\"line\"></div>\n" +
-                "              <div class=\"caption\">FIRMA</div>\n" +
-                "              <div class=\"rep\">Nombre del representante(S)</div>\n" +
+                "            <div class=\"company-title\">INDUSTRIAS PLASTICOS BELSA S.A.C.</div>\n" +
+                "            <div class=\"company-ruc\">RUC: 20544368827</div>\n" +
+                "            <div class=\"firma-block\">\n" +
+                "              <div class=\"sign-line\"></div>\n" +
+                "              <div class=\"sign-text\">FIRMA</div>\n" +
+                "              <div class=\"rep-text\">Nombre del representante(S)</div>\n" +
                 "            </div>\n" +
-                "            <div class=\"doi\">D.O.I</div>\n" +
+                "            <div class=\"doi-text\">D.O.I</div>\n" +
                 "          </div>\n" +
                 "        </div>\n" +
                 "      </div>\n" +

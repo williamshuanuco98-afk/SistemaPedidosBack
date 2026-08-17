@@ -206,7 +206,10 @@ public class LetraCambioController {
             String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
 
             return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(HttpHeaders.PRAGMA, "no-cache")
+                    .header(HttpHeaders.EXPIRES, "0")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfBytes);
         } catch (Exception e) {
@@ -225,7 +228,11 @@ public class LetraCambioController {
 
             Map<String, Object> letra = list.get(0);
             String html = letraPdfGenerator.generateHtml(letra);
-            return ResponseEntity.ok(html);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(HttpHeaders.PRAGMA, "no-cache")
+                    .header(HttpHeaders.EXPIRES, "0")
+                    .body(html);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Error al generar HTML de Letra: " + e.getMessage());
