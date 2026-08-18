@@ -2,7 +2,10 @@ package com.inplabel.pedidos.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.io.File;
 
 @Configuration
 public class WebSecurityConfig implements WebMvcConfigurer {
@@ -10,15 +13,21 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns(
-                        "http://localhost:*",
-                        "http://127.0.0.1:*",
-                        "http://192.168.*:*",
-                        "http://10.*:*")
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .exposedHeaders("X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After")
                 .allowCredentials(false)
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        File frontDir = new File("../SistemaWebPedidosFront");
+        String frontLocation = "file:" + frontDir.getAbsolutePath() + "/";
+
+        registry.addResourceHandler("/**")
+                .addResourceLocations(frontLocation, "classpath:/static/", "classpath:/public/")
+                .setCachePeriod(0);
     }
 }
