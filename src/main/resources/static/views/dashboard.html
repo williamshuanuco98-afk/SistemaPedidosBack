@@ -1,0 +1,144 @@
+<!-- Top Metrics 5 KPI Grid -->
+<div class="metrics-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+  <div class="metric-card card-blue">
+    <div class="metric-info">
+      <h4>Total Pedidos</h4>
+      <div id="statTotalOrders" class="metric-value">0</div>
+    </div>
+    <div class="metric-icon-box">
+      <i class="bi bi-cart3 fs-3"></i>
+    </div>
+  </div>
+
+  <div class="metric-card card-amber">
+    <div class="metric-info">
+      <h4>Pedidos Pendientes</h4>
+      <div id="statPendingOrders" class="metric-value">0</div>
+    </div>
+    <div class="metric-icon-box">
+      <i class="bi bi-clock-history fs-3"></i>
+    </div>
+  </div>
+
+  <div class="metric-card card-emerald">
+    <div class="metric-info">
+      <h4>Pedidos Entregados</h4>
+      <div id="statCompletedOrders" class="metric-value">0</div>
+    </div>
+    <div class="metric-icon-box">
+      <i class="bi bi-check2-circle fs-3"></i>
+    </div>
+  </div>
+
+  <div class="metric-card card-cyan">
+    <div class="metric-info">
+      <h4>Clientes Registrados</h4>
+      <div id="statTotalClients" class="metric-value">0</div>
+    </div>
+    <div class="metric-icon-box">
+      <i class="bi bi-people fs-3"></i>
+    </div>
+  </div>
+
+  <div class="metric-card card-indigo">
+    <div class="metric-info">
+      <h4>Productos Totales</h4>
+      <div id="statTotalProducts" class="metric-value">0</div>
+    </div>
+    <div class="metric-icon-box">
+      <i class="bi bi-box-seam fs-3"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section Row 1: Establecimientos & Pedidos al Mes -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="content-card p-3 h-100">
+      <div class="card-header border-0 pb-0 bg-transparent">
+        <h3 class="card-title d-flex align-items-center">
+          <i class="bi bi-buildings text-primary me-2"></i>
+          <span>Pedidos por Establecimiento</span>
+        </h3>
+      </div>
+      <div class="p-3" style="height: 280px; position: relative;">
+        <canvas id="chartEstablecimientos"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="content-card p-3 h-100">
+      <div class="card-header border-0 pb-0 bg-transparent">
+        <h3 class="card-title d-flex align-items-center">
+          <i class="bi bi-graph-up-arrow text-success me-2"></i>
+          <span>Cantidad de Pedidos al Mes</span>
+        </h3>
+      </div>
+      <div class="p-3" style="height: 280px; position: relative;">
+        <canvas id="chartMonthlyOrders"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section Row 2: Estado Operativo & Productos Más Pedidos -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="content-card p-3 h-100">
+      <div class="card-header border-0 pb-0 bg-transparent">
+        <h3 class="card-title d-flex align-items-center">
+          <i class="bi bi-pie-chart-fill text-warning me-2"></i>
+          <span>Distribución de Pedidos por Estado Operativo</span>
+        </h3>
+      </div>
+      <div class="p-3" style="height: 280px; position: relative;">
+        <canvas id="chartOrderStatus"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="content-card p-3 h-100">
+      <div class="card-header border-0 pb-0 bg-transparent">
+        <h3 class="card-title d-flex align-items-center">
+          <i class="bi bi-award-fill text-info me-2"></i>
+          <span>Productos Más Solicitados</span>
+        </h3>
+      </div>
+      <div class="p-3" style="height: 280px; position: relative;">
+        <canvas id="chartTopProducts"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders Section -->
+<div class="row g-4">
+  <div class="col-12">
+    <div class="content-card h-100">
+      <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h3 class="card-title d-flex align-items-center mb-0">
+          <i class="bi bi-cart3 text-primary me-2"></i>
+          <span>Últimos Pedidos Registrados</span>
+        </h3>
+        <button class="btn btn-sm btn-outline-secondary" onclick="app.navigateTo('pedidos')">Ver Todos</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table custom-table mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>N° Pedido</th>
+              <th>Cliente</th>
+              <th>Establecimiento</th>
+              <th>Fecha Pedido</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="dashOrdersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

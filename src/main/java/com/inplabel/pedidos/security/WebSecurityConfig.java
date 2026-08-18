@@ -3,6 +3,7 @@ package com.inplabel.pedidos.security;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.File;
@@ -22,9 +23,14 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     }
 
     @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/").setViewName("forward:/index.html");
+    }
+
+    @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         File frontDir = new File("../SistemaWebPedidosFront");
-        String frontLocation = "file:" + frontDir.getAbsolutePath() + "/";
+        String frontLocation = "file:" + frontDir.getAbsolutePath().replace('\\', '/') + "/";
 
         registry.addResourceHandler("/**")
                 .addResourceLocations(frontLocation, "classpath:/static/", "classpath:/public/")

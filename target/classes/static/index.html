@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function () {
+      var theme = localStorage.getItem('inplabel_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INPLABEL | Sistema de Gestión de Pedidos y Envíos</title>
+  <meta name="description" content="Plataforma web para la gestión integral de pedidos, guías de remisión y envíos.">
+
+  <!-- Google Fonts: Sora & Manrope -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Bootstrap 5.3 CSS & JS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Chart.js 4 Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/styles.css?v=883.0">
+</head>
+
+<body>
+
+  <div class="app-container">
+    <!-- Vertical Sidebar (Dark Minimalist) -->
+    <aside id="sidebar" class="sidebar">
+      <div>
+        <div class="sidebar-header">
+          <a href="#dashboard" class="brand-logo" onclick="app.navigateTo('dashboard')">
+            <img id="brandLogoImg" src="img/inplabel-logo.png" alt="Inplabel" class="brand-logo-img">
+          </a>
+          <button id="toggleSidebarBtn" class="toggle-sidebar-btn" title="Alternar menú">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        </div>
+
+        <nav class="sidebar-nav">
+
+          <button class="nav-item active" data-route="dashboard" onclick="app.navigateTo('dashboard')">
+            <i class="bi bi-grid-1x2-fill icon"></i>
+            <span class="nav-label">Dashboard</span>
+          </button>
+
+          <button class="nav-item" data-route="pedidos" onclick="app.navigateTo('pedidos')">
+            <i class="bi bi-cart-check-fill icon"></i>
+            <span class="nav-label">Pedidos</span>
+            <span id="badgePedidos" class="badge-count d-none">0</span>
+          </button>
+
+          <button class="nav-item" data-route="produccion" onclick="app.navigateTo('produccion')">
+            <i class="bi bi-gear-wide-connected icon"></i>
+            <span class="nav-label">Producción</span>
+          </button>
+
+          <button class="nav-item" data-route="envios" onclick="app.navigateTo('envios')">
+            <i class="bi bi-truck icon"></i>
+            <span class="nav-label">Guías</span>
+            <span id="badgeEnvios" class="badge-count d-none">0</span>
+          </button>
+
+          <button class="nav-item" data-route="letras" onclick="app.navigateTo('letras')">
+            <i class="bi bi-file-earmark-ruled-fill icon"></i>
+            <span class="nav-label">Letras</span>
+            <span id="badgeLetras" class="badge-count d-none">0</span>
+          </button>
+
+          <button class="nav-item" data-route="clientes" onclick="app.navigateTo('clientes')">
+            <i class="bi bi-people-fill icon"></i>
+            <span class="nav-label">Clientes</span>
+          </button>
+
+          <button class="nav-item" data-route="productos" onclick="app.navigateTo('productos')">
+            <i class="bi bi-box-seam-fill icon"></i>
+            <span class="nav-label">Productos</span>
+          </button>
+
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item mb-1" data-route="config" title="Configuración del Sistema"
+          onclick="app.navigateTo('config')">
+          <i class="bi bi-gear-fill icon"></i>
+          <span class="nav-label">Configuración</span>
+        </button>
+
+        <!-- Botón Cerrar Sesión justo debajo de Configuración -->
+        <button type="button" class="nav-item mb-2 text-danger w-100 border-0 bg-transparent text-start" title="Cerrar Sesión"
+          onclick="authModule.confirmLogout()">
+          <i class="bi bi-box-arrow-right icon text-danger"></i>
+          <span class="nav-label text-danger fw-semibold">Cerrar Sesión</span>
+        </button>
+
+        <!-- Tarjeta de Usuario del Sistema -->
+        <div class="user-profile d-flex align-items-center p-2 rounded border border-secondary border-opacity-25" style="background: rgba(0,0,0,0.15);">
+          <div class="d-flex align-items-center gap-2 overflow-hidden w-100">
+            <div id="userAvatar" class="user-avatar" style="width: 34px; height: 34px; font-size: 0.8rem; font-weight: bold; background: #00AF50; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">AD</div>
+            <div class="user-info text-truncate">
+              <span id="userNameDisplay" class="user-name text-truncate d-block fw-bold fs-7">Administrador</span>
+              <span id="userRoleDisplay" class="badge bg-primary fs-9 py-0 px-1">ADMIN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+
+      <!-- Header Bar (Glassmorphism Header) -->
+      <header class="top-header">
+        <div class="d-flex align-items-center gap-3">
+          <h2 id="pageTitle" class="page-title d-flex align-items-center">
+            <i class="bi bi-speedometer2 text-primary"></i>
+            <span>Panel General de Control</span>
+          </h2>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <div id="backendStatusIndicator" class="status-badge PENDIENTE py-2 px-3 fs-7">
+            <i class="bi bi-arrow-repeat spin me-1"></i> Verificando Backend...
+          </div>
+
+          <!-- Premium Theme Toggle Button -->
+          <button type="button" class="theme-toggle-pill" onclick="app.toggleTheme()"
+            title="Alternar Modo Claro / Oscuro">
+            <div class="theme-toggle-track">
+              <div class="theme-toggle-handle">
+                <i class="bi bi-sun-fill theme-icon-sun"></i>
+                <i class="bi bi-moon-stars-fill theme-icon-moon"></i>
+              </div>
+            </div>
+            <span id="themeToggleLabel" class="theme-toggle-label">Modo Claro</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic View Container -->
+      <div id="viewContainer" class="page-body">
+        <!-- Top Metrics 5 KPI Grid -->
+        <div class="metrics-grid mb-4"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <div class="metric-card card-blue">
+            <div class="metric-info">
+              <h4>Total Pedidos</h4>
+              <div id="statTotalOrders" class="metric-value">0</div>
+            </div>
+            <div class="metric-icon-box">
+              <i class="bi bi-cart3 fs-3"></i>
+            </div>
+          </div>
+
+          <div class="metric-card card-amber">
+            <div class="metric-info">
+              <h4>Pedidos Pendientes</h4>
+              <div id="statPendingOrders" class="metric-value">0</div>
+            </div>
+            <div class="metric-icon-box">
+              <i class="bi bi-clock-history fs-3"></i>
+            </div>
+          </div>
+
+          <div class="metric-card card-emerald">
+            <div class="metric-info">
+              <h4>Pedidos Entregados</h4>
+              <div id="statCompletedOrders" class="metric-value">0</div>
+            </div>
+            <div class="metric-icon-box">
+              <i class="bi bi-check2-circle fs-3"></i>
+            </div>
+          </div>
+
+          <div class="metric-card card-cyan">
+            <div class="metric-info">
+              <h4>Clientes Registrados</h4>
+              <div id="statTotalClients" class="metric-value">0</div>
+            </div>
+            <div class="metric-icon-box">
+              <i class="bi bi-people fs-3"></i>
+            </div>
+          </div>
+
+          <div class="metric-card card-indigo">
+            <div class="metric-info">
+              <h4>Productos Totales</h4>
+              <div id="statTotalProducts" class="metric-value">0</div>
+            </div>
+            <div class="metric-icon-box">
+              <i class="bi bi-box-seam fs-3"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section Row 1: Establecimientos & Pedidos al Mes -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-6">
+            <div class="content-card p-3 h-100">
+              <div class="card-header border-0 pb-0 bg-transparent">
+                <h3 class="card-title d-flex align-items-center">
+                  <i class="bi bi-buildings text-primary me-2"></i>
+                  <span>Pedidos por Establecimiento</span>
+                </h3>
+              </div>
+              <div class="p-3" style="height: 280px; position: relative;">
+                <canvas id="chartEstablecimientos"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="content-card p-3 h-100">
+              <div class="card-header border-0 pb-0 bg-transparent">
+                <h3 class="card-title d-flex align-items-center">
+                  <i class="bi bi-graph-up-arrow text-success me-2"></i>
+                  <span>Cantidad de Pedidos al Mes</span>
+                </h3>
+              </div>
+              <div class="p-3" style="height: 280px; position: relative;">
+                <canvas id="chartMonthlyOrders"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section Row 2: Estado Operativo & Productos Más Pedidos -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-6">
+            <div class="content-card p-3 h-100">
+              <div class="card-header border-0 pb-0 bg-transparent">
+                <h3 class="card-title d-flex align-items-center">
+                  <i class="bi bi-pie-chart-fill text-warning me-2"></i>
+                  <span>Distribución de Pedidos por Estado Operativo</span>
+                </h3>
+              </div>
+              <div class="p-3" style="height: 280px; position: relative;">
+                <canvas id="chartOrderStatus"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="content-card p-3 h-100">
+              <div class="card-header border-0 pb-0 bg-transparent">
+                <h3 class="card-title d-flex align-items-center">
+                  <i class="bi bi-award-fill text-info me-2"></i>
+                  <span>Productos Más Solicitados</span>
+                </h3>
+              </div>
+              <div class="p-3" style="height: 280px; position: relative;">
+                <canvas id="chartTopProducts"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Orders Section -->
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="content-card h-100">
+              <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h3 class="card-title d-flex align-items-center mb-0">
+                  <i class="bi bi-cart3 text-primary me-2"></i>
+                  <span>Últimos Pedidos Registrados</span>
+                </h3>
+                <button class="btn btn-sm btn-outline-secondary" onclick="app.navigateTo('pedidos')">Ver Todos</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table custom-table mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>N° Pedido</th>
+                      <th>Cliente</th>
+                      <th>Establecimiento</th>
+                      <th>Fecha Pedido</th>
+                      <th>Estado</th>
+                      <th class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashOrdersTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Detalle Pedido Modal -->
+  <div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="orderDetailTitle" class="modal-title fw-bold">Detalle de Pedido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            onclick="hideBootstrapModal('orderDetailModal')"></button>
+        </div>
+        <div id="orderDetailBody" class="modal-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal"
+            onclick="hideBootstrapModal('orderDetailModal')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalle Producción Modal -->
+  <div class="modal fade" id="produccionDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="produccionDetailTitle" class="modal-title fw-bold">Detalle del Producto en Producción</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            onclick="hideBootstrapModal('produccionDetailModal')"></button>
+        </div>
+        <div id="produccionDetailBody" class="modal-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal"
+            onclick="hideBootstrapModal('produccionDetailModal')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación Global Personalizado (Ventana Emergente Inplabel) -->
+  <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 99999;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background: var(--bg-card, #1e293b); border: 1px solid rgba(255,255,255,0.12) !important;">
+        <div class="modal-body p-4 text-center">
+          <div id="globalConfirmIconBox" class="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 68px; height: 68px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+            <i id="globalConfirmIcon" class="bi bi-box-arrow-right fs-2"></i>
+          </div>
+          <h5 id="globalConfirmTitle" class="fw-bold mb-2 text-white">¿Cerrar Sesión?</h5>
+          <p id="globalConfirmMessage" class="text-white-50 small mb-4">¿Está seguro de que desea salir del sistema?</p>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" id="globalConfirmCancelBtn" class="btn btn-outline-secondary flex-fill py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="button" id="globalConfirmActionBtn" class="btn btn-danger flex-fill py-2 rounded-3 fw-bold shadow-sm">
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Modular Script -->
+  <script type="module" src="js/main.js?v=1107.0"></script>
+</body>
+
+</html>

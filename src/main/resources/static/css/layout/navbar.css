@@ -1,0 +1,25 @@
+/* Header / Top Navbar - Sticky Always Visible */
+.top-header {
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+  height: 80px;
+  min-height: 80px;
+  background: var(--bg-card);
+
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.page-title {
+  font-family: 'Sora', var(--font-family);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}

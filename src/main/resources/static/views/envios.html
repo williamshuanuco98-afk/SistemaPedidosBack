@@ -1,0 +1,137 @@
+<div class="content-card">
+  <!-- Cabecera de la Vista -->
+  <div class="card-header flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="card-title mb-0"><i class="bi bi-truck text-primary"></i> Listado de Guías de Remisión</h3>
+      <span id="shipmentsCountBadge" class="badge bg-secondary">0 guías</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-primary" onclick="app.navigateTo('nueva-guia')">
+        <i class="bi bi-plus-lg me-1"></i> Generar Nueva Guía
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Búsqueda y Filtros de Guías -->
+  <div class="p-3 bg-body-tertiary border-bottom">
+    <form id="formSearchGuias" onsubmit="event.preventDefault(); app.triggerGuiasSearch();">
+      <div class="row g-2 align-items-end">
+        <!-- Buscar por N° Guía, Cliente o RUC/DNI -->
+        <div class="col-md-4">
+          <label for="searchGuiaInput" class="form-label small fw-bold mb-1">Cliente, N° Guía o Doc</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchGuiaInput" class="form-control" placeholder="Buscar cliente, N° guía (GR001-...) (Enter)...">
+          </div>
+        </div>
+
+        <!-- Fecha Desde -->
+        <div class="col-md-2">
+          <label for="filterGuiaDateFrom" class="form-label small fw-bold mb-1">Desde</label>
+          <input type="date" id="filterGuiaDateFrom" class="form-control form-control-sm">
+        </div>
+
+        <!-- Fecha Hasta -->
+        <div class="col-md-2">
+          <label for="filterGuiaDateTo" class="form-label small fw-bold mb-1">Hasta</label>
+          <input type="date" id="filterGuiaDateTo" class="form-control form-control-sm">
+        </div>
+
+        <!-- Seleccionador de Local (Establecimiento) -->
+        <div class="col-md-3">
+          <label for="filterGuiaEstablishment" class="form-label small fw-bold mb-1">Local / Serie</label>
+          <select id="filterGuiaEstablishment" class="form-select form-select-sm">
+            <option value="ALL" selected>Todos los locales</option>
+            <option value="CARABAYLLO">Carabayllo (Serie GR001)</option>
+            <option value="COMAS">Comas (Serie GR002)</option>
+          </select>
+        </div>
+
+        <!-- Botón de Búsqueda -->
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-search me-1"></i> Buscar
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla de Guías -->
+  <div class="table-responsive">
+    <table class="table custom-table mb-0">
+      <thead>
+        <tr>
+          <th>N° Guía</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>N° Doc (RUC/DNI)</th>
+          <th>Estado</th>
+          <th class="text-center" style="width: 80px;">DETALLES</th>
+          <th class="text-center" style="width: 70px;">PDF</th>
+          <th class="text-center" style="width: 70px;">PRINT</th>
+          <th class="text-center" style="width: 70px;">ANULAR</th>
+        </tr>
+      </thead>
+      <tbody id="enviosTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Detalle de Guía -->
+<div class="modal fade" id="guiaDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold" id="guiaDetailTitle">
+          <i class="bi bi-truck text-white me-2"></i> Detalle de Guía de Remisión
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="guiaDetailBody">
+        <!-- Dynamic content filled by viewGuiaDetail -->
+      </div>
+      <div class="modal-footer bg-body-tertiary">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-success btn-sm" id="btnPrintGuiaModal">
+          <i class="bi bi-printer me-1"></i> Imprimir Guía
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Dar de Baja (Anular Guía) -->
+<div class="modal fade" id="modalAnularGuia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> Dar de Baja / Anular Guía
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="alert alert-warning d-flex align-items-center mb-3 fs-7" role="alert">
+          <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+          <div>Esta acción registrará la guía como <strong>ANULADA</strong> en el sistema.</div>
+        </div>
+        <input type="hidden" id="anularGuiaIdInput">
+        <div class="mb-3">
+          <label class="form-label fs-7 fw-semibold">N° de Guía:</label>
+          <div class="form-control-plaintext font-monospace fw-bold fs-6 text-primary" id="anularNroGuiaLabel">-</div>
+        </div>
+        <div class="mb-3">
+          <label for="motivoAnulacionInput" class="form-label fs-7 fw-semibold">Motivo de Anulación / Baja:</label>
+          <textarea class="form-control" id="motivoAnulacionInput" rows="3" placeholder="Ej: Error en datos del cliente o productos despachados..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer bg-body-tertiary">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="enviosModule.confirmAnularGuia()">
+          <i class="bi bi-check-circle me-1"></i> Confirmar Anulación
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

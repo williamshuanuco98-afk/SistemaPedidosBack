@@ -1,0 +1,54 @@
+/* Custom Modal Overrides */
+.modal-content {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  padding: 20px 24px;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+}
+
+/* Custom Soft, High-Definition & Flicker-Free Modal Backdrop Overlay */
+.modal-backdrop {
+  background-color: #0f172a !important;
+  backdrop-filter: blur(3px) saturate(110%);
+  -webkit-backdrop-filter: blur(3px) saturate(110%);
+  will-change: opacity;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modal-backdrop.fade {
+  opacity: 0 !important;
+}
+
+.modal-backdrop.show {
+  opacity: 0.45 !important;
+}
+
+.modal.show {
+  pointer-events: auto !important;
+}
+
+.modal.show .modal-dialog {
+  pointer-events: auto !important;
+}
+
+/* Ensure hidden modals NEVER capture clicks or block the viewport */
+.modal:not(.show) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body:not(.modal-open) .modal-backdrop {
+  display: none !important;
+  pointer-events: none !important;
+}

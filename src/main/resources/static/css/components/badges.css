@@ -1,0 +1,60 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-badge.PENDIENTE {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.EN_PROCESO,
+.status-badge.EN_TRANSITO {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.status-badge.COMPLETADO,
+.status-badge.ENTREGADO,
+.status-badge.ACTIVA {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.CANCELADO {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+[data-theme="dark"] .status-badge.PENDIENTE {
+  background: #d97706;
+  color: #fef3c7;
+}
+
+[data-theme="dark"] .status-badge.EN_PROCESO,
+[data-theme="dark"] .status-badge.EN_TRANSITO {
+  background: #312e81;
+  color: #a5b4fc;
+}
+
+[data-theme="dark"] .status-badge.COMPLETADO,
+[data-theme="dark"] .status-badge.ENTREGADO,
+[data-theme="dark"] .status-badge.ACTIVA {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .status-badge.CANCELADO {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.badge.bg-emerald { background-color: #10b981 !important; color: #ffffff !important; }
+.badge.bg-amber { background-color: #f59e0b !important; color: #1e293b !important; }
+.badge.bg-purple { background-color: #8b5cf6 !important; color: #ffffff !important; }

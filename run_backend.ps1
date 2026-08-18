@@ -9,6 +9,9 @@ foreach ($c in $conns) {
 }
 Start-Sleep -Seconds 1
 
+# Auto-compilar automáticamente si hubo cambios en código Java o Frontend
+& "$PSScriptRoot\compile_backend.ps1"
+
 $m2Base = "C:\Users\User\.m2\repository"
 
 # List of required runtime jars (without legacy commons-logging)
