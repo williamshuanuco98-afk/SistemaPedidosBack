@@ -69,10 +69,10 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
       matchQuery = nro.includes(query) || cliente.includes(query) || docRef.includes(query) || ruc.includes(query);
     }
 
-    // 2. Date Filter
+    // 2. Date Filter (se ignora si se está buscando por texto específico)
     let matchDate = true;
     const fDate = s.fecha_guia || s.fecha_emision;
-    if (fDate) {
+    if (!query && fDate) {
       const dateStr = String(fDate).substring(0, 10);
       if (dateFrom && dateStr < dateFrom) matchDate = false;
       if (dateTo && dateStr > dateTo) matchDate = false;

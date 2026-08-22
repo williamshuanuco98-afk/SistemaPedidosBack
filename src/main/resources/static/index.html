@@ -108,16 +108,19 @@
         </button>
 
         <!-- Botón Cerrar Sesión justo debajo de Configuración -->
-        <button type="button" class="nav-item mb-2 text-danger w-100 border-0 bg-transparent text-start" title="Cerrar Sesión"
-          onclick="authModule.confirmLogout()">
+        <button type="button" class="nav-item mb-2 text-danger w-100 border-0 bg-transparent text-start"
+          title="Cerrar Sesión" onclick="authModule.confirmLogout()">
           <i class="bi bi-box-arrow-right icon text-danger"></i>
           <span class="nav-label text-danger fw-semibold">Cerrar Sesión</span>
         </button>
 
         <!-- Tarjeta de Usuario del Sistema -->
-        <div class="user-profile d-flex align-items-center p-2 rounded border border-secondary border-opacity-25" style="background: rgba(0,0,0,0.15);">
+        <div class="user-profile d-flex align-items-center p-2 rounded border border-secondary border-opacity-25"
+          style="background: rgba(0,0,0,0.15);">
           <div class="d-flex align-items-center gap-2 overflow-hidden w-100">
-            <div id="userAvatar" class="user-avatar" style="width: 34px; height: 34px; font-size: 0.8rem; font-weight: bold; background: #00AF50; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">AD</div>
+            <div id="userAvatar" class="user-avatar"
+              style="width: 34px; height: 34px; font-size: 0.8rem; font-weight: bold; background: #00AF50; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              AD</div>
             <div class="user-info text-truncate">
               <span id="userNameDisplay" class="user-name text-truncate d-block fw-bold fs-7">Administrador</span>
               <span id="userRoleDisplay" class="badge bg-primary fs-9 py-0 px-1">ADMIN</span>
@@ -136,7 +139,8 @@
       <!-- Header Bar (Glassmorphism Header) -->
       <header class="top-header">
         <div class="d-flex align-items-center gap-2 gap-sm-3 min-w-0">
-          <button type="button" id="btnMobileSidebarToggle" class="btn btn-outline-secondary d-lg-none p-1.5 px-2.5 flex-shrink-0" title="Abrir Menú">
+          <button type="button" id="btnMobileSidebarToggle"
+            class="btn btn-outline-secondary d-lg-none p-1.5 px-2.5 flex-shrink-0" title="Abrir Menú">
             <i class="bi bi-list fs-4 lh-1"></i>
           </button>
           <h2 id="pageTitle" class="page-title d-flex align-items-center text-truncate mb-0">
@@ -354,18 +358,23 @@
   <!-- Modal de Confirmación Global Personalizado (Ventana Emergente Inplabel) -->
   <div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 99999;">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
-      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background: var(--bg-card, #1e293b); border: 1px solid rgba(255,255,255,0.12) !important;">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden"
+        style="background: var(--bg-card, #1e293b); border: 1px solid rgba(255,255,255,0.12) !important;">
         <div class="modal-body p-4 text-center">
-          <div id="globalConfirmIconBox" class="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 68px; height: 68px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+          <div id="globalConfirmIconBox"
+            class="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle"
+            style="width: 68px; height: 68px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">
             <i id="globalConfirmIcon" class="bi bi-box-arrow-right fs-2"></i>
           </div>
           <h5 id="globalConfirmTitle" class="fw-bold mb-2 text-white">¿Cerrar Sesión?</h5>
           <p id="globalConfirmMessage" class="text-white-50 small mb-4">¿Está seguro de que desea salir del sistema?</p>
           <div class="d-flex gap-2 justify-content-center">
-            <button type="button" id="globalConfirmCancelBtn" class="btn btn-outline-secondary flex-fill py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">
+            <button type="button" id="globalConfirmCancelBtn"
+              class="btn btn-outline-secondary flex-fill py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">
               Cancelar
             </button>
-            <button type="button" id="globalConfirmActionBtn" class="btn btn-danger flex-fill py-2 rounded-3 fw-bold shadow-sm">
+            <button type="button" id="globalConfirmActionBtn"
+              class="btn btn-danger flex-fill py-2 rounded-3 fw-bold shadow-sm">
               Cerrar Sesión
             </button>
           </div>

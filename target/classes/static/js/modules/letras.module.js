@@ -284,7 +284,7 @@ export function renderLetrasTable(groupedList = []) {
         <div class="fw-bold">${escapeHtml(lote.nombre_cliente || '-')}</div>
         <small class="text-muted font-monospace">${escapeHtml(lote.nro_documento || '')}</small>
       </td>
-      <td class="small">${escapeHtml(lote.fecha_giro || '-')}</td>
+      <td class="small">${formatDate(lote.fecha_giro)}</td>
       <td class="text-center">
         <span class="badge bg-primary fs-8 px-2 py-1">${lote.total_cuotas} ${lote.total_cuotas === 1 ? 'Letra' : 'Letras'}</span>
       </td>
@@ -374,11 +374,13 @@ export function updateMetrics(rawList = [], groupedList = []) {
 }
 
 export async function triggerSearch() {
-  const search = document.getElementById('searchLetraInput')?.value || '';
+  const search = (document.getElementById('searchLetraInput')?.value || '').trim();
   const dateFrom = document.getElementById('filterLetraDateFrom')?.value || '';
   const dateTo = document.getElementById('filterLetraDateTo')?.value || '';
 
-  const results = await api.getLetras({ search, dateFrom, dateTo });
+  const params = search ? { search } : { search, dateFrom, dateTo };
+
+  const results = await api.getLetras(params);
   rawLetrasList = results || [];
   groupedLetras = groupLetrasByBatch(rawLetrasList);
   renderLetrasTable(groupedLetras);
@@ -898,7 +900,7 @@ export function openLoteDetailModal(idLote) {
                 <td class="text-center fw-bold text-muted">${idx + 1}</td>
                 <td class="font-monospace fw-bold text-primary">${escapeHtml(l.nro_letra)}</td>
                 <td class="text-center font-monospace fw-bold text-warning">${l.dias_credito || '-'} d</td>
-                <td class="small fw-semibold text-danger">${escapeHtml(l.fecha_vencimiento || '-')}</td>
+                <td class="small fw-semibold text-danger">${formatDate(l.fecha_vencimiento)}</td>
                 <td class="text-end fw-bold font-monospace">S/ ${mForm}</td>
                 <td><small class="font-monospace text-muted d-block text-truncate" style="max-width: 260px;" title="${escapeHtml(l.monto_letras || '')}">${escapeHtml(l.monto_letras || '-')}</small></td>
                 <td class="text-center">

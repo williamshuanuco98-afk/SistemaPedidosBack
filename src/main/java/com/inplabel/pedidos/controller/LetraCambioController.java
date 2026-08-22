@@ -42,7 +42,9 @@ public class LetraCambioController {
         StringBuilder sql = new StringBuilder("SELECT * FROM letras_cambio WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
 
-        if (search != null && !search.trim().isEmpty()) {
+        boolean isSearching = search != null && !search.trim().isEmpty();
+
+        if (isSearching) {
             String q = "%" + search.trim() + "%";
             sql.append(
                     "AND (nro_letra LIKE ? OR ref_girador LIKE ? OR nombre_cliente LIKE ? OR nro_documento LIKE ?) ");
@@ -50,16 +52,16 @@ public class LetraCambioController {
             params.add(q);
             params.add(q);
             params.add(q);
-        }
+        } else {
+            if (dateFrom != null && !dateFrom.trim().isEmpty()) {
+                sql.append("AND fecha_giro >= ? ");
+                params.add(dateFrom.trim());
+            }
 
-        if (dateFrom != null && !dateFrom.trim().isEmpty()) {
-            sql.append("AND fecha_giro >= ? ");
-            params.add(dateFrom.trim());
-        }
-
-        if (dateTo != null && !dateTo.trim().isEmpty()) {
-            sql.append("AND fecha_giro <= ? ");
-            params.add(dateTo.trim());
+            if (dateTo != null && !dateTo.trim().isEmpty()) {
+                sql.append("AND fecha_giro <= ? ");
+                params.add(dateTo.trim());
+            }
         }
 
         if (estado != null && !estado.trim().isEmpty() && !estado.equalsIgnoreCase("ALL")) {

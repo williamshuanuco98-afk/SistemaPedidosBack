@@ -57,14 +57,19 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
   const orderStatus = document.getElementById('filterOrderStatus')?.value || 'ALL';
   const todayStr = new Date().toISOString().split('T')[0];
 
+  const isSearching = Boolean(clientQuery);
+
   const filtered = currentOrders.filter(o => {
     const matchClient = !clientQuery ||
       (o.nombre_cliente && o.nombre_cliente.toLowerCase().includes(clientQuery)) ||
       (o.nro_pedido && o.nro_pedido.toLowerCase().includes(clientQuery)) ||
-      (o.nro_orden && o.nro_orden.toLowerCase().includes(clientQuery));
+      (o.nro_orden && o.nro_orden.toLowerCase().includes(clientQuery)) ||
+      (o.nro_guia && o.nro_guia.toLowerCase().includes(clientQuery)) ||
+      (o.nro_documento && o.nro_documento.toLowerCase().includes(clientQuery));
 
     let matchDate = true;
-    if (o.fecha_pedido) {
+    // Si se está buscando por texto, se ignora el filtro de fechas para buscar en todo el histórico
+    if (!isSearching && o.fecha_pedido) {
       if (dateFrom && o.fecha_pedido < dateFrom) matchDate = false;
       if (dateTo && o.fecha_pedido > dateTo) matchDate = false;
     }
