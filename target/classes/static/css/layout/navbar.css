@@ -1,25 +1,49 @@
-/* Header / Top Navbar - Sticky Always Visible */
+/* Header / Top Navbar - Sticky Always Visible & Fully Responsive */
 .top-header {
   position: sticky;
   top: 0;
   z-index: 1040;
-  height: 80px;
-  min-height: 80px;
+  height: 72px;
+  min-height: 72px;
   background: var(--bg-card);
-
-  padding: 0 40px;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
 }
 
 .page-title {
   font-family: 'Sora', var(--font-family);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
+
+@media (max-width: 991.98px) {
+  .top-header {
+    padding: 0 20px;
+    height: 64px;
+    min-height: 64px;
+  }
+  .page-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .top-header {
+    padding: 0 12px;
+    height: 58px;
+    min-height: 58px;
+  }
+  .page-title {
+    font-size: 0.95rem;
+  }
+}

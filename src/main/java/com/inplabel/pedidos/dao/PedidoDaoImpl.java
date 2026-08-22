@@ -2,7 +2,6 @@ package com.inplabel.pedidos.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inplabel.pedidos.util.FileStorageUtil;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -26,25 +25,9 @@ public class PedidoDaoImpl implements PedidoDao {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @PostConstruct
-    public void initTable() {
-        try {
-            jdbcTemplate.update("ALTER TABLE pedido ADD COLUMN adelantos TEXT");
-        } catch (Exception ignored) {}
-    }
-
-    @Override
-    public void cleanOrphanDetails() {
-        try {
-            jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido NOT IN (SELECT id_pedido FROM pedido)");
-        } catch (Exception ignored) {}
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> findAll() {
-        cleanOrphanDetails();
-
         List<Map<String, Object>> pedidos = jdbcTemplate.queryForList(
                 "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
                         "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.id_pedido DESC");
@@ -111,13 +94,16 @@ public class PedidoDaoImpl implements PedidoDao {
                     try {
                         List<Map<String, Object>> parsedList = objectMapper.readValue(strVal, List.class);
                         order.put("adelantos", parsedList);
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 
-            // Calculate dynamic order status if not explicitly CANCELADO, ANULADO or FINALIZADO
+            // Calculate dynamic order status if not explicitly CANCELADO, ANULADO or
+            // FINALIZADO
             String dbEstado = (String) order.get("estado");
-            if (dbEstado == null) dbEstado = "PENDIENTE";
+            if (dbEstado == null)
+                dbEstado = "PENDIENTE";
             dbEstado = dbEstado.trim().toUpperCase();
 
             int sumRequested = 0;
@@ -126,14 +112,17 @@ public class PedidoDaoImpl implements PedidoDao {
             for (Map<String, Object> item : detalles) {
                 Number reqNum = (Number) item.get("cantidad");
                 Number delNum = (Number) item.get("cantidad_entregada");
-                if (reqNum != null) sumRequested += reqNum.intValue();
-                if (delNum != null) sumDelivered += delNum.intValue();
+                if (reqNum != null)
+                    sumRequested += reqNum.intValue();
+                if (delNum != null)
+                    sumDelivered += delNum.intValue();
             }
 
             if (!"CANCELADO".equals(dbEstado) && !"ANULADO".equals(dbEstado) && !"FINALIZADO".equals(dbEstado)) {
                 if (sumDelivered >= sumRequested && sumRequested > 0) {
                     order.put("estado", "COMPLETADO");
-                } else if ((guias != null && !guias.isEmpty()) || sumDelivered > 0 || "EN PROCESO".equals(dbEstado) || "EN_PROCESO".equals(dbEstado)) {
+                } else if ((guias != null && !guias.isEmpty()) || sumDelivered > 0 || "EN PROCESO".equals(dbEstado)
+                        || "EN_PROCESO".equals(dbEstado)) {
                     order.put("estado", "EN PROCESO");
                 }
             }
@@ -166,11 +155,13 @@ public class PedidoDaoImpl implements PedidoDao {
         if (adelantosObj != null) {
             try {
                 adelantosJson = objectMapper.writeValueAsString(adelantosObj);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         Object adjuntosObj = body.get("adjuntos");
-        String storagePath = (String) body.getOrDefault("storage_path", "C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI");
+        String storagePath = (String) body.getOrDefault("storage_path",
+                "C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI");
         boolean useSubfolders = Boolean.TRUE.equals(body.get("use_subfolders"));
 
         final String finalFecha = fecha;
@@ -206,8 +197,10 @@ public class PedidoDaoImpl implements PedidoDao {
         jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido = ?", newId);
 
         // Save attached files and update JSON string
-        String updatedAdjuntosJson = fileStorageUtil.saveAttachedFiles(adjuntosObj, storagePath, useSubfolders, nroPedido);
-        jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido, updatedAdjuntosJson, newId);
+        String updatedAdjuntosJson = fileStorageUtil.saveAttachedFiles(adjuntosObj, storagePath, useSubfolders,
+                nroPedido);
+        jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido,
+                updatedAdjuntosJson, newId);
 
         List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
         if (detalles != null) {
@@ -240,7 +233,8 @@ public class PedidoDaoImpl implements PedidoDao {
             try {
                 String adelantosJson = objectMapper.writeValueAsString(adelantosObj);
                 jdbcTemplate.update("UPDATE pedido SET adelantos = ? WHERE id_pedido = ?", adelantosJson, id);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         if (fecha != null && estado != null) {

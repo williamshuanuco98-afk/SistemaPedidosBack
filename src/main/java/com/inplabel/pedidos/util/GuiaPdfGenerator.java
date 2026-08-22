@@ -121,13 +121,13 @@ public class GuiaPdfGenerator {
         PdfPTable half = new PdfPTable(1);
         half.setWidthPercentage(100);
 
-        String nroGuia = (String) guia.getOrDefault("nro_guia", "GR001-0001");
-        String cliente = (String) guia.getOrDefault("nombre_cliente", "Cliente General");
-        String ruc = (String) guia.getOrDefault("nro_documento", "-");
+        String nroGuia = String.valueOf(guia.getOrDefault("nro_guia", "GR001-0001"));
+        String cliente = String.valueOf(guia.getOrDefault("nombre_cliente", "Cliente General"));
+        String ruc = String.valueOf(guia.getOrDefault("nro_documento", "-"));
         String fecha = formatFecha(guia.get("fecha_guia") != null ? guia.get("fecha_guia") : guia.get("fecha_emision"));
-        String puntoPartida = (String) guia.getOrDefault("punto_partida", "C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - CARABAYLLO - LIMA - LIMA");
-        String puntoLlegada = (String) guia.getOrDefault("punto_llegada", guia.getOrDefault("direccion_destino", "Dirección del Cliente - LIMA - LIMA"));
-        String obs = (String) guia.getOrDefault("observaciones", "");
+        String puntoPartida = String.valueOf(guia.getOrDefault("punto_partida", "C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - CARABAYLLO - LIMA - LIMA"));
+        String puntoLlegada = String.valueOf(guia.getOrDefault("punto_llegada", guia.getOrDefault("direccion_destino", "Dirección del Cliente - LIMA - LIMA")));
+        String obs = String.valueOf(guia.getOrDefault("observaciones", ""));
 
         // -------------------------------------------------------------
         // 1. TOP HEADER: [Logo] [Company Details] [RUC Box]

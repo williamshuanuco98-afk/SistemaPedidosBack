@@ -1,7 +1,18 @@
+/* Root & Viewport Sizing */
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--bg-main);
+}
+
 /* App Layout Container */
 .app-container {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-main);
 }
 
 /* Main Content Workspace */
@@ -10,21 +21,44 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  max-height: 100vh;
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  min-width: 0;
   background-color: var(--bg-main);
   transition: background-color 0.25s ease;
 }
 
 .page-body {
-  padding: 32px 40px;
+  padding: 28px 32px;
   flex: 1;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 768px) {
+.page-body > .content-card {
+  width: 100%;
+}
+
+@media (max-width: 1199.98px) {
   .page-body {
-    padding: 20px;
+    padding: 22px 24px;
   }
 }
+
+@media (max-width: 767.98px) {
+  .page-body {
+    padding: 16px 14px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .page-body {
+    padding: 12px 8px;
+  }
+}
+

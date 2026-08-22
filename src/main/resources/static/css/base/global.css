@@ -175,6 +175,33 @@ body {
   text-align: left;
 }
 
+@media (max-width: 575.98px) {
+  .theme-toggle-pill {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    padding: 3px !important;
+    gap: 0 !important;
+  }
+  .theme-toggle-label {
+    display: none !important;
+  }
+  .theme-toggle-track {
+    width: 44px;
+    height: 24px;
+  }
+  .theme-toggle-handle {
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+  }
+  [data-theme="dark"] .theme-toggle-handle {
+    transform: translateX(20px);
+  }
+}
+
+
 /* Custom Scrollbars in Dark Mode */
 [data-theme="dark"] ::-webkit-scrollbar {
   width: 8px;
@@ -388,3 +415,15 @@ body {
   color: #fca5a5 !important;
   border-color: #b91c1c !important;
 }
+
+/* Spinner Animation for Realtime In-flight Queries */
+.spin {
+  animation: spinRotate 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+

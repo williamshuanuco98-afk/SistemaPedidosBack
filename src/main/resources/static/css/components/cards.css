@@ -37,29 +37,57 @@
   margin-right: 0 !important;
 }
 
-/* 5 Metric Grid Cards */
+/* Responsive Dynamic Metric Grid Cards (All in 1 Row on Desktop) */
 .metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
 }
 
-@media (max-width: 992px) {
+.metrics-grid > .metric-card {
+  flex: 1 1 0px;
+  min-width: 0;
+}
+
+@media (max-width: 1199.98px) {
   .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .metrics-grid > .metric-card {
+    flex: initial;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
 .metric-card {
   background: var(--bg-card);
   border-radius: var(--radius-md);
-  padding: 18px 14px;
+  padding: 14px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
   min-width: 0;
+  overflow: hidden;
 }
 
 .metric-info {
@@ -68,30 +96,54 @@
 }
 
 .metric-info h4 {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+}
+
+.metric-value {
+  font-family: 'Sora', var(--font-family);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.metric-value {
-  font-family: 'Sora', var(--font-family);
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
 .metric-icon-box {
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  margin-left: 8px;
+}
+
+@media (max-width: 575.98px) {
+  .metric-card {
+    padding: 12px 10px;
+  }
+  .metric-value {
+    font-size: 1.45rem;
+  }
+  .metric-icon-box {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
 }
 
 .metric-blue { background: #eff6ff; color: #2563eb; }

@@ -1,6 +1,9 @@
 /* Sidebar (Smooth Butter Transitions) */
 .sidebar {
   width: 270px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
   background: var(--bg-sidebar);
   color: var(--text-sidebar);
   display: flex;
@@ -10,7 +13,8 @@
   z-index: 50;
   border-right: 1px solid var(--border-dark);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   will-change: width;
 }
 
@@ -291,3 +295,55 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* =========================================================================
+   Mobile Off-Canvas Drawer & Responsive Styles (< 992px)
+   ========================================================================= */
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: -300px !important;
+    width: 280px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    z-index: 1060 !important;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.4) !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .sidebar.mobile-open {
+    left: 0 !important;
+  }
+
+  .sidebar-mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1055;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-mobile-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-header {
+    height: 80px;
+    min-height: 80px;
+  }
+
+  .brand-logo-img {
+    height: 55px;
+    max-width: 140px;
+  }
+}

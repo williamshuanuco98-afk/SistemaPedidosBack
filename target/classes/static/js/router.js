@@ -3,7 +3,7 @@
 const EMBEDDED_VIEWS = {
   dashboard: `
 <!-- Top Metrics 5 KPI Grid -->
-<div class="metrics-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+<div class="metrics-grid mb-4">
   <div class="metric-card card-blue">
     <div class="metric-info">
       <h4>Total Pedidos</h4>
@@ -214,7 +214,7 @@ const EMBEDDED_VIEWS = {
         </div>
 
         <!-- Botón de Búsqueda -->
-        <div class="col-md-1">
+        <div class="col-lg-1 col-md-2 col-12">
           <button type="submit" class="btn btn-primary btn-sm w-100">
             <i class="bi bi-search me-1"></i> Buscar
           </button>
@@ -857,22 +857,22 @@ const EMBEDDED_VIEWS = {
   <div class="card-body p-4">
     <form id="formNuevaGuia" onsubmit="event.preventDefault(); nuevaGuiaModule.submitNuevaGuia();">
       
-      <!-- Fila 1: 1. N° Guía (10%), 2. Documento de Referencia (10%), 3. Local de Salida (10%), 4. Dirección del Punto de Partida (70%) -->
-      <div class="d-flex flex-wrap gap-0 mb-3 p-3 border rounded bg-body-tertiary align-items-end" style="gap: 0.5% !important;">
-        <!-- 1. N° Guía (10%) -->
-        <div style="width: 10%;">
+      <!-- Fila 1: 1. N° Guía, 2. Documento de Referencia, 3. Local de Salida, 4. Dirección del Punto de Partida -->
+      <div class="row g-2 mb-3 p-3 border rounded bg-body-tertiary align-items-end">
+        <!-- 1. N° Guía -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-6">
           <label for="nroGuiaInput" class="form-label fw-bold small mb-1 text-nowrap">N° Guía <span class="text-danger">*</span></label>
           <input type="text" id="nroGuiaInput" class="form-control form-control-sm fw-bold text-primary" readonly>
         </div>
 
-        <!-- 2. Documento de Referencia (10%) -->
-        <div style="width: 10%;">
+        <!-- 2. Documento de Referencia -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-6">
           <label for="docReferenciaGuiaInput" class="form-label fw-bold small mb-1 text-nowrap">Doc. Referencia</label>
-          <input type="text" id="docReferenciaGuiaInput" class="form-control form-control-sm">
+          <input type="text" id="docReferenciaGuiaInput" class="form-control form-control-sm" placeholder="Ej: OC-1024">
         </div>
 
-        <!-- 3. Local de Salida (10%) -->
-        <div style="width: 10%;">
+        <!-- 3. Local de Salida -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-12">
           <label for="selectLocalGuia" class="form-label fw-bold small mb-1 text-nowrap">Local Salida <span class="text-danger">*</span></label>
           <select id="selectLocalGuia" class="form-select form-select-sm px-1" onchange="nuevaGuiaModule.onLocalChanged(this.value)">
             <option value="CARABAYLLO" selected>Carabayllo (GR001)</option>
@@ -880,8 +880,8 @@ const EMBEDDED_VIEWS = {
           </select>
         </div>
 
-        <!-- 4. Dirección del Punto de Partida (70%) -->
-        <div style="width: 68.5%;">
+        <!-- 4. Dirección del Punto de Partida -->
+        <div class="col-xl-6 col-lg-6 col-md-3 col-12">
           <label for="puntoPartidaInput" class="form-label fw-bold small mb-1 text-nowrap">Dirección del Punto de Partida</label>
           <input type="text" id="puntoPartidaInput" class="form-control form-control-sm" readonly>
         </div>
@@ -1061,18 +1061,6 @@ const EMBEDDED_VIEWS = {
     </div>
   </div>
 </div>
-              <input type="text" id="modalClienteDireccion" class="form-control" placeholder="Dirección fiscal devuelta por SUNAT">
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar Cliente</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 `,
 
   productos: `
@@ -1160,7 +1148,7 @@ const EMBEDDED_VIEWS = {
 
   <div class="p-3">
     <!-- Indicadores Rápidos / 6 KPI Cards de Producción -->
-    <div class="metrics-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+    <div class="metrics-grid mb-4">
       <div class="metric-card card-blue">
         <div class="metric-info">
           <h4>Ítems Distintos</h4>
@@ -1388,7 +1376,7 @@ const EMBEDDED_VIEWS = {
 
   <div class="p-3">
     <!-- Indicadores Rápidos / KPI Cards -->
-    <div class="metrics-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+    <div class="metrics-grid mb-4">
       <!-- 1. Monto Total Emitido -->
       <div class="metric-card card-emerald">
         <div class="metric-info">

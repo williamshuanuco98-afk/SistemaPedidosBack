@@ -1,5 +1,5 @@
 import { escapeHtml, filterAndRankItems, formatDate, paginateItems, renderPaginationUI } from '../helpers.js';
-import { api } from '../api.js';
+import { api, BASE_URL } from '../api.js';
 
 let rawLetrasList = [];
 let groupedLetras = [];
@@ -281,7 +281,7 @@ export function renderLetrasTable(groupedList = []) {
     tr.innerHTML = `
       <td class="font-monospace fw-bold text-primary fs-7">${escapeHtml(lote.ref_girador || '-')}</td>
       <td>
-        <div class="fw-bold text-white">${escapeHtml(lote.nombre_cliente || '-')}</div>
+        <div class="fw-bold">${escapeHtml(lote.nombre_cliente || '-')}</div>
         <small class="text-muted font-monospace">${escapeHtml(lote.nro_documento || '')}</small>
       </td>
       <td class="small">${escapeHtml(lote.fecha_giro || '-')}</td>
@@ -289,7 +289,7 @@ export function renderLetrasTable(groupedList = []) {
         <span class="badge bg-primary fs-8 px-2 py-1">${lote.total_cuotas} ${lote.total_cuotas === 1 ? 'Letra' : 'Letras'}</span>
       </td>
       <td class="font-monospace fw-semibold text-info small">${escapeHtml(lote.rango_letras || '-')}</td>
-      <td class="text-end fw-bold font-monospace text-white">S/ ${montoFormatted}</td>
+      <td class="text-end fw-bold font-monospace">S/ ${montoFormatted}</td>
       
       <!-- 1. Columna DETALLES -->
       <td class="text-center">
@@ -468,9 +468,9 @@ function setupClientSearchAutocomplete() {
     }
 
     list.innerHTML = matches.map((c, idx) => `
-      <li class="list-group-item list-group-item-action py-2 px-3 client-opt-letra d-flex align-items-center gap-2 fs-7 text-white" data-index="${idx}">
-        <span class="fw-bold text-white">${escapeHtml(c.nro_documento || 'S/D')}</span>
-        <span class="fw-semibold text-white">- ${escapeHtml(c.nombre_cliente || c.razon_social)}</span>
+      <li class="list-group-item list-group-item-action py-2 px-3 client-opt-letra d-flex align-items-center gap-2 fs-7" data-index="${idx}">
+        <span class="fw-bold text-primary">${escapeHtml(c.nro_documento || 'S/D')}</span>
+        <span class="fw-semibold text-body">- ${escapeHtml(c.nombre_cliente || c.razon_social)}</span>
       </li>
     `).join('');
     list.classList.remove('d-none');
@@ -937,13 +937,13 @@ export function openLoteDetailModal(idLote) {
 export function downloadPdf(idLetra) {
   const savedPath = localStorage.getItem('inplabel_letras_pdf_storage_path') || 'C:\\Inplabel\\Letras';
   const sub = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const url = `http://localhost:8080/api/letras/${idLetra}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${sub}&_t=${Date.now()}`;
+  const url = `${BASE_URL}/letras/${idLetra}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${sub}&_t=${Date.now()}`;
   window.open(url, '_blank');
 }
 
 export async function printLetraDirect(idLetra) {
   try {
-    const url = `http://localhost:8080/api/letras/${idLetra}/pdf?_t=${Date.now()}`;
+    const url = `${BASE_URL}/letras/${idLetra}/pdf?_t=${Date.now()}`;
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

@@ -16,32 +16,36 @@
   <div class="card-body p-4">
     <form id="formNuevaGuia" onsubmit="event.preventDefault(); nuevaGuiaModule.submitNuevaGuia();">
 
-      <!-- Fila 1: 1. N° Guía (10%), 2. Documento de Referencia (10%), 3. Local de Salida (10%), 4. Dirección del Punto de Partida (70%) -->
-      <div class="d-flex flex-wrap gap-0 mb-3 p-3 border rounded bg-body-tertiary align-items-end" style="gap: 0.5% !important;">
-        <!-- 1. N° Guía (10%) -->
-        <div style="width: 10%;">
-          <label for="nroGuiaInput" class="form-label fw-bold small mb-1 text-nowrap">N° Guía <span class="text-danger">*</span></label>
+      <!-- Fila 1: 1. N° Guía, 2. Documento de Referencia, 3. Local de Salida, 4. Dirección del Punto de Partida -->
+      <div class="row g-2 mb-3 p-3 border rounded bg-body-tertiary align-items-end">
+        <!-- 1. N° Guía -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+          <label for="nroGuiaInput" class="form-label fw-bold small mb-1 text-nowrap">N° Guía <span
+              class="text-danger">*</span></label>
           <input type="text" id="nroGuiaInput" class="form-control form-control-sm fw-bold text-primary" readonly>
         </div>
 
-        <!-- 2. Documento de Referencia (10%) -->
-        <div style="width: 10%;">
+        <!-- 2. Documento de Referencia -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-6">
           <label for="docReferenciaGuiaInput" class="form-label fw-bold small mb-1 text-nowrap">Doc. Referencia</label>
-          <input type="text" id="docReferenciaGuiaInput" class="form-control form-control-sm">
+          <input type="text" id="docReferenciaGuiaInput" class="form-control form-control-sm" placeholder="Ej: OC-1024">
         </div>
 
-        <!-- 3. Local de Salida (10%) -->
-        <div style="width: 10%;">
-          <label for="selectLocalGuia" class="form-label fw-bold small mb-1 text-nowrap">Local Salida <span class="text-danger">*</span></label>
-          <select id="selectLocalGuia" class="form-select form-select-sm px-1" onchange="nuevaGuiaModule.onLocalChanged(this.value)">
+        <!-- 3. Local de Salida -->
+        <div class="col-xl-2 col-lg-2 col-md-3 col-12">
+          <label for="selectLocalGuia" class="form-label fw-bold small mb-1 text-nowrap">Local Salida <span
+              class="text-danger">*</span></label>
+          <select id="selectLocalGuia" class="form-select form-select-sm px-1"
+            onchange="nuevaGuiaModule.onLocalChanged(this.value)">
             <option value="CARABAYLLO" selected>Carabayllo (GR001)</option>
             <option value="COMAS">Comas (GR002)</option>
           </select>
         </div>
 
-        <!-- 4. Dirección del Punto de Partida (70%) -->
-        <div style="width: 68.5%;">
-          <label for="puntoPartidaInput" class="form-label fw-bold small mb-1 text-nowrap">Dirección del Punto de Partida</label>
+        <!-- 4. Dirección del Punto de Partida -->
+        <div class="col-xl-6 col-lg-6 col-md-3 col-12">
+          <label for="puntoPartidaInput" class="form-label fw-bold small mb-1 text-nowrap">Dirección del Punto de
+            Partida</label>
           <input type="text" id="puntoPartidaInput" class="form-control form-control-sm" readonly>
         </div>
       </div>
@@ -50,13 +54,15 @@
       <div class="row g-2 mb-3 p-3 border rounded bg-body-tertiary">
         <!-- Buscador Interactivo de Cliente -->
         <div class="col-md-5 position-relative">
-          <label for="searchClienteGuiaInput" class="form-label fw-bold small mb-1">Cliente / Razón Social <span class="text-danger">*</span></label>
+          <label for="searchClienteGuiaInput" class="form-label fw-bold small mb-1">Cliente / Razón Social <span
+              class="text-danger">*</span></label>
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-person-search"></i></span>
             <input type="text" id="searchClienteGuiaInput" class="form-control" autocomplete="off">
           </div>
           <!-- Dropdown Autocompletado de Clientes -->
-          <ul id="clientSearchResultsGuiaList" class="list-group position-absolute w-100 shadow-sm d-none z-3" style="max-height: 260px; overflow-y: auto;"></ul>
+          <ul id="clientSearchResultsGuiaList" class="list-group position-absolute w-100 shadow-sm d-none z-3"
+            style="max-height: 260px; overflow-y: auto;"></ul>
         </div>
 
         <div class="col-md-3">
@@ -65,13 +71,15 @@
         </div>
 
         <div class="col-md-4">
-          <label for="fechaEmisionGuiaInput" class="form-label fw-bold small mb-1">Fecha de Emisión <span class="text-danger">*</span></label>
+          <label for="fechaEmisionGuiaInput" class="form-label fw-bold small mb-1">Fecha de Emisión <span
+              class="text-danger">*</span></label>
           <input type="date" id="fechaEmisionGuiaInput" class="form-control form-control-sm">
         </div>
 
         <!-- Punto de Llegada (Solo Lectura) -->
         <div class="col-12 mt-2">
-          <label for="puntoLlegadaGuiaInput" class="form-label fw-bold small mb-1">Punto de Llegada (Dirección del Cliente) <span class="text-danger">*</span></label>
+          <label for="puntoLlegadaGuiaInput" class="form-label fw-bold small mb-1">Punto de Llegada (Dirección del
+            Cliente) <span class="text-danger">*</span></label>
           <input type="text" id="puntoLlegadaGuiaInput" class="form-control form-control-sm bg-body-secondary" readonly>
         </div>
       </div>
@@ -90,7 +98,8 @@
               <input type="text" id="searchProductGuiaInput" class="form-control" autocomplete="off">
             </div>
             <!-- Autocompletado Productos -->
-            <ul id="productSearchResultsGuiaList" class="list-group position-absolute w-100 shadow mt-1 d-none" style="z-index: 1050; max-height: 600px; overflow-y: auto;"></ul>
+            <ul id="productSearchResultsGuiaList" class="list-group position-absolute w-100 shadow mt-1 d-none"
+              style="z-index: 1050; max-height: 600px; overflow-y: auto;"></ul>
           </div>
         </div>
 

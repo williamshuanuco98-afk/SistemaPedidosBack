@@ -159,13 +159,55 @@
 }
 
 .btn-action-solid.btn-envio {
-  background: #f59e0b !important; /* Vibrant Amber Orange */
+  background: #d97706 !important; /* High-contrast Warm Amber */
+  color: #ffffff !important;
+}
+
+.btn-action-solid.btn-envio:hover {
+  background: #b45309 !important;
+  color: #ffffff !important;
 }
 
 .btn-action-solid.btn-edit {
   background: #eab308 !important; /* Vibrant Yellow/Gold */
-  color: #1e293b !important;
+  color: #0f172a !important;
 }
 
+.btn-action-solid.btn-edit i {
+  color: #0f172a !important;
+}
 
+.btn-action-solid.btn-edit:hover i {
+  color: #0f172a !important;
+}
 
+/* =========================================================================
+   Mobile Responsive Table & Action Button Adjustments (< 768px)
+   ========================================================================= */
+@media (max-width: 767.98px) {
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .custom-table th, .table th {
+    padding: 7px 8px !important;
+    font-size: 12.5px !important;
+    letter-spacing: 0.02em;
+  }
+
+  .custom-table td, .table td {
+    padding: 7px 8px !important;
+    font-size: 12.5px !important;
+  }
+
+  .btn-action-solid {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    border-radius: 5px;
+  }
+
+  .table-actions-container {
+    gap: 4px;
+  }
+}

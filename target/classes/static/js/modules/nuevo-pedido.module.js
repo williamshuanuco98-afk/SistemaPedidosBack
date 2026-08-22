@@ -78,9 +78,9 @@ function setupClientSearch() {
     }
 
     list.innerHTML = matches.map((c, idx) => `
-      <li class="list-group-item list-group-item-action py-2 px-3 client-opt-item d-flex align-items-center gap-2 fs-7 text-white" data-index="${idx}">
-        <span class="fw-bold text-white">${escapeHtml(c.nro_documento || 'S/D')}</span>
-        <span class="fw-semibold text-white">- ${escapeHtml(c.nombre_cliente)}</span>
+      <li class="list-group-item list-group-item-action py-2 px-3 client-opt-item d-flex align-items-center gap-2 fs-7" data-index="${idx}">
+        <span class="fw-bold text-primary">${escapeHtml(c.nro_documento || 'S/D')}</span>
+        <span class="fw-semibold text-body">- ${escapeHtml(c.nombre_cliente)}</span>
       </li>
     `).join('');
     list.classList.remove('d-none');
@@ -164,9 +164,9 @@ function setupProductSearch() {
     }
 
     list.innerHTML = matches.map((p, idx) => `
-      <li class="list-group-item list-group-item-action py-1 px-3 prod-opt-item d-flex align-items-center gap-2 fs-7 text-white" data-index="${idx}">
-        <span class="fw-bold text-white">#${p.id_producto}</span>
-        <span class="fw-semibold text-white">- ${escapeHtml(p.nombre_producto)}</span>
+      <li class="list-group-item list-group-item-action py-1 px-3 prod-opt-item d-flex align-items-center gap-2 fs-7" data-index="${idx}">
+        <span class="fw-bold text-primary">#${p.id_producto}</span>
+        <span class="fw-semibold text-body">- ${escapeHtml(p.nombre_producto)}</span>
       </li>
     `).join('');
     list.classList.remove('d-none');

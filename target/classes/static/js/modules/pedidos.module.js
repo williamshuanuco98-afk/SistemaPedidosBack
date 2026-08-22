@@ -377,8 +377,6 @@ export async function saveRegistrarEnvio() {
         });
       }
 
-      const cerrarSaldoChecked = document.getElementById('envioCerrarSaldoCheck')?.checked;
-
       let nuevoEstado = 'EN PROCESO';
       if (totalDelivered >= totalRequested && totalRequested > 0) {
         nuevoEstado = 'COMPLETADO';

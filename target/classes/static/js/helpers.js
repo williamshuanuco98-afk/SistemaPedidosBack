@@ -312,44 +312,22 @@ export function initFlatpickrOnAllInputs() {
 }
 window.initFlatpickrOnAllInputs = initFlatpickrOnAllInputs;
 
-export function setAppZoom(zoomVal) {
-  const currentZoom = Math.max(0.4, Math.min(2.0, zoomVal));
-  localStorage.setItem('inplabel_user_zoom', String(currentZoom));
-  document.body.style.zoom = currentZoom;
-  return currentZoom;
+export function setAppZoom() {
+  try {
+    localStorage.removeItem('inplabel_user_zoom');
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.removeProperty('zoom');
+    }
+  } catch (e) {}
 }
 
 export function initGlobalZoomHandlers() {
-  const saved = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
-  if (saved !== 1.0) setAppZoom(saved);
-
-  window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      const cur = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
-      if (e.key === '+' || e.key === '=' || e.key === 'NumpadAdd') {
-        e.preventDefault();
-        setAppZoom(cur + 0.1);
-      } else if (e.key === '-' || e.key === '_' || e.key === 'NumpadSubtract') {
-        e.preventDefault();
-        setAppZoom(cur - 0.1);
-      } else if (e.key === '0' || e.key === 'Numpad0') {
-        e.preventDefault();
-        setAppZoom(1.0);
-      }
+  try {
+    localStorage.removeItem('inplabel_user_zoom');
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.removeProperty('zoom');
     }
-  });
-
-  window.addEventListener('wheel', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const cur = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
-      if (e.deltaY < 0) {
-        setAppZoom(cur + 0.05);
-      } else if (e.deltaY > 0) {
-        setAppZoom(cur - 0.05);
-      }
-    }
-  }, { passive: false });
+  } catch (e) {}
 }
 window.setAppZoom = setAppZoom;
 window.initGlobalZoomHandlers = initGlobalZoomHandlers;

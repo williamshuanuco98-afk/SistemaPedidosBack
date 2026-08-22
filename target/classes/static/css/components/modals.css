@@ -52,3 +52,35 @@ body:not(.modal-open) .modal-backdrop {
   display: none !important;
   pointer-events: none !important;
 }
+
+/* =========================================================================
+   Mobile Modal Adjustments (< 576px)
+   ========================================================================= */
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 8px auto !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  .modal-content {
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .modal-body {
+    padding: 16px 14px !important;
+  }
+
+  .modal-footer {
+    padding: 12px 14px !important;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer > * {
+    margin: 4px !important;
+  }
+}
+

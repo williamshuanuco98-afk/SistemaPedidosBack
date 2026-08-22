@@ -58,27 +58,27 @@ export function filterClientes(queryStr = '') {
     return;
   }
 
-  p.items.forEach((c, idx) => {
+  p.items.forEach((c) => {
     const tr = document.createElement('tr');
     const badgeBg = (c.tipo_documento === 'DNI') ? 'bg-info text-dark' : 'bg-primary';
     const clientId = c.id_cliente || c.id;
     tr.innerHTML = `
-      <td class="fw-bold text-white">
+      <td class="fw-bold">
         <span class="badge ${badgeBg} me-1 fs-8">${escapeHtml(c.tipo_documento || 'RUC')}</span>
         <span>${escapeHtml(c.nro_documento || 'S/D')}</span>
       </td>
-      <td class="fw-semibold text-white">${escapeHtml(c.nombre_cliente || '-')}</td>
-      <td class="small text-white-50">${escapeHtml(c.direccion || 'No especificada')}</td>
+      <td class="fw-semibold">${escapeHtml(c.nombre_cliente || '-')}</td>
+      <td class="small text-muted">${escapeHtml(c.direccion || 'No especificada')}</td>
       <!-- 1. Columna EDITAR -->
       <td class="text-center">
-        <button type="button" class="btn-action-solid btn-edit" onclick="clientesModule.openEditClientModal(${idx})" title="Modificar Cliente">
+        <button type="button" class="btn-action-solid btn-edit" onclick="clientesModule.openEditClientModal('${clientId}')" title="Modificar Cliente">
           <i class="bi bi-pencil-square text-dark"></i>
         </button>
       </td>
       <!-- 2. Columna ELIMINAR -->
       <td class="text-center">
         ${allowDelete ? `
-          <button type="button" class="btn-action-solid btn-delete" onclick="clientesModule.deleteClient(${clientId})" title="Eliminar Cliente">
+          <button type="button" class="btn-action-solid btn-delete" onclick="clientesModule.deleteClient('${clientId}')" title="Eliminar Cliente">
             <i class="bi bi-trash-fill"></i>
           </button>
         ` : `
@@ -125,15 +125,8 @@ export function openNewClientModal() {
   modal.show();
 }
 
-export function openEditClientModal(filteredIndex) {
-  const queryStr = document.getElementById('searchClientesInput')?.value || '';
-  const filtered = filterAndRankItems(
-    currentClients, 
-    queryStr, 
-    c => `${c.nro_documento || ''} ${c.nombre_cliente || ''} ${c.direccion || ''}`
-  );
-
-  const client = filtered[filteredIndex];
+export function openEditClientModal(clientId) {
+  const client = currentClients.find(c => String(c.id_cliente || c.id) === String(clientId));
   if (!client) return;
 
   editingClientIndex = currentClients.indexOf(client);

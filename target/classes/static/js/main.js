@@ -17,6 +17,8 @@ import {
   saveFinalizarOrden,
   openRegistrarEnvioModal,
   saveRegistrarEnvio,
+  openAgregarPagoModal,
+  savePagoPedido,
   viewOrderDetail,
   setupDefaultDateFilters
 } from './modules/pedidos.module.js';
@@ -140,6 +142,8 @@ window.pedidosModule = {
   saveFinalizarOrden,
   openRegistrarEnvioModal,
   saveRegistrarEnvio,
+  openAgregarPagoModal,
+  savePagoPedido,
   viewOrderDetail
 };
 
@@ -382,7 +386,7 @@ class ModularSpaApp {
       }
     });
 
-    // Sidebar toggle
+    // Desktop sidebar collapse toggle
     const toggleBtn = document.getElementById('btnToggleSidebar') || document.getElementById('toggleSidebarBtn');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
@@ -400,9 +404,34 @@ class ModularSpaApp {
       });
     }
 
-    // Navigation routes
+    // Mobile sidebar off-canvas drawer toggle
+    const mobileToggleBtn = document.getElementById('btnMobileSidebarToggle');
+    const mobileBackdrop = document.getElementById('sidebarMobileBackdrop');
+    const sidebarEl = document.querySelector('.sidebar') || document.getElementById('sidebar');
+
+    const closeMobileSidebar = () => {
+      if (sidebarEl) sidebarEl.classList.remove('mobile-open');
+      if (mobileBackdrop) mobileBackdrop.classList.remove('show');
+    };
+
+    if (mobileToggleBtn && sidebarEl) {
+      mobileToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = sidebarEl.classList.toggle('mobile-open');
+        if (mobileBackdrop) {
+          mobileBackdrop.classList.toggle('show', isOpen);
+        }
+      });
+    }
+
+    if (mobileBackdrop) {
+      mobileBackdrop.addEventListener('click', closeMobileSidebar);
+    }
+
+    // Navigation routes - auto close mobile drawer when route selected
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => {
+        closeMobileSidebar();
         const route = btn.getAttribute('data-route');
         if (route) this.navigateTo(route);
       });

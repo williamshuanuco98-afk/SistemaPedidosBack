@@ -98,7 +98,7 @@ export function openNewProductModal() {
 }
 
 export function openEditProductModal(id) {
-  const p = currentProducts.find(item => item.id_producto === id);
+  const p = currentProducts.find(item => String(item.id_producto || item.id) === String(id));
   if (!p) return;
 
   const modalElem = document.getElementById('modalProducto');
@@ -184,7 +184,7 @@ export async function deleteProduct(id) {
     });
     return;
   }
-  const p = currentProducts.find(item => item.id_producto === id);
+  const p = currentProducts.find(item => String(item.id_producto || item.id) === String(id));
   if (!p) return;
 
   const confirmed = await showConfirmModal({
@@ -201,6 +201,6 @@ export async function deleteProduct(id) {
   if (!confirmed) return;
 
   await api.deleteProducto(id);
-  currentProducts = currentProducts.filter(item => item.id_producto !== id);
+  currentProducts = currentProducts.filter(item => String(item.id_producto || item.id) !== String(id));
   filterProductos();
 }

@@ -1,4 +1,4 @@
-import { api } from '../api.js';
+import { api, BASE_URL } from '../api.js';
 import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
 
 let currentShipments = [];
@@ -282,7 +282,7 @@ export function viewGuiaDetail(idGuia) {
 export function openPDF(idGuia) {
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `http://localhost:8080/api/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
   window.open(pdfUrl, '_blank');
 }
 
@@ -304,7 +304,7 @@ export async function printPDF(idGuia) {
   // Fallback: If not in memory, print PDF stream directly via invisible iframe
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `http://localhost:8080/api/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
 
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';

@@ -103,10 +103,19 @@ public class LetraPdfGenerator {
         String fechaVencStr = String.valueOf(letra.getOrDefault("fecha_vencimiento", LocalDate.now().plusDays(30).toString()));
         String[] vencParts = parseDateToParts(fechaVencStr);
 
-        Number montoNum = (Number) letra.getOrDefault("monto", 0.0);
+        Object montoObj = letra.get("monto");
+        double montoVal = 0.0;
+        if (montoObj instanceof Number) {
+            montoVal = ((Number) montoObj).doubleValue();
+        } else if (montoObj != null) {
+            try {
+                montoVal = Double.parseDouble(montoObj.toString().trim().replace(",", "."));
+            } catch (Exception ignored) {}
+        }
+
         String moneda = String.valueOf(letra.getOrDefault("moneda", "SOLES")).toUpperCase();
         String symbol = moneda.contains("DOLAR") || moneda.contains("USD") ? "$" : "S/";
-        String montoFormatted = String.format("%s %,.2f", symbol, montoNum.doubleValue()).replace(',', 'X').replace('.', ',').replace('X', '.');
+        String montoFormatted = String.format("%s %,.2f", symbol, montoVal).replace(',', 'X').replace('.', ',').replace('X', '.');
 
         String montoLetras = String.valueOf(letra.getOrDefault("monto_letras", "CERO CON 00 / 100 SOLES")).toUpperCase();
         String cliente = String.valueOf(letra.getOrDefault("nombre_cliente", "CLIENTE S.A.C.")).toUpperCase();

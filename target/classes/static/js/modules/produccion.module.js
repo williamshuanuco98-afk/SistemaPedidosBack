@@ -226,12 +226,12 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
       <tr>
         <td class="fw-bold font-monospace text-secondary">${escapeHtml(prod.codigo_producto || '')}</td>
         <td>
-          <div class="fw-bold text-white">${escapeHtml(prod.nombre_producto || '')}</div>
+          <div class="fw-bold">${escapeHtml(prod.nombre_producto || '')}</div>
         </td>
         <td>
           <span class="badge ${catBadge} fs-8 fw-semibold px-2 py-1">${escapeHtml(prod.categoria || '')}</span>
         </td>
-        <td class="text-center fw-bold text-white fs-6">${solQty}</td>
+        <td class="text-center fw-bold fs-6">${solQty}</td>
         <td class="text-center fw-bold text-success fs-6">${entQty}</td>
         <td class="text-center fw-bold text-warning fs-6">${pendQty}</td>
         <td class="text-center">
@@ -285,7 +285,7 @@ export function openProductDetailModal(idProducto) {
         <div class="col-md-3 col-6">
           <div class="p-2 border rounded bg-body-tertiary text-center">
             <span class="text-muted fs-8 d-block text-uppercase fw-semibold">Total Solicitado</span>
-            <strong class="fs-6 text-white">${product.total_solicitado.toLocaleString()}</strong>
+            <strong class="fs-6 text-body">${product.total_solicitado.toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-md-3 col-6">
@@ -330,7 +330,7 @@ export function openProductDetailModal(idProducto) {
               return `
                 <tr>
                   <td>
-                    <div class="fw-bold text-white">${escapeHtml(c.nombre_cliente)}</div>
+                    <div class="fw-bold text-body">${escapeHtml(c.nombre_cliente)}</div>
                     ${c.nro_documento ? `<span class="small text-muted">RUC: ${escapeHtml(c.nro_documento)}</span>` : ''}
                   </td>
                   <td>
@@ -342,7 +342,7 @@ export function openProductDetailModal(idProducto) {
                     <div class="small text-muted">F. Entrega: ${formatDate(c.fecha_entrega)}</div>
                   </td>
                   <td><span class="small text-muted">${escapeHtml(c.establecimiento)}</span></td>
-                  <td class="text-center fw-bold text-white fs-6">${sol.toLocaleString()}</td>
+                  <td class="text-center fw-bold text-body fs-6">${sol.toLocaleString()}</td>
                   <td class="text-center fw-bold text-success fs-6">${ent.toLocaleString()}</td>
                   <td class="text-center fw-bold text-warning fs-6">${pend.toLocaleString()}</td>
                   <td class="text-center"><span class="status-badge ${c.estado_pedido || 'PENDIENTE'}">${statusBadgeText}</span></td>

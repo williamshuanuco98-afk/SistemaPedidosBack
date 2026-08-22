@@ -127,13 +127,17 @@ public class SunatClientUtil {
             if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> bodyMap = objectMapper.readValue(httpRes.body(), Map.class);
-                Map data = bodyMap.containsKey("data") && bodyMap.get("data") instanceof Map ? (Map) bodyMap.get("data") : bodyMap;
-                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social") || data.containsKey("nombre"))) {
+                Map data = bodyMap.containsKey("data") && bodyMap.get("data") instanceof Map ? (Map) bodyMap.get("data")
+                        : bodyMap;
+                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social")
+                        || data.containsKey("nombre"))) {
                     Map<String, Object> result = new HashMap<>();
                     result.put("success", true);
                     result.put("nro_documento", cleanRuc);
-                    result.put("nombre_cliente", String.valueOf(data.getOrDefault("nombre_o_razon_social", data.getOrDefault("razon_social", data.get("nombre")))));
-                    result.put("direccion", String.valueOf(data.getOrDefault("direccion_completa", data.getOrDefault("direccion", ""))));
+                    result.put("nombre_cliente", String.valueOf(data.getOrDefault("nombre_o_razon_social",
+                            data.getOrDefault("razon_social", data.get("nombre")))));
+                    result.put("direccion", String
+                            .valueOf(data.getOrDefault("direccion_completa", data.getOrDefault("direccion", ""))));
                     result.put("estado", String.valueOf(data.getOrDefault("estado", "ACTIVO")));
                     result.put("condicion", String.valueOf(data.getOrDefault("condicion", "HABIDO")));
                     return result;
@@ -149,11 +153,14 @@ public class SunatClientUtil {
     }
 
     private Map<String, Object> parseApisNetPeRuc(String cleanRuc, Map<String, Object> body) {
-        if (body == null) return null;
+        if (body == null)
+            return null;
 
         Object nameObj = body.get("nombre");
-        if (nameObj == null) nameObj = body.get("razonSocial");
-        if (nameObj == null) nameObj = body.get("razon_social");
+        if (nameObj == null)
+            nameObj = body.get("razonSocial");
+        if (nameObj == null)
+            nameObj = body.get("razon_social");
 
         if (nameObj == null || nameObj.toString().trim().isEmpty()) {
             return null;
@@ -167,7 +174,8 @@ public class SunatClientUtil {
         result.put("nombre_cliente", nombre);
 
         Object dirObj = body.get("direccion");
-        if (dirObj == null) dirObj = body.get("domicilio_fiscal");
+        if (dirObj == null)
+            dirObj = body.get("domicilio_fiscal");
         String dir = dirObj != null ? dirObj.toString().trim() : "";
 
         String dist = body.get("distrito") != null ? body.get("distrito").toString().trim() : "";
@@ -176,8 +184,10 @@ public class SunatClientUtil {
 
         if (!dir.isEmpty() && !dist.isEmpty() && !dir.toUpperCase().contains(dist.toUpperCase())) {
             StringBuilder ubigeoStr = new StringBuilder();
-            if (!dpto.isEmpty()) ubigeoStr.append(dpto).append(" - ");
-            if (!prov.isEmpty()) ubigeoStr.append(prov).append(" - ");
+            if (!dpto.isEmpty())
+                ubigeoStr.append(dpto).append(" - ");
+            if (!prov.isEmpty())
+                ubigeoStr.append(prov).append(" - ");
             ubigeoStr.append(dist);
             dir = dir + " - " + ubigeoStr.toString();
         }
@@ -193,14 +203,18 @@ public class SunatClientUtil {
     }
 
     private Map<String, Object> parseDecolectaRuc(String cleanRuc, Map<String, Object> body) {
-        if (body == null) return null;
+        if (body == null)
+            return null;
 
         Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
 
         Object nameObj = data.get("razon_social");
-        if (nameObj == null) nameObj = data.get("razonSocial");
-        if (nameObj == null) nameObj = data.get("nombre_o_razon_social");
-        if (nameObj == null) nameObj = data.get("nombre");
+        if (nameObj == null)
+            nameObj = data.get("razonSocial");
+        if (nameObj == null)
+            nameObj = data.get("nombre_o_razon_social");
+        if (nameObj == null)
+            nameObj = data.get("nombre");
 
         if (nameObj == null || nameObj.toString().trim().isEmpty()) {
             return null;
@@ -212,8 +226,10 @@ public class SunatClientUtil {
         result.put("nombre_cliente", nameObj.toString().trim());
 
         Object dirObj = data.get("direccion");
-        if (dirObj == null) dirObj = data.get("domicilio_fiscal");
-        if (dirObj == null) dirObj = data.get("direccion_completa");
+        if (dirObj == null)
+            dirObj = data.get("domicilio_fiscal");
+        if (dirObj == null)
+            dirObj = data.get("direccion_completa");
         String dir = dirObj != null ? dirObj.toString().trim() : "";
 
         String distrito = data.get("distrito") != null ? data.get("distrito").toString().trim() : "";
@@ -222,8 +238,10 @@ public class SunatClientUtil {
 
         if (!dir.isEmpty() && !distrito.isEmpty() && !dir.toUpperCase().contains(distrito.toUpperCase())) {
             StringBuilder ubigeoStr = new StringBuilder();
-            if (!departamento.isEmpty()) ubigeoStr.append(departamento).append(" - ");
-            if (!provincia.isEmpty()) ubigeoStr.append(provincia).append(" - ");
+            if (!departamento.isEmpty())
+                ubigeoStr.append(departamento).append(" - ");
+            if (!provincia.isEmpty())
+                ubigeoStr.append(provincia).append(" - ");
             ubigeoStr.append(distrito);
             dir = dir + " - " + ubigeoStr.toString();
         }
@@ -274,7 +292,8 @@ public class SunatClientUtil {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> body = objectMapper.readValue(httpRes.body(), Map.class);
                 Object nameObj = body.get("nombre");
-                if (nameObj == null) nameObj = body.get("nombres");
+                if (nameObj == null)
+                    nameObj = body.get("nombres");
 
                 if (nameObj != null && !nameObj.toString().trim().isEmpty()) {
                     response.put("success", true);
@@ -307,7 +326,8 @@ public class SunatClientUtil {
             if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> body = objectMapper.readValue(httpRes.body(), Map.class);
-                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
+                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data")
+                        : body;
 
                 String nombres = data.get("nombres") != null ? data.get("nombres").toString() : "";
                 String apPaterno = data.get("apellido_paterno") != null ? data.get("apellido_paterno").toString()

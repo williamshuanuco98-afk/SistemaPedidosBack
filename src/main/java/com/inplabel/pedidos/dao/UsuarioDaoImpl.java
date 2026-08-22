@@ -2,7 +2,6 @@ package com.inplabel.pedidos.dao;
 
 import com.inplabel.pedidos.model.Usuario;
 import com.inplabel.pedidos.security.PasswordUtil;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -32,26 +31,6 @@ public class UsuarioDaoImpl implements UsuarioDao {
         }
         return u;
     };
-
-    @PostConstruct
-    public void init() {
-        try {
-            // Asegurar que la tabla exista
-            jdbcTemplate.execute(
-                    "CREATE TABLE IF NOT EXISTS usuarios (" +
-                            "id_usuario INT AUTO_INCREMENT PRIMARY KEY, " +
-                            "username VARCHAR(50) NOT NULL UNIQUE, " +
-                            "password VARCHAR(255) NOT NULL, " +
-                            "salt VARCHAR(100) NOT NULL, " +
-                            "nombre_completo VARCHAR(100) NOT NULL, " +
-                            "rol VARCHAR(20) NOT NULL, " +
-                            "activo BOOLEAN DEFAULT TRUE, " +
-                            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-            initDefaultUsers();
-        } catch (Exception e) {
-            System.err.println("Advertencia al inicializar tabla de usuarios: " + e.getMessage());
-        }
-    }
 
     @Override
     public Optional<Usuario> findByUsername(String username) {

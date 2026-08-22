@@ -1,6 +1,5 @@
 package com.inplabel.pedidos.dao;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -19,64 +18,6 @@ public class GuiaDaoImpl implements GuiaDao {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @Override
-    @PostConstruct
-    public void initSchema() {
-        try {
-            jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS guias (" +
-                "  id_guia INT AUTO_INCREMENT PRIMARY KEY," +
-                "  id_cliente INT NOT NULL," +
-                "  id_pedido INT NULL," +
-                "  fecha_guia DATE NOT NULL," +
-                "  nro_guia VARCHAR(50) NOT NULL UNIQUE," +
-                "  estado VARCHAR(50) DEFAULT 'EMITIDA'," +
-                "  activo BOOLEAN DEFAULT TRUE," +
-                "  doc_referencia VARCHAR(255) NULL," +
-                "  punto_partida TEXT NULL," +
-                "  punto_llegada TEXT NULL," +
-                "  observaciones TEXT NULL," +
-                "  motivo_anulacion TEXT NULL," +
-                "  establecimiento VARCHAR(100) DEFAULT 'CARABAYLLO'," +
-                "  storage_path VARCHAR(500) NULL," +
-                "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
-                ")"
-            );
-            jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS detalle_guias (" +
-                "  id_detalle INT AUTO_INCREMENT PRIMARY KEY," +
-                "  id_guia INT NOT NULL," +
-                "  id_producto INT NOT NULL," +
-                "  cantidad INT NOT NULL," +
-                "  FOREIGN KEY (id_guia) REFERENCES guias(id_guia) ON DELETE CASCADE" +
-                ")"
-            );
-        } catch (Exception e) {
-            System.err.println("Init schema table err: " + e.getMessage());
-        }
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN doc_referencia VARCHAR(255)");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN punto_partida TEXT");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN punto_llegada TEXT");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN observaciones TEXT");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN motivo_anulacion TEXT");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN establecimiento VARCHAR(100)");
-        } catch (Exception ignored) {}
-        try {
-            jdbcTemplate.execute("ALTER TABLE guias ADD COLUMN storage_path VARCHAR(500)");
-        } catch (Exception ignored) {}
-    }
 
     @Override
     public List<Map<String, Object>> findAll() {
