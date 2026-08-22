@@ -102,6 +102,18 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
     return matchClient && matchDate && matchEstab && matchStatus;
   });
 
+  // Always sort orders by fecha_pedido DESC, then id_pedido DESC
+  filtered.sort((a, b) => {
+    const fA = a.fecha_pedido || '';
+    const fB = b.fecha_pedido || '';
+    if (fA !== fB) {
+      return fB.localeCompare(fA);
+    }
+    const idA = Number(a.id_pedido || a.id) || 0;
+    const idB = Number(b.id_pedido || b.id) || 0;
+    return idB - idA;
+  });
+
   const badge = document.getElementById('ordersCountBadge');
   if (badge) badge.textContent = `${filtered.length} pedidos`;
 

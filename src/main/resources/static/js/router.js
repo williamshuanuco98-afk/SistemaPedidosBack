@@ -1198,7 +1198,7 @@ const EMBEDDED_VIEWS = {
         </div>
       </div>
 
-      <div class="metric-card card-emerald">
+      <div class="metric-card card-emerald" style="cursor: pointer;" onclick="produccionModule.onCategoryFilterChange('FRASCOS')" title="Filtrar por Frascos">
         <div class="metric-info">
           <h4>Cant. Frascos</h4>
           <div id="statProdFrascosCount" class="metric-value">0</div>
@@ -1211,9 +1211,9 @@ const EMBEDDED_VIEWS = {
         </div>
       </div>
 
-      <div class="metric-card card-amber">
+      <div class="metric-card card-amber" style="cursor: pointer;" onclick="produccionModule.onCategoryFilterChange('GALONERAS')" title="Filtrar por Galoneras">
         <div class="metric-info">
-          <h4>Cant. Galones</h4>
+          <h4>Cant. Galoneras</h4>
           <div id="statProdGalonesCount" class="metric-value">0</div>
         </div>
         <div class="metric-icon-box">
@@ -1224,7 +1224,7 @@ const EMBEDDED_VIEWS = {
         </div>
       </div>
 
-      <div class="metric-card card-purple">
+      <div class="metric-card card-purple" style="cursor: pointer;" onclick="produccionModule.onCategoryFilterChange('TAPAS')" title="Filtrar por Tapas">
         <div class="metric-info">
           <h4>Cant. Tapas</h4>
           <div id="statProdTapasCount" class="metric-value">0</div>
@@ -1237,17 +1237,34 @@ const EMBEDDED_VIEWS = {
       </div>
     </div>
 
-    <!-- Buscador de Productos en Producción -->
+    <!-- Buscador y Filtro por Categoría de Productos en Producción -->
     <div class="row g-2 align-items-center mb-3">
-      <div class="col-md-6 col-12">
+      <div class="col-md-5 col-12">
         <div class="input-group input-group-sm">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
           <input type="text" id="searchProduccionInput" class="form-control"
-            placeholder="Buscar por código o nombre de producto en pedidos..." oninput="produccionModule.onSearchInput(this.value)">
+            placeholder="Buscar por código o nombre de producto..." oninput="produccionModule.onSearchInput(this.value)">
         </div>
       </div>
-      <div class="col-md-6 col-12 text-md-end text-muted small">
-        <i class="bi bi-info-circle me-1"></i> Control de demanda activa de pedidos en producción.
+      <div class="col-md-4 col-12">
+        <div class="input-group input-group-sm">
+          <label class="input-group-text fw-semibold" for="filterProduccionCategorySelect">
+            <i class="bi bi-funnel me-1"></i> Categoría:
+          </label>
+          <select id="filterProduccionCategorySelect" class="form-select" onchange="produccionModule.onCategoryFilterChange(this.value)">
+            <option value="ALL" selected>Todas las Categorías</option>
+            <option value="FRASCOS">FRASCOS</option>
+            <option value="GALONERAS">GALONERAS</option>
+            <option value="TAPAS">TAPAS / TAPONES</option>
+            <option value="ASAS">ASAS</option>
+            <option value="BALDES">BALDES</option>
+            <option value="PRODUCTOS COMPLEMENTARIOS">COMPLEMENTARIOS</option>
+            <option value="GENERAL">GENERAL / OTROS</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-3 col-12 text-md-end text-muted small">
+        <i class="bi bi-info-circle me-1"></i> Control de demanda activa.
       </div>
     </div>
 

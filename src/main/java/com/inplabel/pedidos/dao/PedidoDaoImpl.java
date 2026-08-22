@@ -30,7 +30,7 @@ public class PedidoDaoImpl implements PedidoDao {
     public List<Map<String, Object>> findAll() {
         List<Map<String, Object>> pedidos = jdbcTemplate.queryForList(
                 "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
-                        "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.id_pedido DESC");
+                        "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.fecha_pedido DESC, p.id_pedido DESC");
 
         for (Map<String, Object> order : pedidos) {
             Integer idPedido = (Integer) order.get("id_pedido");

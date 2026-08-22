@@ -75,7 +75,7 @@ import {
   deleteProduct 
 } from './modules/productos.module.js';
 import { renderConfigView, saveStorageConfig } from './modules/config.module.js';
-import { renderProduccionTable, changePage as changeProduccionPage, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
+import { renderProduccionTable, changePage as changeProduccionPage, onCategoryFilterChange, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
 import * as letrasModule from './modules/letras.module.js';
 import * as dashboardModule from './modules/dashboard.module.js';
 import * as authModule from './modules/auth.module.js';
@@ -160,6 +160,7 @@ window.productosModule = {
 
 window.produccionModule = {
   changePage: changeProduccionPage,
+  onCategoryFilterChange,
   openProductDetailModal,
   onSearchInput: onProduccionSearch
 };
