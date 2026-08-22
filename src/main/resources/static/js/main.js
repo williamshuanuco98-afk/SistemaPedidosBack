@@ -77,6 +77,7 @@ import {
 import { renderConfigView, saveStorageConfig } from './modules/config.module.js';
 import { renderProduccionTable, changePage as changeProduccionPage, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
 import * as letrasModule from './modules/letras.module.js';
+import * as dashboardModule from './modules/dashboard.module.js';
 import * as authModule from './modules/auth.module.js';
 
 // Early stub for instant global accessibility
@@ -88,6 +89,7 @@ window.app = {
 
 window.authModule = authModule;
 window.letrasModule = letrasModule;
+window.dashboardModule = dashboardModule;
 
 
 // Attach modules globally for inline HTML event handlers

@@ -1,16 +1,21 @@
-/* Sidebar (Smooth Butter Transitions) */
+/* Sidebar (Smooth Butter Transitions & Fixed Viewport) */
 .sidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
   width: 270px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  flex-shrink: 0;
   background: var(--bg-sidebar);
   color: var(--text-sidebar);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 50;
+  z-index: 1030;
   border-right: 1px solid var(--border-dark);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
   overflow-y: auto;

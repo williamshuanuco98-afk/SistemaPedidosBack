@@ -1,6 +1,12 @@
 import { escapeHtml, formatDate } from '../helpers.js';
 
+let cachedOrders = [];
+let activeScheduleDateFilter = null;
+
 export function renderDashboard(orders = [], shipments = [], clients = [], products = [], statusData = null) {
+  cachedOrders = orders || [];
+  activeScheduleDateFilter = null;
+
   const pendingOrders = orders.filter(o => {
     const st = (o.estado || 'PENDIENTE').toUpperCase();
     return st === 'PENDIENTE' || st === 'EN_PROCESO' || st === 'PROCESO' || st === 'PARCIAL' || st === 'FUERA_DE_TIEMPO';
@@ -40,120 +46,183 @@ export function renderDashboard(orders = [], shipments = [], clients = [], produ
   if (sTotalC) sTotalC.textContent = totalClientsCount;
 
   // Render Recent Orders Table
-  const tbody = document.getElementById('dashOrdersTable');
-  if (tbody) {
-    tbody.innerHTML = '';
-    const recent = orders.slice(0, 6);
-    if (recent.length === 0) {
-      tbody.innerHTML = `<tr><td colSpan="6" class="text-center text-muted py-4">No hay pedidos registrados en MySQL.</td></tr>`;
-    } else {
-      recent.forEach(o => {
-        const tr = document.createElement('tr');
-        const estLabel = o.establecimiento === 'COMAS' 
-          ? '<span class="badge bg-primary fs-8">Planta Comas</span>' 
-          : '<span class="badge bg-info text-dark fs-8">Sucursal Carabayllo</span>';
-        
-        tr.innerHTML = `
-          <td class="fw-bold text-primary">${escapeHtml(o.nro_pedido || ('PED-' + o.id_pedido))}</td>
-          <td class="fw-semibold text-truncate" style="max-width:200px;">${escapeHtml(o.nombre_cliente || 'Cliente')}</td>
-          <td>${estLabel}</td>
-          <td>${formatDate(o.fecha_pedido || o.fecha_ingreso)}</td>
-          <td><span class="status-badge ${o.estado || 'PENDIENTE'}">${escapeHtml(o.estado || 'PENDIENTE')}</span></td>
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-primary py-0 px-2 fs-8" onclick="app.viewOrderDetail('${o.id_pedido || o.id}')">Ver Detalle</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-  }
+  renderRecentOrdersTable(orders);
 
-  // Render 4 Analytics Charts
-  renderEstablecimientosChart(orders);
+  // Render Weekly Delivery Schedule (Idea #1)
+  renderWeeklySchedule(orders);
+
+  // Render Remaining Analytics Charts
   renderMonthlyOrdersChart(orders);
   renderOrderStatusChart(orders);
   renderTopProductsChart(orders);
 }
 
+function renderRecentOrdersTable(ordersToDisplay, customTitle = null) {
+  const tbody = document.getElementById('dashOrdersTable');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const titleEl = document.getElementById('dashOrdersTableTitle');
+  if (titleEl && customTitle) {
+    titleEl.innerHTML = customTitle;
+  }
+
+  const list = ordersToDisplay.slice(0, 8);
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colSpan="6" class="text-center text-muted py-4">No hay pedidos registrados para el criterio seleccionado.</td></tr>`;
+    return;
+  }
+
+  list.forEach(o => {
+    const tr = document.createElement('tr');
+    const estLabel = (o.establecimiento === 'COMAS' || String(o.establecimiento).toUpperCase().includes('COMAS'))
+      ? '<span class="badge bg-primary fs-8">Planta Comas</span>' 
+      : '<span class="badge bg-info text-dark fs-8">Sucursal Carabayllo</span>';
+    
+    tr.innerHTML = `
+      <td class="fw-bold text-primary">${escapeHtml(o.nro_pedido || ('PED-' + o.id_pedido))}</td>
+      <td class="fw-semibold text-truncate" style="max-width:200px;">${escapeHtml(o.nombre_cliente || 'Cliente')}</td>
+      <td>${estLabel}</td>
+      <td>${formatDate(o.fecha_pedido || o.fecha_ingreso)}</td>
+      <td><span class="status-badge ${o.estado || 'PENDIENTE'}">${escapeHtml(o.estado || 'PENDIENTE')}</span></td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-primary py-0 px-2 fs-8" onclick="app.viewOrderDetail('${o.id_pedido || o.id}')">Ver Detalle</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 1. Cronograma de Entregas de la Semana (Mini-Agenda de Despachos)
+export function renderWeeklySchedule(orders = []) {
+  const container = document.getElementById('weeklyScheduleGrid');
+  const weekRangeLabel = document.getElementById('currentWeekRangeLabel');
+  const todaySummary = document.getElementById('todayDeliverySummary');
+  if (!container) return;
+
+  const now = new Date();
+  const currentDayOfWeek = now.getDay(); // 0 is Sun, 1 is Mon...
+  const diffToMonday = (currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek);
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+
+  const daysNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+  const dayCards = [];
+  let todayCount = 0;
+
+  const yearNow = now.getFullYear();
+  const monthNow = String(now.getMonth() + 1).padStart(2, '0');
+  const dayNow = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${yearNow}-${monthNow}-${dayNow}`;
+
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    // Matching orders by scheduled delivery date (fecha_entrega or fecha_pedido)
+    const matchingOrders = orders.filter(o => {
+      const fEnt = o.fecha_entrega ? String(o.fecha_entrega).substring(0, 10) : '';
+      const fPed = o.fecha_pedido ? String(o.fecha_pedido).substring(0, 10) : '';
+      return fEnt === dateKey || (!fEnt && fPed === dateKey);
+    });
+
+    const isToday = (dateKey === todayStr);
+    const isSelected = (activeScheduleDateFilter === dateKey);
+    if (isToday) todayCount = matchingOrders.length;
+
+    const count = matchingOrders.length;
+    let badgeHtml = '';
+    if (count > 0) {
+      badgeHtml = `<span class="badge ${isToday ? 'bg-primary' : 'bg-secondary'} day-schedule-badge">${count} ${count === 1 ? 'ped' : 'peds'}</span>`;
+    } else {
+      badgeHtml = `<span class="text-muted" style="font-size: 0.68rem;">0 peds</span>`;
+    }
+
+    dayCards.push(`
+      <div class="day-schedule-card ${isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''}" 
+           onclick="dashboardModule.filterOrdersByDate('${dateKey}', '${daysNames[i]} ${day}/${month}')" 
+           title="${count} pedido(s) para el ${day}/${month}/${year}">
+        <div class="day-schedule-name">${daysNames[i]}</div>
+        <div class="day-schedule-date">${day}</div>
+        <div>${badgeHtml}</div>
+      </div>
+    `);
+  }
+
+  container.innerHTML = dayCards.join('');
+
+  if (weekRangeLabel) {
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    weekRangeLabel.textContent = `${String(monday.getDate()).padStart(2, '0')}/${String(monday.getMonth() + 1).padStart(2, '0')} al ${String(saturday.getDate()).padStart(2, '0')}/${String(saturday.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  if (todaySummary) {
+    if (todayCount === 0) {
+      todaySummary.textContent = 'No hay entregas pendientes programadas para hoy.';
+    } else {
+      todaySummary.textContent = `${todayCount} ${todayCount === 1 ? 'pedido comprometido' : 'pedidos comprometidos'} para despacho hoy.`;
+    }
+  }
+}
+
+export function filterOrdersByDate(dateKey, label) {
+  if (activeScheduleDateFilter === dateKey) {
+    // Toggle off / reset
+    activeScheduleDateFilter = null;
+    renderWeeklySchedule(cachedOrders);
+    renderRecentOrdersTable(cachedOrders);
+    return;
+  }
+
+  activeScheduleDateFilter = dateKey;
+  renderWeeklySchedule(cachedOrders);
+
+  const matched = cachedOrders.filter(o => {
+    const fEnt = o.fecha_entrega ? String(o.fecha_entrega).substring(0, 10) : '';
+    const fPed = o.fecha_pedido ? String(o.fecha_pedido).substring(0, 10) : '';
+    return fEnt === dateKey || (!fEnt && fPed === dateKey);
+  });
+
+  const customTitle = `<i class="bi bi-calendar2-check text-primary me-2"></i> Pedidos programados para <strong>${label}</strong> (${matched.length}) <button class="btn btn-sm btn-link text-decoration-none py-0 fs-8 ms-2" onclick="dashboardModule.resetDashboardOrdersTable()"><i class="bi bi-x-circle me-1"></i>Ver todos</button>`;
+  renderRecentOrdersTable(matched, customTitle);
+}
+
+export function filterTodayOrders() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayKey = `${year}-${month}-${day}`;
+  filterOrdersByDate(todayKey, `Hoy ${day}/${month}`);
+}
+
+export function resetDashboardOrdersTable() {
+  activeScheduleDateFilter = null;
+  renderWeeklySchedule(cachedOrders);
+  renderRecentOrdersTable(cachedOrders);
+}
+
+// Global exposure for inline events
+window.dashboardModule = {
+  renderWeeklySchedule,
+  filterOrdersByDate,
+  filterTodayOrders,
+  resetDashboardOrdersTable
+};
+
 function getChartColors() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
   return {
     ticks: isDark ? '#cbd5e1' : '#475569',
     grid: isDark ? '#334155' : '#e2e8f0',
     legend: isDark ? '#f8fafc' : '#0f172a'
   };
-}
-
-// 1. Pedidos por Establecimiento (Comas vs Carabayllo)
-function renderEstablecimientosChart(orders) {
-  try {
-    if (typeof Chart === 'undefined') return;
-    const canvas = document.getElementById('chartEstablecimientos');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const colors = getChartColors();
-
-    if (window.establecimientosChartInstance) {
-      window.establecimientosChartInstance.destroy();
-    }
-
-    let comasCount = 0;
-    let carabaylloCount = 0;
-
-    orders.forEach(o => {
-      const est = (o.establecimiento || 'CARABAYLLO').toUpperCase();
-      if (est.includes('COMAS')) {
-        comasCount++;
-      } else {
-        carabaylloCount++;
-      }
-    });
-
-    if (comasCount === 0 && carabaylloCount === 0 && orders.length === 0) {
-      comasCount = 0;
-      carabaylloCount = 0;
-    }
-
-    window.establecimientosChartInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Planta Principal - Comas', 'Sucursal - Carabayllo'],
-        datasets: [{
-          data: [comasCount, carabaylloCount],
-          backgroundColor: ['#2563eb', '#06b6d4'],
-          borderWidth: 2,
-          borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: colors.legend,
-              padding: 15,
-              font: { size: 12, weight: 'bold' }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const val = context.parsed || 0;
-                const total = (comasCount + carabaylloCount) || 1;
-                const pct = ((val / total) * 100).toFixed(1);
-                return ` ${context.label}: ${val} pedidos (${pct}%)`;
-              }
-            }
-          }
-        },
-        cutout: '60%'
-      }
-    });
-  } catch (e) {
-    console.warn("Error rendering establecimientos chart:", e);
-  }
 }
 
 // 2. Cantidad de Pedidos al Mes
@@ -292,6 +361,8 @@ function renderOrderStatusChart(orders) {
       statusCounts['CANCELADO']
     ];
 
+    const nonZeroCount = data.filter(v => v > 0).length;
+
     window.orderStatusChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -299,7 +370,7 @@ function renderOrderStatusChart(orders) {
         datasets: [{
           data: data,
           backgroundColor: ['#f59e0b', '#3b82f6', '#dc2626', '#10b981', '#8b5cf6', '#6b7280'],
-          borderWidth: 2,
+          borderWidth: nonZeroCount > 1 ? 2 : 0,
           borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff'
         }]
       },

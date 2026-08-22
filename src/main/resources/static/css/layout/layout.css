@@ -1,33 +1,40 @@
-/* Root & Viewport Sizing */
+/* Root & Viewport Sizing - Lock window scroll so only main workspace scrolls */
 html, body {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   background-color: var(--bg-main);
 }
 
 /* App Layout Container */
 .app-container {
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
-  width: 100%;
-  overflow-x: hidden;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 100%;
+  overflow: hidden;
   background-color: var(--bg-main);
 }
 
-/* Main Content Workspace */
+/* Main Content Workspace - Independent scroll area */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 100vh;
-  min-height: 100dvh;
   width: 100%;
   min-width: 0;
   background-color: var(--bg-main);
   transition: background-color 0.25s ease;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page-body {

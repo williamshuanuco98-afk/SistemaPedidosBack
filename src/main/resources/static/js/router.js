@@ -55,18 +55,36 @@ const EMBEDDED_VIEWS = {
   </div>
 </div>
 
-<!-- Charts Section Row 1: Establecimientos & Pedidos al Mes -->
+<!-- Section Row 1: Cronograma Semanal de Entregas & Pedidos al Mes -->
 <div class="row g-4 mb-4">
   <div class="col-lg-6">
-    <div class="content-card p-3 h-100">
-      <div class="card-header border-0 pb-0 bg-transparent">
-        <h3 class="card-title d-flex align-items-center">
-          <i class="bi bi-buildings text-primary me-2"></i>
-          <span>Pedidos por Establecimiento</span>
+    <div class="content-card p-3 h-100 d-flex flex-column justify-content-between">
+      <div class="card-header border-0 pb-2 bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h3 class="card-title d-flex align-items-center mb-0 fs-6 fw-bold">
+          <i class="bi bi-calendar-week-fill text-primary me-2 fs-5"></i>
+          <span>Cronograma de Entregas de la Semana</span>
         </h3>
+        <span id="currentWeekRangeLabel" class="badge bg-primary-subtle text-primary border border-primary-subtle fs-8 px-2.5 py-1 fw-semibold">
+          Semana Actual
+        </span>
       </div>
-      <div class="p-3" style="height: 280px; position: relative;">
-        <canvas id="chartEstablecimientos"></canvas>
+      
+      <div class="p-2 flex-fill d-flex flex-column justify-content-between">
+        <!-- 6-Day Interactive Grid -->
+        <div id="weeklyScheduleGrid" class="weekly-schedule-grid mb-3">
+          <!-- Dynamically generated day cards -->
+        </div>
+        
+        <!-- Summary & Quick Filter Footer -->
+        <div class="p-2.5 rounded bg-body-tertiary border d-flex align-items-center justify-content-between flex-wrap gap-2 fs-8">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark px-2 py-0.5 fw-bold">HOY</span>
+            <span id="todayDeliverySummary" class="text-body fw-semibold">Verificando entregas programadas...</span>
+          </div>
+          <button type="button" id="btnFilterTodayOrders" class="btn btn-sm btn-outline-primary py-0.5 px-2.5 fs-8" onclick="dashboardModule.filterTodayOrders()">
+            <i class="bi bi-funnel-fill me-1"></i> Ver pedidos de hoy
+          </button>
+        </div>
       </div>
     </div>
   </div>
