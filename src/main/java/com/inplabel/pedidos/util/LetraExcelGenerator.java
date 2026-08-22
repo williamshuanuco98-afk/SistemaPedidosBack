@@ -139,7 +139,8 @@ public class LetraExcelGenerator {
         } else if (montoObj != null) {
             try {
                 montoVal = Double.parseDouble(montoObj.toString().trim().replace(",", "."));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         String moneda = String.valueOf(letra.getOrDefault("moneda", "SOLES")).toUpperCase();
