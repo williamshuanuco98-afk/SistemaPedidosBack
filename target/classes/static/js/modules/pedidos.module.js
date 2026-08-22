@@ -207,10 +207,13 @@ export function openFinalizarOrdenModal(idPedido) {
   document.getElementById('finalizarOrderNroBadge').textContent = order.nro_pedido || ('PED-' + idPedido);
 
   document.getElementById('optCompletado').checked = true;
-  toggleFinalizarFields('ENTREGADO');
+  toggleFinalizarFields('COMPLETADO');
 
   document.getElementById('finalizarNroGuia').value = order.nro_guia || '';
   document.getElementById('finalizarFechaEntrega').value = order.fecha_entrega || new Date().toISOString().split('T')[0];
+
+  const motivoElem = document.getElementById('finalizarMotivoInput');
+  if (motivoElem) motivoElem.value = order.motivo_cancelacion || '';
 
   const modalElem = document.getElementById('modalFinalizarOrden');
   if (modalElem) {
@@ -220,12 +223,23 @@ export function openFinalizarOrdenModal(idPedido) {
 }
 
 export function toggleFinalizarFields(status) {
-  const fields = document.getElementById('finalizarDeliveryFields');
-  if (!fields) return;
-  if (status === 'COMPLETADO' || status === 'FINALIZADO' || status === 'ENTREGADO') {
-    fields.style.display = 'block';
-  } else {
-    fields.style.display = 'none';
+  const deliveryFields = document.getElementById('finalizarDeliveryFields');
+  const motivoContainer = document.getElementById('finalizarMotivoContainer');
+
+  if (deliveryFields) {
+    if (status === 'COMPLETADO' || status === 'FINALIZADO' || status === 'ENTREGADO') {
+      deliveryFields.style.display = 'block';
+    } else {
+      deliveryFields.style.display = 'none';
+    }
+  }
+
+  if (motivoContainer) {
+    if (status === 'FINALIZADO' || status === 'CANCELADO') {
+      motivoContainer.style.display = 'block';
+    } else {
+      motivoContainer.style.display = 'none';
+    }
   }
 }
 
@@ -246,6 +260,7 @@ export async function saveFinalizarOrden() {
   const needsDeliveryFields = (nuevoEstado === 'COMPLETADO' || nuevoEstado === 'FINALIZADO');
   const nroGuia = needsDeliveryFields ? document.getElementById('finalizarNroGuia')?.value.trim() : null;
   const fechaEntrega = needsDeliveryFields ? document.getElementById('finalizarFechaEntrega')?.value : null;
+  const motivo = document.getElementById('finalizarMotivoInput')?.value?.trim() || '';
 
   if (needsDeliveryFields && !nroGuia) {
     alert('Por favor ingrese el N° de Guía de Remisión para guardar el estado del pedido.');
@@ -255,7 +270,8 @@ export async function saveFinalizarOrden() {
   const payload = {
     estado: nuevoEstado,
     nro_guia: nroGuia,
-    fecha_entrega: fechaEntrega
+    fecha_entrega: fechaEntrega,
+    motivo_cancelacion: motivo
   };
 
   const res = await api.updatePedidoStatus(idPedido, payload);
@@ -265,6 +281,7 @@ export async function saveFinalizarOrden() {
       localOrder.estado = nuevoEstado;
       localOrder.nro_guia = nroGuia;
       localOrder.fecha_entrega = fechaEntrega;
+      localOrder.motivo_cancelacion = motivo;
     }
   }
 
@@ -554,6 +571,16 @@ export function viewOrderDetail(idPedido) {
     </div>
   ` : '';
 
+    const motivoBanner = order.motivo_cancelacion ? `
+    <div class="alert alert-warning border-warning d-flex align-items-start py-2.5 px-3 fs-7 mb-3" role="alert">
+      <i class="bi bi-chat-left-text-fill text-warning me-2.5 fs-5 mt-0.5"></i>
+      <div>
+        <strong class="d-block text-dark">Razón / Motivo de Resolución (${estadoClass}):</strong>
+        <span class="text-dark">${escapeHtml(order.motivo_cancelacion)}</span>
+      </div>
+    </div>
+  ` : '';
+
     // Consolidate duplicate order items by product name
     const consolidatedDetalles = [];
     (detalles || []).forEach(item => {
@@ -636,6 +663,7 @@ export function viewOrderDetail(idPedido) {
 
     modalBody.innerHTML = `
     ${overdueBanner}
+    ${motivoBanner}
     <div class="row g-3 mb-3">
       <div class="col-md-6">
         <div class="p-3 border rounded bg-body-tertiary h-100">

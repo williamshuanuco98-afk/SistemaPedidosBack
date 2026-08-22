@@ -228,6 +228,14 @@ public class PedidoDaoImpl implements PedidoDao {
         String fechaEntrega = (String) body.get("fecha_entrega");
         String estado = (String) body.get("estado");
 
+        if (body.containsKey("motivo_cancelacion")) {
+            String motivo = (String) body.get("motivo_cancelacion");
+            jdbcTemplate.update("UPDATE pedido SET motivo_cancelacion = ? WHERE id_pedido = ?", motivo, id);
+        } else if (body.containsKey("motivo")) {
+            String motivo = (String) body.get("motivo");
+            jdbcTemplate.update("UPDATE pedido SET motivo_cancelacion = ? WHERE id_pedido = ?", motivo, id);
+        }
+
         if (body.containsKey("adelantos")) {
             Object adelantosObj = body.get("adelantos");
             try {

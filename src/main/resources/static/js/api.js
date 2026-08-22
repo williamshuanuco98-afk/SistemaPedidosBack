@@ -509,7 +509,7 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ letras: letrasArray }),
-        timeout: 4000
+        timeout: 25000
       });
       if (res.ok) {
         const result = await res.json();

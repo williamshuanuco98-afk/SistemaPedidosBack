@@ -1,4 +1,4 @@
-import { escapeHtml, formatDate, showBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, paginateItems, renderPaginationUI, filterAndRankItems } from '../helpers.js';
 import { resolveOrderStatus } from './pedidos.module.js';
 
 let currentOrders = [];
@@ -160,37 +160,31 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
 
   const productList = Object.values(aggregatedProductsMap);
 
-  // Filter list by searchQuery and category filter
-  const query = (currentSearchQuery || '').toLowerCase().trim();
+  // Filter list by category filter first
   const catFilter = (currentCategoryFilter || 'ALL').toUpperCase();
 
-  const filtered = productList.filter(p => {
-    let matchQuery = true;
-    if (query) {
-      matchQuery = (p.nombre_producto && p.nombre_producto.toLowerCase().includes(query)) ||
-                   (p.codigo_producto && p.codigo_producto.toLowerCase().includes(query)) ||
-                   (p.categoria && p.categoria.toLowerCase().includes(query));
+  const categoryFiltered = productList.filter(p => {
+    if (!catFilter || catFilter === 'ALL') return true;
+    const pCat = (p.categoria || 'GENERAL').toUpperCase();
+    if (catFilter === 'GENERAL') {
+      return (pCat === 'GENERAL' || pCat === 'OTROS' || (!['FRASCOS', 'GALONERAS', 'GALONES', 'TAPAS', 'TAPONES', 'ASAS', 'BALDE', 'BALDES', 'PRODUCTOS COMPLEMENTARIOS'].includes(pCat)));
+    } else if (catFilter === 'GALONES' || catFilter === 'GALONERAS' || catFilter === 'GALON') {
+      return pCat.includes('GALON');
+    } else if (catFilter === 'TAPAS' || catFilter === 'TAPONES') {
+      return (pCat.includes('TAPA') || pCat.includes('TAPON'));
+    } else if (catFilter === 'BALDE' || catFilter === 'BALDES') {
+      return pCat.includes('BALDE');
+    } else if (catFilter === 'FRASCOS' || catFilter === 'FRASCO') {
+      return pCat.includes('FRASCO');
+    } else {
+      return (pCat === catFilter || pCat.includes(catFilter));
     }
+  });
 
-    let matchCat = true;
-    if (catFilter && catFilter !== 'ALL') {
-      const pCat = (p.categoria || 'GENERAL').toUpperCase();
-      if (catFilter === 'GENERAL') {
-        matchCat = (pCat === 'GENERAL' || pCat === 'OTROS' || (!['FRASCOS', 'GALONERAS', 'GALONES', 'TAPAS', 'TAPONES', 'ASAS', 'BALDE', 'BALDES', 'PRODUCTOS COMPLEMENTARIOS'].includes(pCat)));
-      } else if (catFilter === 'GALONES' || catFilter === 'GALONERAS' || catFilter === 'GALON') {
-        matchCat = pCat.includes('GALON');
-      } else if (catFilter === 'TAPAS' || catFilter === 'TAPONES') {
-        matchCat = (pCat.includes('TAPA') || pCat.includes('TAPON'));
-      } else if (catFilter === 'BALDE' || catFilter === 'BALDES') {
-        matchCat = pCat.includes('BALDE');
-      } else if (catFilter === 'FRASCOS' || catFilter === 'FRASCO') {
-        matchCat = pCat.includes('FRASCO');
-      } else {
-        matchCat = (pCat === catFilter || pCat.includes(catFilter));
-      }
-    }
-
-    return matchQuery && matchCat;
+  // Smart multi-token relevance search (same algorithm used in order creation)
+  const filtered = filterAndRankItems(categoryFiltered, currentSearchQuery, p => {
+    const clientsStr = (p.clientes || []).map(c => `${c.nombre_cliente} ${c.nro_pedido} ${c.nro_orden}`).join(' ');
+    return `${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.categoria || ''} ${clientsStr}`;
   });
 
   // Calculate top product by demand

@@ -323,6 +323,16 @@ const EMBEDDED_VIEWS = {
             </div>
           </div>
 
+          <!-- Campo para la Razón / Motivo de Cancelación o Finalización (Solo visible al Finalizar o Cancelar) -->
+          <div id="finalizarMotivoContainer" class="mb-3" style="display: none;">
+            <label for="finalizarMotivoInput" class="form-label fw-bold fs-7 mb-1 text-warning">
+              <i class="bi bi-chat-right-text me-1"></i> Razón o Motivo de Finalización / Cancelación:
+            </label>
+            <textarea id="finalizarMotivoInput" class="form-control form-control-sm" rows="2"
+              placeholder="Escriba la razón o motivo (ej: Solicitud del cliente, entrega parcial aceptada como final, etc.)..."></textarea>
+            <div class="form-text fs-8">Esta razón quedará registrada en el historial del pedido.</div>
+          </div>
+
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-primary btn-sm px-3">
@@ -1498,6 +1508,7 @@ const EMBEDDED_VIEWS = {
       <table class="table custom-table mb-0 align-middle">
         <thead>
           <tr>
+            <th style="white-space: nowrap; width: 120px;">ID Operación</th>
             <th style="white-space: nowrap; width: 140px;">Ref. Girador</th>
             <th style="white-space: nowrap;">Girado a (Cliente)</th>
             <th style="white-space: nowrap; width: 115px;">F. Giro</th>

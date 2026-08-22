@@ -47,7 +47,8 @@ public class LetraCambioController {
         if (isSearching) {
             String q = "%" + search.trim() + "%";
             sql.append(
-                    "AND (nro_letra LIKE ? OR ref_girador LIKE ? OR nombre_cliente LIKE ? OR nro_documento LIKE ?) ");
+                    "AND (id_lote LIKE ? OR nro_letra LIKE ? OR ref_girador LIKE ? OR nombre_cliente LIKE ? OR nro_documento LIKE ?) ");
+            params.add(q);
             params.add(q);
             params.add(q);
             params.add(q);
@@ -107,7 +108,19 @@ public class LetraCambioController {
                 return ResponseEntity.badRequest().body(Map.of("error", "No se proporcionaron letras para registrar"));
             }
 
-            String idLote = "LOTE-" + System.currentTimeMillis();
+            String idLote = (String) payload.get("id_lote");
+            if (idLote == null || idLote.trim().isEmpty()) {
+                Integer maxSeq = null;
+                try {
+                    maxSeq = jdbcTemplate.queryForObject(
+                        "SELECT MAX(CAST(SUBSTRING_INDEX(id_lote, 'OP-', -1) AS UNSIGNED)) FROM letras_cambio WHERE id_lote LIKE 'OP-%'",
+                        Integer.class
+                    );
+                } catch (Exception ignored) {}
+                int nextOp = (maxSeq != null && maxSeq > 0) ? maxSeq + 1 : 1;
+                idLote = String.format("OP-%04d", nextOp);
+            }
+            final String batchId = idLote;
             List<Map<String, Object>> createdLetras = new ArrayList<>();
 
             for (Map<String, Object> letraData : letras) {
@@ -145,7 +158,7 @@ public class LetraCambioController {
 
                 jdbcTemplate.update(connection -> {
                     PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
-                    ps.setString(1, idLote);
+                    ps.setString(1, batchId);
                     ps.setInt(2, idCliente);
                     ps.setString(3, nombreCliente);
                     ps.setString(4, nroDocumento);

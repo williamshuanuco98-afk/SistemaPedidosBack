@@ -279,6 +279,7 @@ export function renderLetrasTable(groupedList = []) {
     });
 
     tr.innerHTML = `
+      <td class="font-monospace fw-bold text-secondary fs-7">${escapeHtml(lote.id_lote || '-')}</td>
       <td class="font-monospace fw-bold text-primary fs-7">${escapeHtml(lote.ref_girador || '-')}</td>
       <td>
         <div class="fw-bold">${escapeHtml(lote.nombre_cliente || '-')}</div>
@@ -764,7 +765,11 @@ export function onInstallmentAmountChange(idx, amountVal) {
   }
 }
 
+let isSubmittingLetras = false;
+
 export async function submitBatchLetras() {
+  if (isSubmittingLetras) return;
+
   const clienteNombre = document.getElementById('letraClienteNombre')?.value?.trim();
   const refGirador = document.getElementById('letraRefGirador')?.value?.trim();
   const lugarGiro = document.getElementById('letraLugarGiro')?.value?.trim() || 'LIMA';
@@ -805,6 +810,13 @@ export async function submitBatchLetras() {
     monto_letras: inst.monto_letras
   }));
 
+  const submitBtn = document.querySelector('#modalGenerarLetras .modal-footer button.btn-primary');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Procesando...';
+  }
+  isSubmittingLetras = true;
+
   try {
     const res = await api.createLetrasBatch(payloadArray);
     if (res && res.success) {
@@ -817,6 +829,12 @@ export async function submitBatchLetras() {
   } catch (err) {
     console.error('Error enviando letras batch:', err);
     alert('Error al procesar la solicitud: ' + err.message);
+  } finally {
+    isSubmittingLetras = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Emitir y Guardar Letras de Cambio';
+    }
   }
 }
 
@@ -842,11 +860,15 @@ export function openLoteDetailModal(idLote) {
     <!-- Ficha Resumen de la Operación -->
     <div class="p-3 bg-body-tertiary rounded border mb-4">
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-2">
+          <label class="small text-muted d-block font-monospace">ID OPERACIÓN</label>
+          <span class="fs-5 fw-bold text-secondary font-monospace">${escapeHtml(lote.id_lote)}</span>
+        </div>
+        <div class="col-md-3">
           <label class="small text-muted d-block font-monospace">REF. DEL GIRADOR</label>
           <span class="fs-5 fw-bold text-primary font-monospace">${escapeHtml(lote.ref_girador)}</span>
         </div>
-        <div class="col-md-5">
+        <div class="col-md-4">
           <label class="small text-muted d-block font-monospace">GIRADO A (CLIENTE)</label>
           <div class="fw-bold text-white fs-6">${escapeHtml(lote.nombre_cliente)}</div>
           <small class="text-warning font-monospace">RUC: ${escapeHtml(lote.nro_documento || '-')}</small>
