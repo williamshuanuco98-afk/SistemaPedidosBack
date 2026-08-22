@@ -189,15 +189,16 @@ const EMBEDDED_VIEWS = {
           <input type="date" id="filterDateTo" class="form-control form-control-sm">
         </div>
 
-        <!-- Filtro Estado del Pedido (Predeterminado: TODOS) -->
+        <!-- Filtro Estado del Pedido -->
         <div class="col-md-2">
           <label for="filterOrderStatus" class="form-label small fw-bold mb-1">Estado</label>
           <select id="filterOrderStatus" class="form-select form-select-sm">
             <option value="ALL" selected>TODOS LOS ESTADOS</option>
             <option value="PENDIENTE">PENDIENTE</option>
-            <option value="EN_PROCESO">EN PROCESO / PARCIAL</option>
-            <option value="FUERA_DE_PLAZO">FUERA DE PLAZO</option>
+            <option value="EN_PROCESO">EN PROCESO</option>
+            <option value="FUERA_DE_TIEMPO">FUERA DE TIEMPO</option>
             <option value="COMPLETADO">COMPLETADO</option>
+            <option value="FINALIZADO">FINALIZADO</option>
             <option value="CANCELADO">CANCELADO</option>
           </select>
         </div>
@@ -240,10 +241,11 @@ const EMBEDDED_VIEWS = {
       </thead>
       <tbody id="pedidosTableBody"></tbody>
     </table>
+    <div id="pedidosPaginationContainer"></div>
   </div>
 </div>
 
-<!-- Modal Finalizar Orden -->
+<!-- Modal Finalizar Orden (Advertencia de Cancelación o Completar con Guía) -->
 <div class="modal fade" id="modalFinalizarOrden" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -267,22 +269,29 @@ const EMBEDDED_VIEWS = {
 
           <div class="mb-3">
             <label class="form-label fw-bold mb-2">Resolución de la Orden *</label>
-            <div class="d-flex gap-4">
+            <div class="d-flex flex-wrap gap-3">
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCompletado" value="ENTREGADO" checked onchange="pedidosModule.toggleFinalizarFields('ENTREGADO')">
-                <label class="form-check-label fw-semibold text-success" for="optCompletado">
-                  <i class="bi bi-check-circle-fill me-1"></i> Orden Entregada (COMPLETADA)
+                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCompletado" value="COMPLETADO" checked onchange="pedidosModule.toggleFinalizarFields('COMPLETADO')">
+                <label class="form-check-label fw-bold text-success" for="optCompletado">
+                  <i class="bi bi-check-circle-fill me-1"></i> Completado (100% Entregado)
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optFinalizado" value="FINALIZADO" onchange="pedidosModule.toggleFinalizarFields('FINALIZADO')">
+                <label class="form-check-label fw-bold" style="color:#8b5cf6;" for="optFinalizado">
+                  <i class="bi bi-flag-fill me-1"></i> Finalizado (Entrega Parcial / Cierra Saldo)
                 </label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCancelado" value="CANCELADO" onchange="pedidosModule.toggleFinalizarFields('CANCELADO')">
                 <label class="form-check-label fw-semibold text-danger" for="optCancelado">
-                  <i class="bi bi-x-circle-fill me-1"></i> Orden Cancelada (CANCELADO)
+                  <i class="bi bi-x-circle-fill me-1"></i> Cancelado (Sin Entregas)
                 </label>
               </div>
             </div>
           </div>
 
+          <!-- Campos requeridos si es ENTREGADO -->
           <div id="finalizarDeliveryFields" class="card card-body bg-body-tertiary border-0 mb-3">
             <div class="row g-3">
               <div class="col-md-6">
@@ -308,7 +317,7 @@ const EMBEDDED_VIEWS = {
   </div>
 </div>
 
-<!-- Modal Registrar Envío -->
+<!-- Modal Registrar Envío / Entrega Parcial -->
 <div class="modal fade" id="modalRegistrarEnvio" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -349,10 +358,71 @@ const EMBEDDED_VIEWS = {
             </table>
           </div>
 
+          <div class="form-check p-3 rounded bg-body-tertiary border mb-3">
+            <input class="form-check-input" type="checkbox" id="envioCerrarSaldoCheck">
+            <label class="form-check-label fw-bold text-primary" for="envioCerrarSaldoCheck">
+              <i class="bi bi-flag-fill text-warning me-1"></i> Dar por FINALIZADO el pedido (Si es una entrega parcial y ya no se enviará más saldo)
+            </label>
+            <div class="form-text fs-8 mt-0 ms-4">Si se marca, el estado cambiará a <strong>FINALIZADO</strong> en lugar de mantenerse EN PROCESO.</div>
+          </div>
+
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-warning btn-sm text-dark fw-bold px-3">
               <i class="bi bi-truck me-1"></i> Guardar Envío
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registrar Pago para Pedido Existente -->
+<div class="modal fade" id="modalAgregarPagoPedido" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-cash-stack me-2"></i> Registrar Pago / Abono <span id="pagoOrderNroBadge" class="badge bg-light text-dark ms-1"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="formAgregarPagoPedido" onsubmit="event.preventDefault(); pedidosModule.savePagoPedido();">
+          <input type="hidden" id="pagoOrderId">
+
+          <div class="mb-3">
+            <label for="pagoBancoSelect" class="form-label fw-bold fs-7">Banco / Medio de Pago *</label>
+            <select id="pagoBancoSelect" class="form-select form-select-sm" required>
+              <option value="BCP" selected>BCP - Banco de Crédito del Perú</option>
+              <option value="BBVA">BBVA Continental</option>
+              <option value="INTERBANK">INTERBANK</option>
+              <option value="SCOTIABANK">SCOTIABANK</option>
+              <option value="YAPE/PLIN">Yape / Plin</option>
+              <option value="EFECTIVO">Efectivo / Caja</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="pagoMontoInput" class="form-label fw-bold fs-7">Monto Abonado (S/) *</label>
+            <input type="number" id="pagoMontoInput" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0.10" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="pagoFechaInput" class="form-label fw-bold fs-7">Fecha del Pago *</label>
+            <input type="date" id="pagoFechaInput" class="form-control form-control-sm" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="pagoVoucherInput" class="form-label fw-bold fs-7">N° de Operación / Voucher (Opcional)</label>
+            <input type="text" id="pagoVoucherInput" class="form-control form-control-sm" placeholder="Ej: OP-1234567">
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success btn-sm px-3">
+              <i class="bi bi-save me-1"></i> Guardar Pago
             </button>
           </div>
         </form>
@@ -578,6 +648,53 @@ const EMBEDDED_VIEWS = {
     </form>
   </div>
 </div>
+
+<!-- MODAL EMERGENTE: REGISTRAR ADELANTO DE PAGO -->
+<div class="modal fade" id="modalAdelantoPago" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-cash-coin text-primary me-2"></i> Registrar Adelanto de Pago</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formModalAdelanto" onsubmit="event.preventDefault(); nuevoPedidoModule.addAdelantoFromModal();">
+          <div class="mb-3">
+            <label for="modalBancoSelect" class="form-label fw-bold">Banco / Medio de Pago <span class="text-danger">*</span></label>
+            <select id="modalBancoSelect" class="form-select" required>
+              <option value="BCP" selected>BCP - Banco de Crédito del Perú</option>
+              <option value="BBVA">BBVA Continental</option>
+              <option value="INTERBANK">INTERBANK</option>
+              <option value="SCOTIABANK">SCOTIABANK</option>
+              <option value="YAPE/PLIN">Yape / Plin</option>
+              <option value="EFECTIVO">Efectivo / Caja</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="modalMontoInput" class="form-label fw-bold">Monto del Adelanto (S/) <span class="text-danger">*</span></label>
+            <input type="number" id="modalMontoInput" class="form-control" placeholder="0.00" step="0.01" min="0.10" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="modalFechaPagoInput" class="form-label fw-bold">Fecha del Pago <span class="text-danger">*</span></label>
+            <input type="date" id="modalFechaPagoInput" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="modalVoucherInput" class="form-label fw-bold">N° de Operación / Voucher (Opcional)</label>
+            <input type="text" id="modalVoucherInput" class="form-control" placeholder="Ejemplo: OP-9876543">
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Agregar Adelanto</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 `,
 
   envios: `
@@ -658,6 +775,7 @@ const EMBEDDED_VIEWS = {
       </thead>
       <tbody id="enviosTableBody"></tbody>
     </table>
+    <div id="enviosPaginationContainer"></div>
   </div>
 </div>
 
@@ -889,6 +1007,7 @@ const EMBEDDED_VIEWS = {
       </thead>
       <tbody id="clientesTableBody"></tbody>
     </table>
+    <div id="clientesPaginationContainer"></div>
   </div>
 </div>
 
@@ -988,6 +1107,7 @@ const EMBEDDED_VIEWS = {
       </thead>
       <tbody id="productosTableBody"></tbody>
     </table>
+    <div id="productosPaginationContainer"></div>
   </div>
 </div>
 
@@ -1009,6 +1129,7 @@ const EMBEDDED_VIEWS = {
             <label class="form-label fw-semibold">Tipo / Categoría de Producto *</label>
             <select id="modalProductoTipo" class="form-select" required>
               <option value="" disabled selected>-- Seleccione una categoría --</option>
+              <option value="BALDES">BALDES</option>
               <option value="FRASCOS">FRASCOS</option>
               <option value="GALONES">GALONES</option>
               <option value="TAPAS">TAPAS</option>
@@ -1141,6 +1262,7 @@ const EMBEDDED_VIEWS = {
         </thead>
         <tbody id="produccionTableBody"></tbody>
       </table>
+      <div id="produccionPaginationContainer"></div>
     </div>
   </div>
 </div>
@@ -1365,6 +1487,7 @@ const EMBEDDED_VIEWS = {
         </thead>
         <tbody id="letrasTableBody"></tbody>
       </table>
+      <div id="letrasPaginationContainer"></div>
     </div>
   </div>
 </div>

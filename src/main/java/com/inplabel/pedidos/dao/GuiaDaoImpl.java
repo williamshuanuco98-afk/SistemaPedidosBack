@@ -216,9 +216,39 @@ public class GuiaDaoImpl implements GuiaDao {
         }
 
         if (idPedido != null) {
+            Boolean cerrarSaldo = body.get("cerrar_saldo") != null ? Boolean.parseBoolean(String.valueOf(body.get("cerrar_saldo"))) : false;
+            String reqEstado = (String) body.get("estado_pedido");
+
+            Integer totalRequested = 0;
+            try {
+                totalRequested = jdbcTemplate.queryForObject(
+                    "SELECT COALESCE(SUM(cantidad), 0) FROM detalle_pedido WHERE id_pedido = ?",
+                    Integer.class, idPedido
+                );
+            } catch (Exception ignored) {}
+
+            Integer totalDelivered = 0;
+            try {
+                totalDelivered = jdbcTemplate.queryForObject(
+                    "SELECT COALESCE(SUM(dg.cantidad), 0) FROM detalle_guias dg " +
+                    "INNER JOIN guias g ON dg.id_guia = g.id_guia " +
+                    "WHERE g.id_pedido = ? AND (g.estado IS NULL OR g.estado != 'ANULADA')",
+                    Integer.class, idPedido
+                );
+            } catch (Exception ignored) {}
+
+            String nuevoEstadoPedido = "EN PROCESO";
+            if (reqEstado != null && !reqEstado.trim().isEmpty()) {
+                nuevoEstadoPedido = reqEstado.trim().toUpperCase();
+            } else if (totalRequested != null && totalDelivered != null && totalDelivered >= totalRequested && totalRequested > 0) {
+                nuevoEstadoPedido = "COMPLETADO";
+            } else if (cerrarSaldo) {
+                nuevoEstadoPedido = "FINALIZADO";
+            }
+
             jdbcTemplate.update(
-                "UPDATE pedido SET nro_guia = ?, fecha_entrega = ? WHERE id_pedido = ?",
-                finalNroGuia, fecha, idPedido
+                "UPDATE pedido SET nro_guia = ?, fecha_entrega = ?, estado = ? WHERE id_pedido = ?",
+                finalNroGuia, fecha, nuevoEstadoPedido, idPedido
             );
         }
 

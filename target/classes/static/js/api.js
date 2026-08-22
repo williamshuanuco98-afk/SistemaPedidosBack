@@ -593,32 +593,37 @@ export const api = {
   },
 
   async login(username, password) {
+    const cleanUser = String(username || '').trim().toLowerCase();
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-        timeout: 4000
+        body: JSON.stringify({ username: cleanUser, password }),
+        timeout: 6000
       });
-      return await res.json();
-    } catch (e) {
-      // Fallback local si el backend estuviera desconectado
-      console.warn("Backend login error, attempting offline auth fallback:", e);
-      if (username === 'admin' && password === 'admin123') {
-        return {
-          success: true,
-          message: 'Inicio de sesión local (Admin)',
-          user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Inplabel', rol: 'ADMIN' }
-        };
-      } else if (username === 'operaciones' && password === 'operaciones123') {
-        return {
-          success: true,
-          message: 'Inicio de sesión local (Operaciones)',
-          user: { idUsuario: 2, username: 'operaciones', nombreCompleto: 'Área de Operaciones', rol: 'OPERACIONES' }
-        };
+      if (res) {
+        return await res.json();
       }
-      return { success: false, message: 'Usuario o contraseña incorrectos.' };
+    } catch (e) {
+      console.warn("Backend login error, attempting offline auth fallback:", e);
     }
+
+    if (cleanUser === 'admin' && password === 'admin123') {
+      return {
+        success: true,
+        message: 'Inicio de sesión (Administrador)',
+        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Inplabel', rol: 'ADMIN' }
+      };
+    } else if (cleanUser === 'operaciones' && password === 'operaciones123') {
+      return {
+        success: true,
+        message: 'Inicio de sesión (Operaciones)',
+        user: { idUsuario: 2, username: 'operaciones', nombreCompleto: 'Área de Operaciones', rol: 'OPERACIONES' }
+      };
+    }
+
+    return { success: false, message: 'Usuario o contraseña incorrectos.' };
   }
+
 };
 

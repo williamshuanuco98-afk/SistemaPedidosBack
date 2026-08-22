@@ -12,7 +12,8 @@ Start-Sleep -Seconds 1
 # Auto-compilar automáticamente si hubo cambios en código Java o Frontend
 & "$PSScriptRoot\compile_backend.ps1"
 
-$m2Base = "C:\Users\User\.m2\repository"
+$m2Base = "$env:USERPROFILE\.m2\repository"
+
 
 # List of required runtime jars (without legacy commons-logging)
 $requiredJars = @(
@@ -78,7 +79,8 @@ foreach ($j in $requiredJars) {
 }
 
 $cpString = $cpList -join ";"
-Set-Content -Path "runtime_cp.txt" -Value @("-cp", $cpString, "com.inplabel.pedidos.PedidosApplication")
-
 Write-Host "Starting Spring Boot on port 8080..."
-java "@runtime_cp.txt"
+java -cp "$cpString" com.inplabel.pedidos.PedidosApplication
+
+
+

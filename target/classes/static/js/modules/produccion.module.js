@@ -1,9 +1,21 @@
-import { escapeHtml, formatDate, showBootstrapModal } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
+import { resolveOrderStatus } from './pedidos.module.js';
 
 let currentOrders = [];
 let currentProducts = [];
 let currentSearchQuery = '';
 let aggregatedProductsMap = {};
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  renderProduccionTable(currentOrders, currentProducts, currentSearchQuery);
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
 
 function detectCategory(prodName = '', tipoProd = '') {
   const text = (prodName + ' ' + tipoProd).toUpperCase();
@@ -36,10 +48,10 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
     });
   }
 
-  // Filter ONLY active orders (completed, delivered or cancelled orders are discounted/excluded)
+  // Filter ONLY active orders (exclude CANCELADO, ANULADO, COMPLETADO, FINALIZADO)
   const activeOrders = currentOrders.filter(order => {
-    const st = (order.estado || 'PENDIENTE').toUpperCase();
-    return st !== 'COMPLETADO' && st !== 'ENTREGADO' && st !== 'ANULADO';
+    const st = resolveOrderStatus(order);
+    return st !== 'COMPLETADO' && st !== 'FINALIZADO' && st !== 'CANCELADO' && st !== 'ANULADO';
   });
 
   // Build aggregated product map from active orders
@@ -51,7 +63,6 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
 
   activeOrders.forEach(order => {
     const clientName = order.nombre_cliente || 'Cliente General';
-    if (clientName) uniqueClientsSet.add(clientName.trim());
 
     if (order.detalles && Array.isArray(order.detalles)) {
       const orderDate = order.fecha_pedido || '';
@@ -59,6 +70,7 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
       const orderNro = order.nro_pedido || ('PED-' + order.id_pedido);
       const poNro = order.nro_orden || '';
       const clientDoc = order.nro_documento || '';
+      const orderResolvedStatus = resolveOrderStatus(order);
       const estabRaw = (order.establecimiento || 'CARABAYLLO').toUpperCase();
       const estabText = (estabRaw === 'COMAS' || estabRaw.includes('COMAS')) 
         ? 'Planta Principal - Comas' 
@@ -76,13 +88,18 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
         const ent = Number(d.cantidad_entregada) || 0;
         const pend = Math.max(0, sol - ent);
 
-        // Add to category counters based on active demand
+        // ONLY count items with pending production demand (pend > 0)
+        if (pend <= 0) return;
+
+        if (clientName) uniqueClientsSet.add(clientName.trim());
+
+        // Add to category counters based on PENDING production demand
         if (categoria === 'FRASCOS') {
-          totalFrascos += sol;
+          totalFrascos += pend;
         } else if (categoria === 'GALONES') {
-          totalGalones += sol;
+          totalGalones += pend;
         } else if (categoria === 'TAPAS') {
-          totalTapas += sol;
+          totalTapas += pend;
         }
 
         if (!aggregatedProductsMap[prodId]) {
@@ -114,7 +131,7 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
           fecha_pedido: orderDate,
           fecha_entrega: deliveryDate,
           establecimiento: estabText,
-          estado_pedido: order.estado || 'PENDIENTE',
+          estado_pedido: orderResolvedStatus,
           cantidad_solicitada: sol,
           cantidad_entregada: ent,
           cantidad_pendiente: pend
@@ -147,8 +164,9 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
     }
   }
 
-  // Update 6 KPI Cards
-  const totalItems = filtered.length;
+  // Update 6 KPI Cards (Always reflect total active production metrics)
+  const totalDistinctProducts = productList.length;
+  const filteredCount = filtered.length;
   const countBadge = document.getElementById('produccionCountBadge');
   const sItems = document.getElementById('statProdItemsCount');
   const sTopName = document.getElementById('statProdTopName');
@@ -158,8 +176,8 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
   const sGalones = document.getElementById('statProdGalonesCount');
   const sTapas = document.getElementById('statProdTapasCount');
 
-  if (countBadge) countBadge.textContent = `${totalItems} productos`;
-  if (sItems) sItems.textContent = totalItems;
+  if (countBadge) countBadge.textContent = `${filteredCount} productos`;
+  if (sItems) sItems.textContent = totalDistinctProducts;
   if (sTopName) {
     sTopName.textContent = topProdName;
     sTopName.title = topProdName;
@@ -174,37 +192,55 @@ export function renderProduccionTable(orders = [], products = [], searchQuery = 
   const tbody = document.getElementById('produccionTableBody');
   if (!tbody) return;
 
-  if (filtered.length === 0) {
+  const p = paginateItems(filtered, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'produccionPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'produccionModule.changePage'
+  });
+
+  if (p.items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">No hay productos en demanda de producción activa.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map(p => {
+  tbody.innerHTML = p.items.map(prod => {
     let catBadge = 'bg-secondary';
-    if (p.categoria === 'FRASCOS') catBadge = 'bg-emerald text-white';
-    else if (p.categoria === 'GALONES') catBadge = 'bg-amber text-dark';
-    else if (p.categoria === 'TAPAS') catBadge = 'bg-purple text-white';
-    else if (p.categoria === 'ASAS') catBadge = 'bg-info text-dark';
+    if (prod.categoria === 'FRASCOS') catBadge = 'bg-emerald text-white';
+    else if (prod.categoria === 'GALONES') catBadge = 'bg-amber text-dark';
+    else if (prod.categoria === 'TAPAS') catBadge = 'bg-purple text-white';
+    else if (prod.categoria === 'ASAS') catBadge = 'bg-info text-dark';
+
+    const clientCount = (prod.clientes && Array.isArray(prod.clientes)) ? prod.clientes.length : 0;
+    const solQty = (Number(prod.total_solicitado) || 0).toLocaleString();
+    const entQty = (Number(prod.total_entregado) || 0).toLocaleString();
+    const pendQty = (Number(prod.total_pendiente) || 0).toLocaleString();
 
     return `
       <tr>
-        <td class="fw-bold font-monospace text-secondary">${escapeHtml(p.codigo_producto)}</td>
+        <td class="fw-bold font-monospace text-secondary">${escapeHtml(prod.codigo_producto || '')}</td>
         <td>
-          <div class="fw-bold text-white">${escapeHtml(p.nombre_producto)}</div>
+          <div class="fw-bold text-white">${escapeHtml(prod.nombre_producto || '')}</div>
         </td>
         <td>
-          <span class="badge ${catBadge} fs-8 fw-semibold px-2 py-1">${escapeHtml(p.categoria)}</span>
+          <span class="badge ${catBadge} fs-8 fw-semibold px-2 py-1">${escapeHtml(prod.categoria || '')}</span>
         </td>
-        <td class="text-center fw-bold text-white fs-6">${p.total_solicitado.toLocaleString()}</td>
-        <td class="text-center fw-bold text-success fs-6">${p.total_entregado.toLocaleString()}</td>
-        <td class="text-center fw-bold text-warning fs-6">${p.total_pendiente.toLocaleString()}</td>
+        <td class="text-center fw-bold text-white fs-6">${solQty}</td>
+        <td class="text-center fw-bold text-success fs-6">${entQty}</td>
+        <td class="text-center fw-bold text-warning fs-6">${pendQty}</td>
         <td class="text-center">
           <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-            <i class="bi bi-people-fill me-1"></i> ${p.clientes.length} ${p.clientes.length === 1 ? 'cliente' : 'clientes'}
+            <i class="bi bi-people-fill me-1"></i> ${clientCount} ${clientCount === 1 ? 'cliente' : 'clientes'}
           </span>
         </td>
         <td class="text-center">
-          <button class="btn-action-solid btn-view" onclick="produccionModule.openProductDetailModal('${p.id_producto}')" title="Ver Detalle del Producto">
+          <button class="btn-action-solid btn-view" onclick="produccionModule.openProductDetailModal('${prod.id_producto}')" title="Ver Detalle del Producto">
             <i class="bi bi-eye-fill"></i>
           </button>
         </td>
@@ -240,19 +276,25 @@ export function openProductDetailModal(idProducto) {
     modalBody.innerHTML = `
       <!-- Product Summary Cards -->
       <div class="row g-2 mb-3">
-        <div class="col-md-4 col-6">
+        <div class="col-md-3 col-6">
           <div class="p-2 border rounded bg-body-tertiary text-center">
             <span class="text-muted fs-8 d-block text-uppercase fw-semibold">Pedidos Activos</span>
             <strong class="fs-6 text-primary">${product.clientes.length}</strong>
           </div>
         </div>
-        <div class="col-md-4 col-6">
+        <div class="col-md-3 col-6">
           <div class="p-2 border rounded bg-body-tertiary text-center">
             <span class="text-muted fs-8 d-block text-uppercase fw-semibold">Total Solicitado</span>
             <strong class="fs-6 text-white">${product.total_solicitado.toLocaleString()}</strong>
           </div>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-6">
+          <div class="p-2 border rounded bg-body-tertiary text-center">
+            <span class="text-muted fs-8 d-block text-uppercase fw-semibold">Pendiente Producción</span>
+            <strong class="fs-6 text-warning">${product.total_pendiente.toLocaleString()}</strong>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
           <div class="p-2 border rounded bg-body-tertiary text-center">
             <span class="text-muted fs-8 d-block text-uppercase fw-semibold">Categoría</span>
             <strong class="fs-6 text-info">${escapeHtml(product.categoria)}</strong>
@@ -270,13 +312,21 @@ export function openProductDetailModal(idProducto) {
               <th>N° Pedido / Orden</th>
               <th>Fecha Pedido</th>
               <th>Establecimiento</th>
-              <th class="text-center">Cantidad Solicitada</th>
+              <th class="text-center">Solicitado</th>
+              <th class="text-center">Entregado</th>
+              <th class="text-center">Pendiente</th>
               <th class="text-center">Estado Pedido</th>
             </tr>
           </thead>
           <tbody>
             ${product.clientes.map(c => {
               const sol = c.cantidad_solicitada || 0;
+              const ent = c.cantidad_entregada || 0;
+              const pend = c.cantidad_pendiente || 0;
+              let statusBadgeText = c.estado_pedido || 'PENDIENTE';
+              if (statusBadgeText === 'EN_PROCESO') statusBadgeText = 'EN PROCESO';
+              if (statusBadgeText === 'FUERA_DE_TIEMPO') statusBadgeText = 'FUERA DE TIEMPO';
+
               return `
                 <tr>
                   <td>
@@ -293,7 +343,9 @@ export function openProductDetailModal(idProducto) {
                   </td>
                   <td><span class="small text-muted">${escapeHtml(c.establecimiento)}</span></td>
                   <td class="text-center fw-bold text-white fs-6">${sol.toLocaleString()}</td>
-                  <td class="text-center"><span class="status-badge ${c.estado_pedido || 'PENDIENTE'}">${escapeHtml(c.estado_pedido || 'PENDIENTE')}</span></td>
+                  <td class="text-center fw-bold text-success fs-6">${ent.toLocaleString()}</td>
+                  <td class="text-center fw-bold text-warning fs-6">${pend.toLocaleString()}</td>
+                  <td class="text-center"><span class="status-badge ${c.estado_pedido || 'PENDIENTE'}">${statusBadgeText}</span></td>
                 </tr>
               `;
             }).join('')}

@@ -23,6 +23,8 @@ public class StatusDaoImpl implements StatusDao {
             Integer pedidosCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM pedido", Integer.class);
             Integer guiasCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM guias", Integer.class);
 
+
+
             Map<String, Integer> counts = new HashMap<>();
             counts.put("clientes", clientesCount != null ? clientesCount : 0);
             counts.put("productos", productosCount != null ? productosCount : 0);

@@ -8,6 +8,6 @@ public class PedidosApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PedidosApplication.class, args);
-        System.out.println("🚀 Backend Spring Boot listo en http://localhost:8080");
+        System.out.println(" Backend Spring Boot listo en http://localhost:8080");
     }
 }

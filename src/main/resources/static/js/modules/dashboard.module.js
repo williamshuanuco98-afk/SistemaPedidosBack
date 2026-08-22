@@ -1,8 +1,14 @@
 import { escapeHtml, formatDate } from '../helpers.js';
 
 export function renderDashboard(orders = [], shipments = [], clients = [], products = [], statusData = null) {
-  const pendingOrders = orders.filter(o => o.estado === 'PENDIENTE');
-  const completedOrders = orders.filter(o => o.estado === 'COMPLETADO');
+  const pendingOrders = orders.filter(o => {
+    const st = (o.estado || 'PENDIENTE').toUpperCase();
+    return st === 'PENDIENTE' || st === 'EN_PROCESO' || st === 'PROCESO' || st === 'PARCIAL' || st === 'FUERA_DE_TIEMPO';
+  });
+  const completedOrders = orders.filter(o => {
+    const st = (o.estado || '').toUpperCase();
+    return st === 'ENTREGADO' || st === 'COMPLETADO' || st === 'FINALIZADO';
+  });
 
   let totalProductsCount = (products && Array.isArray(products) && products.length > 0) ? products.length : 0;
   if (!totalProductsCount && statusData && statusData.counts && statusData.counts.productos) {
@@ -232,34 +238,58 @@ function renderOrderStatusChart(orders) {
       window.orderStatusChartInstance.destroy();
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const statusCounts = {
       'PENDIENTE': 0,
       'EN_PROCESO': 0,
-      'POR_ENTREGAR': 0,
+      'FUERA_DE_TIEMPO': 0,
       'COMPLETADO': 0,
-      'ANULADO': 0
+      'FINALIZADO': 0,
+      'CANCELADO': 0
     };
 
     orders.forEach(o => {
       const st = (o.estado || 'PENDIENTE').toUpperCase();
-      if (statusCounts[st] !== undefined) {
-        statusCounts[st]++;
-      } else if (st.includes('PROCESO') || st.includes('PRODUCCION')) {
-        statusCounts['EN_PROCESO']++;
-      } else if (st.includes('ENTREG')) {
+      const isCancelled = st === 'ANULADO' || st === 'CANCELADO';
+      const isFinalized = st === 'FINALIZADO';
+
+      let sumReq = 0;
+      let sumEnt = 0;
+      if (o.detalles && Array.isArray(o.detalles)) {
+        o.detalles.forEach(d => {
+          sumReq += (Number(d.cantidad) || 0);
+          sumEnt += (Number(d.cantidad_entregada) || 0);
+        });
+      }
+
+      const hasShipments = (o.guias && Array.isArray(o.guias) && o.guias.length > 0) || sumEnt > 0;
+      const isCompleted = st === 'ENTREGADO' || st === 'COMPLETADO' || (sumReq > 0 && sumEnt >= sumReq);
+      const isOverdue = o.fecha_entrega && o.fecha_entrega < todayStr && !isCompleted && !isFinalized && !isCancelled;
+
+      if (isCancelled) {
+        statusCounts['CANCELADO']++;
+      } else if (isCompleted) {
         statusCounts['COMPLETADO']++;
+      } else if (isFinalized) {
+        statusCounts['FINALIZADO']++;
+      } else if (hasShipments || st === 'EN_PROCESO' || st === 'PROCESO' || st === 'PARCIAL' || st === 'EN PROCESO') {
+        statusCounts['EN_PROCESO']++;
+      } else if (isOverdue) {
+        statusCounts['FUERA_DE_TIEMPO']++;
       } else {
         statusCounts['PENDIENTE']++;
       }
     });
 
-    const labels = ['Pendiente', 'En Producción', 'Por Entregar', 'Entregado / Completado', 'Anulado'];
+    const labels = ['Pendiente', 'En Proceso', 'Fuera de Tiempo', 'Completado', 'Finalizado (Parcial)', 'Cancelado'];
     const data = [
       statusCounts['PENDIENTE'],
       statusCounts['EN_PROCESO'],
-      statusCounts['POR_ENTREGAR'],
+      statusCounts['FUERA_DE_TIEMPO'],
       statusCounts['COMPLETADO'],
-      statusCounts['ANULADO']
+      statusCounts['FINALIZADO'],
+      statusCounts['CANCELADO']
     ];
 
     window.orderStatusChartInstance = new Chart(ctx, {
@@ -268,7 +298,7 @@ function renderOrderStatusChart(orders) {
         labels: labels,
         datasets: [{
           data: data,
-          backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#ef4444'],
+          backgroundColor: ['#f59e0b', '#3b82f6', '#dc2626', '#10b981', '#8b5cf6', '#6b7280'],
           borderWidth: 2,
           borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff'
         }]

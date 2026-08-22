@@ -1,10 +1,21 @@
-import { escapeHtml, filterAndRankItems, showConfirmModal } from '../helpers.js';
+import { escapeHtml, filterAndRankItems, showConfirmModal, paginateItems, renderPaginationUI } from '../helpers.js';
 import { api } from '../api.js';
 import { canDelete } from './auth.module.js';
 
 let currentClients = [];
 let lastSunatQueryRuc = '';
 let editingClientIndex = -1;
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  filterClientes(document.getElementById('searchClientesInput')?.value || '');
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
 
 export function renderClientesTable(clients = [], searchQuery = '') {
   currentClients = clients || [];
@@ -27,14 +38,27 @@ export function filterClientes(queryStr = '') {
   const countBadge = document.getElementById('clientesCountBadge');
   if (countBadge) countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? 'cliente' : 'clientes'}`;
 
+  const p = paginateItems(filtered, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'clientesPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'clientesModule.changePage'
+  });
+
   const allowDelete = canDelete();
 
-  if (filtered.length === 0) {
+  if (p.items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No se encontraron clientes coincidentes.</td></tr>`;
     return;
   }
 
-  filtered.forEach((c, idx) => {
+  p.items.forEach((c, idx) => {
     const tr = document.createElement('tr');
     const badgeBg = (c.tipo_documento === 'DNI') ? 'bg-info text-dark' : 'bg-primary';
     const clientId = c.id_cliente || c.id;

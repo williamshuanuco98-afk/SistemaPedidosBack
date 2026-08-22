@@ -24,12 +24,12 @@ public class ClienteController {
     }
 
     @GetMapping("/sunat/{ruc}")
-    public Map<String, Object> consultarSunatRuc(@PathVariable String ruc) {
+    public Map<String, Object> consultarSunatRuc(@PathVariable("ruc") String ruc) {
         return clienteService.consultarSunatRuc(ruc);
     }
 
     @GetMapping("/dni/{dni}")
-    public Map<String, Object> consultarDni(@PathVariable String dni) {
+    public Map<String, Object> consultarDni(@PathVariable("dni") String dni) {
         return clienteService.consultarDni(dni);
     }
 

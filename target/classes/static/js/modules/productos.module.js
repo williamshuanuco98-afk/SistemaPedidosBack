@@ -1,8 +1,19 @@
-import { escapeHtml, filterAndRankItems, showConfirmModal } from '../helpers.js';
+import { escapeHtml, filterAndRankItems, showConfirmModal, paginateItems, renderPaginationUI } from '../helpers.js';
 import { api } from '../api.js';
 import { canDelete } from './auth.module.js';
 
 let currentProducts = [];
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  filterProductos(document.getElementById('searchProductosInput')?.value || '');
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
 
 export function renderProductosTable(products = [], searchQuery = '') {
   currentProducts = products || [];
@@ -22,14 +33,27 @@ export function filterProductos(queryStr = '') {
     p => `#${p.id_producto || ''} ${p.id_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || p.categoria || ''}`
   );
 
-  if (filtered.length === 0) {
+  const p = paginateItems(filtered, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'productosPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'productosModule.changePage'
+  });
+
+  if (p.items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron productos coincidentes.</td></tr>`;
     return;
   }
 
   const allowDelete = canDelete();
 
-  filtered.forEach(p => {
+  p.items.forEach(p => {
     const tipo = p.tipo_producto || p.categoria || 'General';
     const tr = document.createElement('tr');
     tr.innerHTML = `

@@ -1,11 +1,14 @@
 import { api } from './api.js';
 import { themeManager } from './theme.js';
 import { Router } from './router.js';
-import { escapeHtml } from './helpers.js';
+import { escapeHtml, initFlatpickrOnAllInputs, initGlobalZoomHandlers } from './helpers.js';
+
+
 
 import { renderDashboard } from './modules/dashboard.module.js';
 import { 
   renderPedidosTable, 
+  changePage as changePedidosPage,
   populateClientSelect, 
   resetProductRows, 
   addOrderProductRow,
@@ -33,6 +36,7 @@ import {
 } from './modules/nuevo-pedido.module.js';
 import { 
   renderEnviosTable, 
+  changePage as changeEnviosPage,
   openPDF as openGuiaPDF, 
   printPDF as printGuiaPDF,
   viewGuiaDetail,
@@ -49,6 +53,7 @@ import {
 } from './modules/nueva-guia.module.js';
 import { 
   renderClientesTable, 
+  changePage as changeClientesPage,
   filterClientes, 
   openNewClientModal, 
   openEditClientModal,
@@ -60,6 +65,7 @@ import {
 } from './modules/clientes.module.js';
 import { 
   renderProductosTable, 
+  changePage as changeProductosPage,
   filterProductos, 
   openNewProductModal, 
   openEditProductModal, 
@@ -67,7 +73,7 @@ import {
   deleteProduct 
 } from './modules/productos.module.js';
 import { renderConfigView, saveStorageConfig } from './modules/config.module.js';
-import { renderProduccionTable, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
+import { renderProduccionTable, changePage as changeProduccionPage, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
 import * as letrasModule from './modules/letras.module.js';
 import * as authModule from './modules/auth.module.js';
 
@@ -106,6 +112,7 @@ window.nuevaGuiaModule = {
 
 window.enviosModule = {
   renderEnviosTable,
+  changePage: changeEnviosPage,
   openPDF: openGuiaPDF,
   printPDF: printGuiaPDF,
   viewGuiaDetail,
@@ -116,6 +123,7 @@ window.enviosModule = {
 
 window.clientesModule = {
   filterClientes,
+  changePage: changeClientesPage,
   openNewClientModal,
   openEditClientModal,
   deleteClient,
@@ -126,6 +134,7 @@ window.clientesModule = {
 };
 
 window.pedidosModule = {
+  changePage: changePedidosPage,
   openFinalizarOrdenModal,
   toggleFinalizarFields,
   saveFinalizarOrden,
@@ -136,6 +145,7 @@ window.pedidosModule = {
 
 window.productosModule = {
   filterProductos,
+  changePage: changeProductosPage,
   openNewProductModal,
   openEditProductModal,
   saveProductFromModal,
@@ -143,6 +153,7 @@ window.productosModule = {
 };
 
 window.produccionModule = {
+  changePage: changeProduccionPage,
   openProductDetailModal,
   onSearchInput: onProduccionSearch
 };
@@ -230,6 +241,8 @@ class ModularSpaApp {
 
     this.updateUserUI();
     authModule.initInactivityTracker();
+    initGlobalZoomHandlers();
+
 
     if (!authModule.isAuthenticated() || authModule.checkSessionTimeout()) {
       await this.router.navigateTo('login');
@@ -528,7 +541,12 @@ class ModularSpaApp {
     } catch (err) {
       console.error("Error rendering view:", route, err);
     }
+
+    setTimeout(() => {
+      initFlatpickrOnAllInputs();
+    }, 50);
   }
+
 
   viewOrderDetail(idPedido) {
     viewOrderDetail(idPedido);

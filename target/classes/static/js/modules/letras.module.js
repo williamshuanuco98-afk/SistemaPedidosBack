@@ -1,4 +1,4 @@
-import { escapeHtml, filterAndRankItems } from '../helpers.js';
+import { escapeHtml, filterAndRankItems, formatDate, paginateItems, renderPaginationUI } from '../helpers.js';
 import { api } from '../api.js';
 
 let rawLetrasList = [];
@@ -7,6 +7,18 @@ let allClients = [];
 let selectedClient = null;
 let generatedInstallments = [];
 let activeClientIndex = -1;
+
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  renderLetrasTable(groupedLetras);
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
 
 // =========================================================================
 // 1. NÚMERO A LETRAS (CONVERSOR EN ESPAÑOL PARA SOLES PERUANOS)
@@ -232,7 +244,20 @@ export function renderLetrasTable(groupedList = []) {
   tbody.innerHTML = '';
   if (countBadge) countBadge.textContent = `${groupedList.length} ${groupedList.length === 1 ? 'operación' : 'operaciones'}`;
 
-  if (groupedList.length === 0) {
+  const p = paginateItems(groupedList, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'letrasPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'letrasModule.changePage'
+  });
+
+  if (p.items.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="text-center py-5 text-muted">
@@ -244,7 +269,7 @@ export function renderLetrasTable(groupedList = []) {
     return;
   }
 
-  groupedList.forEach(lote => {
+  p.items.forEach(lote => {
     const tr = document.createElement('tr');
     const isAnulada = lote.estado === 'ANULADA';
 

@@ -26,7 +26,7 @@ public class PedidoController {
     }
 
     @PutMapping("/{id}")
-    public Map<String, Object> updatePedido(@PathVariable int id, @RequestBody Map<String, Object> body) {
+    public Map<String, Object> updatePedido(@PathVariable("id") int id, @RequestBody Map<String, Object> body) {
         return pedidoService.updatePedido(id, body);
     }
 }

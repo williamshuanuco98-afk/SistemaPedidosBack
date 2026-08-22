@@ -82,25 +82,37 @@ export function filterAndRankItems(items, queryStr, getSearchableText) {
   return matched.map(m => m.item);
 }
 
-// Format date to DD/MM/YYYY format
+// Format date strictly to DD/MM/AAAA format
 export function formatDate(dateStr) {
   if (!dateStr || dateStr === '-' || dateStr === 'null' || dateStr === 'undefined') return '-';
   const str = String(dateStr).trim();
   if (!str) return '-';
   
-  // Handle ISO YYYY-MM-DD or YYYY-MM-DDT...
   if (str.includes('T')) {
-    const parts = str.split('T')[0].split('-');
-    if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+    const cleanStr = str.split('T')[0];
+    const parts = cleanStr.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+    }
   }
   if (str.includes('-')) {
     const parts = str.split('-');
-    if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      } else if (parts[2].length === 4) { // DD-MM-YYYY
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+      }
+    }
   }
   if (str.includes('/')) {
     const parts = str.split('/');
-    if (parts.length === 3 && parts[0].length === 4) {
-      return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY/MM/DD
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      } else if (parts[2].length === 4) { // DD/MM/YYYY
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+      }
     }
   }
   return str;
@@ -262,3 +274,139 @@ export function showConfirmModal({
   });
 }
 window.showConfirmDialog = showConfirmModal;
+
+export function initFlatpickrOnAllInputs() {
+  if (typeof window.flatpickr === 'undefined') return;
+
+  const inputs = document.querySelectorAll('input[type="date"], input.flatpickr-input');
+  inputs.forEach(input => {
+    if (input.dataset.fpBound === 'true') return;
+    input.dataset.fpBound = 'true';
+
+    try {
+      const fpConfig = {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd/m/Y',
+        allowInput: true,
+        clickOpens: true,
+        locale: (window.flatpickr.l10ns && window.flatpickr.l10ns.es) ? window.flatpickr.l10ns.es : 'es'
+      };
+
+      if (input.max) {
+        fpConfig.maxDate = input.max;
+      }
+
+      const fp = window.flatpickr(input, fpConfig);
+
+      input.addEventListener('dblclick', () => {
+        if (fp) fp.open();
+      });
+      input.addEventListener('click', () => {
+        if (fp) fp.open();
+      });
+    } catch (e) {
+      console.warn("Flatpickr init error on input:", input, e);
+    }
+  });
+}
+window.initFlatpickrOnAllInputs = initFlatpickrOnAllInputs;
+
+export function setAppZoom(zoomVal) {
+  const currentZoom = Math.max(0.4, Math.min(2.0, zoomVal));
+  localStorage.setItem('inplabel_user_zoom', String(currentZoom));
+  document.body.style.zoom = currentZoom;
+  return currentZoom;
+}
+
+export function initGlobalZoomHandlers() {
+  const saved = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
+  if (saved !== 1.0) setAppZoom(saved);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      const cur = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
+      if (e.key === '+' || e.key === '=' || e.key === 'NumpadAdd') {
+        e.preventDefault();
+        setAppZoom(cur + 0.1);
+      } else if (e.key === '-' || e.key === '_' || e.key === 'NumpadSubtract') {
+        e.preventDefault();
+        setAppZoom(cur - 0.1);
+      } else if (e.key === '0' || e.key === 'Numpad0') {
+        e.preventDefault();
+        setAppZoom(1.0);
+      }
+    }
+  });
+
+  window.addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const cur = parseFloat(localStorage.getItem('inplabel_user_zoom')) || 1.0;
+      if (e.deltaY < 0) {
+        setAppZoom(cur + 0.05);
+      } else if (e.deltaY > 0) {
+        setAppZoom(cur - 0.05);
+      }
+    }
+  }, { passive: false });
+}
+window.setAppZoom = setAppZoom;
+window.initGlobalZoomHandlers = initGlobalZoomHandlers;
+
+// Generic Pagination Helper
+export function paginateItems(items, currentPage = 1, pageSize = 20) {
+  const totalItems = items ? items.length : 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.max(1, Math.min(currentPage, totalPages));
+  const startIndex = totalItems === 0 ? 0 : (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+  const pageItems = items ? items.slice(startIndex, endIndex) : [];
+
+  return {
+    items: pageItems,
+    currentPage: page,
+    pageSize,
+    totalPages,
+    totalItems,
+    startIndex: totalItems === 0 ? 0 : startIndex + 1,
+    endIndex
+  };
+}
+
+export function renderPaginationUI({ containerId, currentPage, totalPages, totalItems, startIndex, endIndex, onPageChangeName }) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (totalItems === 0) {
+    container.innerHTML = '';
+    container.classList.add('d-none');
+    return;
+  }
+
+  container.classList.remove('d-none');
+  const isFirst = currentPage <= 1;
+  const isLast = currentPage >= totalPages;
+
+  container.innerHTML = `
+    <div class="d-flex flex-wrap align-items-center justify-content-between p-3 bg-body-tertiary border-top gap-2">
+      <div class="text-muted small">
+        Mostrando <span class="fw-bold text-body">${startIndex}-${endIndex}</span> de <span class="fw-bold text-body">${totalItems}</span> registros
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" ${isFirst ? 'disabled' : ''} onclick="${onPageChangeName}(-1)">
+          <i class="bi bi-chevron-left me-1"></i> Anterior
+        </button>
+        <span class="small fw-semibold px-2 text-secondary">Página ${currentPage} de ${totalPages}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" ${isLast ? 'disabled' : ''} onclick="${onPageChangeName}(1)">
+          Siguiente <i class="bi bi-chevron-right ms-1"></i>
+        </button>
+      </div>
+    </div>
+  `;
+}
+window.paginateItems = paginateItems;
+window.renderPaginationUI = renderPaginationUI;
+
+

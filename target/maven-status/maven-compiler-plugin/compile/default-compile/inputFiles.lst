@@ -1,32 +1,43 @@
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\GuiaDao.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\ProductoDao.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\Producto.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDao.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ProductoServiceImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\StatusService.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteServiceImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\GuiaServiceImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\ProductoController.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\PedidoController.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\PedidoDao.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\PedidoServiceImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\ClienteController.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\SunatClientUtil.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\StatusController.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\PedidoService.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\ClienteDaoImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\StatusServiceImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\ClienteDao.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\PedidoDetalle.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\GuiaDetalle.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\GuiaService.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\util\FileStorageUtil.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\PedidosApplication.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\PedidoDaoImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\model\Cliente.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDaoImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteService.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\GuiaDaoImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\dao\ProductoDaoImpl.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\service\ProductoService.java
-C:\Users\User\OneDrive\Escritorio\Proyectos\SistemaWebPedidosBack\src\main\java\com\inplabel\pedidos\controller\GuiaController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\model\Usuario.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteService.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\ProductoDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\model\Producto.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\StatusController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\PedidoDao.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\security\PasswordUtil.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\UsuarioDao.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDao.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\AuthController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\model\PedidoDetalle.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\ClienteDao.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\PedidoService.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\ClienteController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\util\GuiaPdfGenerator.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\model\GuiaDetalle.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\PedidoServiceImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\StatusService.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\StatusServiceImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\GuiaDao.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\GuiaServiceImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\ProductoController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\GuiaDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\util\SunatClientUtil.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\GuiaService.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\StatusDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\model\Cliente.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\ClienteDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\security\RateLimitingFilter.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\PedidoDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\GuiaController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\PedidoController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\security\WebSecurityConfig.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\ProductoServiceImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\util\LetraPdfGenerator.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\PedidosApplication.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\util\LetraExcelGenerator.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\ProductoService.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\util\FileStorageUtil.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\controller\LetraCambioController.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\service\ClienteServiceImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\UsuarioDaoImpl.java
+C:\Users\Mi Equipo\Desktop\WEB\SistemaPedidosBack\src\main\java\com\inplabel\pedidos\dao\ProductoDao.java

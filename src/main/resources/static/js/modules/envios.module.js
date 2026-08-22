@@ -1,8 +1,19 @@
 import { api } from '../api.js';
-import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
 
 let currentShipments = [];
 let currentSearchQuery = '';
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  renderEnviosTable(currentShipments, currentSearchQuery);
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
 
 export function setupDefaultDateFiltersEnvios() {
   const dateFromElem = document.getElementById('filterGuiaDateFrom');
@@ -42,6 +53,12 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
   const establishment = document.getElementById('filterGuiaEstablishment')?.value || 'ALL';
 
   const filtered = currentShipments.filter(s => {
+    // 0. Only show Official Guías de Remisión (GR...) - Exclude order delivery progress vouchers (TT...)
+    const nroUpper = (s.nro_guia || '').toUpperCase();
+    if (nroUpper.startsWith('TT') || (!nroUpper.startsWith('GR') && s.id_pedido)) {
+      return false;
+    }
+
     // 1. Text Search Filter
     let matchQuery = true;
     if (query) {
@@ -73,12 +90,25 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
 
   if (countBadge) countBadge.textContent = `${filtered.length} guías`;
 
-  if (filtered.length === 0) {
+  const p = paginateItems(filtered, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'enviosPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'enviosModule.changePage'
+  });
+
+  if (p.items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No se encontraron guías de remisión registradas para los filtros aplicados.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map(s => {
+  tbody.innerHTML = p.items.map(s => {
     const isAnulada = (s.estado === 'ANULADA');
     const badgeClass = isAnulada ? 'CANCELADO' : 'COMPLETADO';
     const statusText = isAnulada ? 'ANULADA' : (s.estado || 'EMITIDA');

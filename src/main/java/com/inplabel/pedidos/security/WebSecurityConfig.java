@@ -30,10 +30,15 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         File frontDir = new File("../SistemaWebPedidosFront");
-        String frontLocation = "file:" + frontDir.getAbsolutePath().replace('\\', '/') + "/";
-
-        registry.addResourceHandler("/**")
-                .addResourceLocations(frontLocation, "classpath:/static/", "classpath:/public/")
-                .setCachePeriod(0);
+        if (frontDir.exists() && frontDir.isDirectory()) {
+            String frontLocation = "file:" + frontDir.getAbsolutePath().replace('\\', '/') + "/";
+            registry.addResourceHandler("/**")
+                    .addResourceLocations(frontLocation, "classpath:/static/", "classpath:/public/")
+                    .setCachePeriod(0);
+        } else {
+            registry.addResourceHandler("/**")
+                    .addResourceLocations("classpath:/static/", "classpath:/public/")
+                    .setCachePeriod(0);
+        }
     }
 }

@@ -1,7 +1,44 @@
-import { escapeHtml, formatDate, showBootstrapModal } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
 import { api } from '../api.js';
 
 let currentOrders = [];
+let currentPage = 1;
+const pageSize = 20;
+
+export function changePage(delta) {
+  currentPage += delta;
+  renderPedidosTable(currentOrders);
+}
+
+export function resetPagination() {
+  currentPage = 1;
+}
+
+export function resolveOrderStatus(o, todayStr = new Date().toISOString().split('T')[0]) {
+  const ost = (o.estado || 'PENDIENTE').toUpperCase();
+  const isCancelled = ost === 'CANCELADO' || ost === 'ANULADO';
+  const isFinalized = ost === 'FINALIZADO';
+
+  let sumReq = 0;
+  let sumEnt = 0;
+  if (o.detalles && Array.isArray(o.detalles)) {
+    o.detalles.forEach(d => {
+      sumReq += (Number(d.cantidad) || 0);
+      sumEnt += (Number(d.cantidad_entregada) || 0);
+    });
+  }
+
+  const hasShipments = (o.guias && Array.isArray(o.guias) && o.guias.length > 0) || sumEnt > 0;
+  const isCompleted = ost === 'COMPLETADO' || ost === 'ENTREGADO' || (sumReq > 0 && sumEnt >= sumReq);
+  const isOverdue = o.fecha_entrega && o.fecha_entrega < todayStr && !isCompleted && !isFinalized && !isCancelled;
+
+  if (isCancelled) return 'CANCELADO';
+  if (isCompleted) return 'COMPLETADO';
+  if (isFinalized) return 'FINALIZADO';
+  if (hasShipments || ost === 'PROCESO' || ost === 'PARCIAL' || ost === 'EN_PROCESO' || ost === 'EN PROCESO') return 'EN_PROCESO';
+  if (isOverdue) return 'FUERA_DE_TIEMPO';
+  return 'PENDIENTE';
+}
 
 export function renderPedidosTable(orders = [], searchQuery = '') {
   currentOrders = orders || [];
@@ -38,17 +75,22 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
       matchEstab = oEstab.includes(establishment);
     }
 
+    const displayStatus = resolveOrderStatus(o, todayStr);
+
     let matchStatus = true;
     if (orderStatus && orderStatus !== 'ALL') {
-      const ost = (o.estado || 'PENDIENTE').toUpperCase();
-      const isOverdue = o.fecha_entrega && o.fecha_entrega < todayStr && ost !== 'COMPLETADO' && ost !== 'CANCELADO';
-
-      if (orderStatus === 'FUERA_DE_PLAZO') {
-        matchStatus = isOverdue;
-      } else if (orderStatus === 'EN_PROCESO') {
-        matchStatus = (ost === 'EN_PROCESO' || ost === 'PARCIAL');
-      } else {
-        matchStatus = (ost === orderStatus);
+      if (orderStatus === 'FUERA_DE_TIEMPO' || orderStatus === 'FUERA_DE_PLAZO') {
+        matchStatus = (displayStatus === 'FUERA_DE_TIEMPO');
+      } else if (orderStatus === 'EN_PROCESO' || orderStatus === 'PROCESO') {
+        matchStatus = (displayStatus === 'EN_PROCESO');
+      } else if (orderStatus === 'PENDIENTE') {
+        matchStatus = (displayStatus === 'PENDIENTE');
+      } else if (orderStatus === 'COMPLETADO') {
+        matchStatus = (displayStatus === 'COMPLETADO');
+      } else if (orderStatus === 'FINALIZADO') {
+        matchStatus = (displayStatus === 'FINALIZADO');
+      } else if (orderStatus === 'CANCELADO') {
+        matchStatus = (displayStatus === 'CANCELADO');
       }
     }
 
@@ -58,18 +100,36 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
   const badge = document.getElementById('ordersCountBadge');
   if (badge) badge.textContent = `${filtered.length} pedidos`;
 
-  if (filtered.length === 0) {
+  const p = paginateItems(filtered, currentPage, pageSize);
+  currentPage = p.currentPage;
+
+  renderPaginationUI({
+    containerId: 'pedidosPaginationContainer',
+    currentPage: p.currentPage,
+    totalPages: p.totalPages,
+    totalItems: p.totalItems,
+    startIndex: p.startIndex,
+    endIndex: p.endIndex,
+    onPageChangeName: 'pedidosModule.changePage'
+  });
+
+  if (p.items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No se encontraron pedidos con los filtros aplicados.</td></tr>`;
     return;
   }
 
-  filtered.forEach(o => {
+  p.items.forEach(o => {
     const tr = document.createElement('tr');
     const estabRaw = (o.establecimiento || 'CARABAYLLO').toUpperCase();
     const estabText = (estabRaw === 'COMAS' || estabRaw.includes('COMAS'))
       ? 'Planta Principal - Comas'
       : 'Sucursal - Carabayllo';
-    const estadoClass = (o.estado || 'PENDIENTE').toUpperCase();
+
+    const displayStatus = resolveOrderStatus(o, todayStr);
+
+    let statusBadgeText = displayStatus;
+    if (displayStatus === 'FUERA_DE_TIEMPO') statusBadgeText = 'FUERA DE TIEMPO';
+    if (displayStatus === 'EN_PROCESO') statusBadgeText = 'EN PROCESO';
 
     tr.innerHTML = `
       <td class="fw-bold text-primary">${o.nro_pedido || ('PED-' + o.id_pedido)}</td>
@@ -77,7 +137,7 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
       <td class="fw-semibold">${escapeHtml(o.nombre_cliente || 'Cliente General')}</td>
       <td>${formatDate(o.fecha_pedido)}</td>
       <td><span class="small text-muted">${estabText}</span></td>
-      <td><span class="status-badge ${estadoClass}">${estadoClass}</span></td>
+      <td><span class="status-badge ${displayStatus}">${statusBadgeText}</span></td>
       <!-- 1. Columna FINALIZAR -->
       <td class="text-center">
         <button class="btn-action-solid btn-finish" onclick="pedidosModule.openFinalizarOrdenModal('${o.id_pedido || o.id || o.nro_pedido}')" title="Finalizar Orden (Entregado / Cancelado)">
@@ -145,7 +205,7 @@ export function openFinalizarOrdenModal(idPedido) {
 export function toggleFinalizarFields(status) {
   const fields = document.getElementById('finalizarDeliveryFields');
   if (!fields) return;
-  if (status === 'ENTREGADO') {
+  if (status === 'COMPLETADO' || status === 'FINALIZADO' || status === 'ENTREGADO') {
     fields.style.display = 'block';
   } else {
     fields.style.display = 'none';
@@ -157,13 +217,21 @@ export async function saveFinalizarOrden() {
   if (!idPedido) return;
 
   const isCompletado = document.getElementById('optCompletado')?.checked;
-  const nuevoEstado = isCompletado ? 'ENTREGADO' : 'CANCELADO';
+  const isFinalizado = document.getElementById('optFinalizado')?.checked;
 
-  const nroGuia = isCompletado ? document.getElementById('finalizarNroGuia')?.value.trim() : null;
-  const fechaEntrega = isCompletado ? document.getElementById('finalizarFechaEntrega')?.value : null;
+  let nuevoEstado = 'CANCELADO';
+  if (isCompletado) {
+    nuevoEstado = 'COMPLETADO';
+  } else if (isFinalizado) {
+    nuevoEstado = 'FINALIZADO';
+  }
 
-  if (isCompletado && !nroGuia) {
-    alert('Por favor ingrese el N° de Guía de Remisión para completar la orden.');
+  const needsDeliveryFields = (nuevoEstado === 'COMPLETADO' || nuevoEstado === 'FINALIZADO');
+  const nroGuia = needsDeliveryFields ? document.getElementById('finalizarNroGuia')?.value.trim() : null;
+  const fechaEntrega = needsDeliveryFields ? document.getElementById('finalizarFechaEntrega')?.value : null;
+
+  if (needsDeliveryFields && !nroGuia) {
+    alert('Por favor ingrese el N° de Guía de Remisión para guardar el estado del pedido.');
     return;
   }
 
@@ -175,7 +243,7 @@ export async function saveFinalizarOrden() {
 
   const res = await api.updatePedidoStatus(idPedido, payload);
   if (res) {
-    const localOrder = currentOrders.find(o => o.id_pedido === idPedido);
+    const localOrder = currentOrders.find(o => (o.id_pedido || o.id) === idPedido);
     if (localOrder) {
       localOrder.estado = nuevoEstado;
       localOrder.nro_guia = nroGuia;
@@ -266,18 +334,21 @@ export async function saveRegistrarEnvio() {
     return;
   }
 
+  const cerrarSaldoChecked = document.getElementById('envioCerrarSaldoCheck')?.checked;
+
   const payload = {
     id_pedido: idPedido,
     id_cliente: idCliente,
     nro_guia: nroGuia,
     fecha_guia: fechaGuia,
-    estado: 'ENTREGADO',
+    estado: 'EMITIDA',
+    cerrar_saldo: cerrarSaldoChecked,
     detalles: detallesEnvio
   };
 
   const res = await api.addGuia(payload);
   if (res) {
-    const localOrder = currentOrders.find(o => o.id_pedido === idPedido);
+    const localOrder = currentOrders.find(o => (o.id_pedido || o.id) === idPedido);
     if (localOrder) {
       localOrder.nro_guia = nroGuia;
       localOrder.fecha_entrega = fechaGuia;
@@ -291,6 +362,9 @@ export async function saveRegistrarEnvio() {
         detalles: detallesEnvio
       });
 
+      let totalRequested = 0;
+      let totalDelivered = 0;
+
       // Update accumulated delivered quantities
       if (localOrder.detalles) {
         localOrder.detalles.forEach(item => {
@@ -298,8 +372,22 @@ export async function saveRegistrarEnvio() {
           if (matchEnvio) {
             item.cantidad_entregada = (item.cantidad_entregada || 0) + matchEnvio.cantidad;
           }
+          totalRequested += (item.cantidad || 0);
+          totalDelivered += (item.cantidad_entregada || 0);
         });
       }
+
+      const cerrarSaldoChecked = document.getElementById('envioCerrarSaldoCheck')?.checked;
+
+      let nuevoEstado = 'EN PROCESO';
+      if (totalDelivered >= totalRequested && totalRequested > 0) {
+        nuevoEstado = 'COMPLETADO';
+      } else if (cerrarSaldoChecked) {
+        nuevoEstado = 'FINALIZADO';
+      }
+
+      localOrder.estado = nuevoEstado;
+      await api.updatePedidoStatus(idPedido, { estado: nuevoEstado, nro_guia: nroGuia, fecha_entrega: fechaGuia });
     }
   }
 
@@ -468,6 +556,69 @@ export function viewOrderDetail(idPedido) {
       }
     });
 
+    // Parse payments/adelantos list if present
+    let adelantosList = [];
+    if (order.adelantos) {
+      try {
+        adelantosList = typeof order.adelantos === 'string' ? JSON.parse(order.adelantos) : order.adelantos;
+      } catch (e) {
+        console.warn("Error parsing adelantos JSON:", e);
+      }
+    }
+    if (!Array.isArray(adelantosList)) adelantosList = [];
+
+    let totalAdelantado = 0;
+    adelantosList.forEach(a => {
+      totalAdelantado += (Number(a.monto) || 0);
+    });
+
+    let adelantosHtml = `
+      <div class="card border-0 bg-body-tertiary mb-3">
+        <div class="card-header bg-transparent fw-bold text-primary d-flex align-items-center justify-content-between">
+          <span><i class="bi bi-wallet2 me-2"></i> Pagos / Adelantos Registrados (${adelantosList.length})</span>
+          <button type="button" class="btn btn-sm btn-success fw-bold px-2.5 py-1 fs-8" onclick="pedidosModule.openAgregarPagoModal('${order.id_pedido || order.id || order.nro_pedido}')">
+            <i class="bi bi-plus-circle me-1"></i> Registrar Pago / Abono
+          </button>
+        </div>
+        <div class="card-body p-2">
+          ${adelantosList.length === 0 ? `
+            <div class="p-3 text-center text-muted fs-8">
+              No hay pagos ni adelantos registrados para este pedido.
+            </div>
+          ` : `
+            <div class="table-responsive">
+              <table class="table custom-table table-sm mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th>Fecha del Pago</th>
+                    <th>Banco / Medio</th>
+                    <th>N° Voucher / Op.</th>
+                    <th class="text-end">Monto Abonado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${adelantosList.map(a => `
+                    <tr>
+                      <td class="fw-semibold">${formatDate(a.fecha)}</td>
+                      <td><span class="badge bg-primary px-2 py-0.5 fs-8">${escapeHtml(a.banco || 'BCP')}</span></td>
+                      <td class="small font-monospace">${escapeHtml(a.voucher || '-')}</td>
+                      <td class="text-end fw-bold text-success">S/ ${(Number(a.monto) || 0).toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <td colspan="3" class="text-end fw-bold fs-8">Total Acumulado Pagado:</td>
+                    <td class="text-end fw-bold text-success fs-7">S/ ${totalAdelantado.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+
     modalBody.innerHTML = `
     ${overdueBanner}
     <div class="row g-3 mb-3">
@@ -548,6 +699,8 @@ export function viewOrderDetail(idPedido) {
       ${order.observaciones ? escapeHtml(order.observaciones) : '<span class="text-muted">-</span>'}
     </div>
 
+    ${adelantosHtml}
+
     ${guiasHtml}
 
     ${adjuntosHtml}
@@ -557,6 +710,64 @@ export function viewOrderDetail(idPedido) {
   }
 
   showBootstrapModal('orderDetailModal');
+}
+
+export function openAgregarPagoModal(idPedido) {
+  const order = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
+  if (!order) return;
+
+  document.getElementById('pagoOrderId').value = idPedido;
+  document.getElementById('pagoOrderNroBadge').textContent = order.nro_pedido || ('PED-' + idPedido);
+  document.getElementById('pagoMontoInput').value = '';
+  document.getElementById('pagoFechaInput').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pagoVoucherInput').value = '';
+
+  showBootstrapModal('modalAgregarPagoPedido');
+}
+
+export async function savePagoPedido() {
+  const idPedido = parseInt(document.getElementById('pagoOrderId')?.value);
+  if (!idPedido) return;
+
+  const banco = document.getElementById('pagoBancoSelect')?.value || 'BCP';
+  const monto = parseFloat(document.getElementById('pagoMontoInput')?.value || 0);
+  const fecha = document.getElementById('pagoFechaInput')?.value || new Date().toISOString().split('T')[0];
+  const voucher = document.getElementById('pagoVoucherInput')?.value.trim() || '-';
+
+  if (isNaN(monto) || monto <= 0) {
+    alert('Por favor ingrese un monto de pago válido.');
+    return;
+  }
+
+  const order = currentOrders.find(o => (o.id_pedido || o.id) === idPedido);
+  if (!order) return;
+
+  let adelantos = [];
+  if (order.adelantos) {
+    try {
+      adelantos = typeof order.adelantos === 'string' ? JSON.parse(order.adelantos) : order.adelantos;
+    } catch (e) {
+      adelantos = [];
+    }
+  }
+  if (!Array.isArray(adelantos)) adelantos = [];
+
+  adelantos.push({
+    id: Date.now(),
+    banco,
+    monto,
+    fecha,
+    voucher
+  });
+
+  const res = await api.updatePedidoStatus(idPedido, {
+    adelantos: adelantos
+  });
+
+  order.adelantos = adelantos;
+  hideBootstrapModal('modalAgregarPagoPedido');
+
+  viewOrderDetail(idPedido);
 }
 
 export function populateClientSelect(clients) { }

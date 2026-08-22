@@ -1,6 +1,7 @@
 Set-Location $PSScriptRoot
 
-$m2Base = "C:\Users\User\.m2\repository"
+$m2Base = "$env:USERPROFILE\.m2\repository"
+
 
 $requiredJars = @(
   "org\springframework\boot\spring-boot\3.2.5\spring-boot-3.2.5.jar",
@@ -66,11 +67,23 @@ if (-not (Test-Path "target\classes")) {
   New-Item -ItemType Directory -Path "target\classes" -Force | Out-Null
 }
 
-$sources = Get-ChildItem -Path "src\main\java" -Filter "*.java" -Recurse | Select-Object -ExpandProperty FullName
-Set-Content -Path "sources.txt" -Value $sources
+$sources = Get-ChildItem -Path "src\main\java" -Filter "*.java" -Recurse | ForEach-Object { Resolve-Path -Path $_.FullName -Relative }
+[System.IO.File]::WriteAllLines("sources.txt", $sources)
 
 Write-Host "Compilando clases Java con Java 21..." -ForegroundColor Yellow
-javac --release 21 -cp $cpString -d target/classes "@sources.txt"
+javac -parameters --release 21 -cp $cpString -d target/classes "@sources.txt"
+
+
+
+Write-Host "Sincronizando recursos del Frontend en static..." -ForegroundColor Yellow
+if (-not (Test-Path "src\main\resources\static")) {
+  New-Item -ItemType Directory -Path "src\main\resources\static" -Force | Out-Null
+}
+Copy-Item -Path "..\SistemaWebPedidosFront\index.html" -Destination "src\main\resources\static\" -Force
+Copy-Item -Path "..\SistemaWebPedidosFront\css" -Destination "src\main\resources\static\" -Recurse -Force
+Copy-Item -Path "..\SistemaWebPedidosFront\img" -Destination "src\main\resources\static\" -Recurse -Force
+Copy-Item -Path "..\SistemaWebPedidosFront\js" -Destination "src\main\resources\static\" -Recurse -Force
+Copy-Item -Path "..\SistemaWebPedidosFront\views" -Destination "src\main\resources\static\" -Recurse -Force
 
 Write-Host "Copiando recursos estáticos..." -ForegroundColor Yellow
 Copy-Item -Path "src\main\resources\*" -Destination "target\classes\" -Recurse -Force

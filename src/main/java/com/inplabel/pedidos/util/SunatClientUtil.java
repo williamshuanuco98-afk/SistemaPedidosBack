@@ -1,14 +1,14 @@
 package com.inplabel.pedidos.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,11 +21,13 @@ public class SunatClientUtil {
     @Value("${sunat.api.token:}")
     private String sunatToken;
 
-    private RestTemplate createRestTemplate(int timeoutMs) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(timeoutMs);
-        factory.setReadTimeout(timeoutMs);
-        return new RestTemplate(factory);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private HttpClient createHttpClient() {
+        return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(4))
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build();
     }
 
     private String getEffectiveToken() {
@@ -54,126 +56,91 @@ public class SunatClientUtil {
         }
 
         String token = getEffectiveToken();
-        RestTemplate restTemplate = createRestTemplate(3500);
+        HttpClient client = createHttpClient();
 
-        // 1. Intentar Decolecta API - Endpoint estándar (/v1/sunat/ruc)
+        // 1. Intentar apis.net.pe v1 (Público y rápido)
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("User-Agent", "InplabelSistemaPedidos/1.0");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.apis.net.pe/v1/ruc?numero=" + cleanRuc))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET();
 
-            String url = "https://api.decolecta.com/v1/sunat/ruc?numero=" + cleanRuc;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                Map<String, Object> parsed = parseDecolectaRucResponse(cleanRuc, body);
-                if (parsed != null)
-                    return parsed;
+            if (!token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
             }
-        } catch (Exception e) {
-            // Intento con siguiente endpoint
+
+            HttpResponse<String> httpRes = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> bodyMap = objectMapper.readValue(httpRes.body(), Map.class);
+                Map<String, Object> parsed = parseApisNetPeRuc(cleanRuc, bodyMap);
+                if (parsed != null) {
+                    return parsed;
+                }
+            }
+        } catch (Throwable t) {
+            System.err.println("Advertencia apis.net.pe RUC: " + t.getMessage());
         }
 
-        // 2. Intentar Decolecta API - Endpoint extendido (/v1/sunat/ruc/full)
+        // 2. Intentar Decolecta API (/v1/sunat/ruc)
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("User-Agent", "InplabelSistemaPedidos/1.0");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.decolecta.com/v1/sunat/ruc?numero=" + cleanRuc))
+                    .header("User-Agent", "InplabelSistemaPedidos/1.0")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET();
 
-            String url = "https://api.decolecta.com/v1/sunat/ruc/full?numero=" + cleanRuc;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                Map<String, Object> parsed = parseDecolectaRucResponse(cleanRuc, body);
-                if (parsed != null)
-                    return parsed;
+            if (!token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
             }
-        } catch (Exception e) {
-            // Intento con fallback APIs
+
+            HttpResponse<String> httpRes = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> bodyMap = objectMapper.readValue(httpRes.body(), Map.class);
+                Map<String, Object> parsed = parseDecolectaRuc(cleanRuc, bodyMap);
+                if (parsed != null) {
+                    return parsed;
+                }
+            }
+        } catch (Throwable t) {
+            System.err.println("Advertencia Decolecta RUC: " + t.getMessage());
         }
 
-        // 3. Fallback: apis.net.pe
+        // 3. Fallback: apiperu.dev
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create("https://apiperu.dev/api/ruc/" + cleanRuc))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET();
 
-            String url = "https://api.apis.net.pe/v1/ruc?numero=" + cleanRuc;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                if (body.containsKey("nombre") || body.containsKey("razonSocial") || body.containsKey("razon_social")) {
+            if (!token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
+            }
+
+            HttpResponse<String> httpRes = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> bodyMap = objectMapper.readValue(httpRes.body(), Map.class);
+                Map data = bodyMap.containsKey("data") && bodyMap.get("data") instanceof Map ? (Map) bodyMap.get("data") : bodyMap;
+                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social") || data.containsKey("nombre"))) {
                     Map<String, Object> result = new HashMap<>();
                     result.put("success", true);
                     result.put("nro_documento", cleanRuc);
-
-                    String nombre = (String) (body.get("nombre") != null ? body.get("nombre")
-                            : body.get("razonSocial") != null ? body.get("razonSocial") : body.get("razon_social"));
-                    result.put("nombre_cliente", nombre);
-
-                    String dir = (String) (body.get("direccion") != null ? body.get("direccion")
-                            : body.get("domicilio_fiscal"));
-                    String dist = (String) body.get("distrito");
-                    String prov = (String) body.get("provincia");
-                    String dpto = (String) body.get("departamento");
-
-                    if (dir != null && !dir.isEmpty() && dist != null && !dist.isEmpty()
-                            && !dir.toUpperCase().contains(dist.toUpperCase())) {
-                        dir = dir.trim() + " - " + (dpto != null ? dpto : "") + " - " + (prov != null ? prov : "")
-                                + " - " + dist;
-                    }
-                    result.put("direccion", dir != null ? dir.trim() : "");
-                    result.put("estado", body.getOrDefault("estado", "ACTIVO"));
-                    result.put("condicion", body.getOrDefault("condicion", "HABIDO"));
+                    result.put("nombre_cliente", String.valueOf(data.getOrDefault("nombre_o_razon_social", data.getOrDefault("razon_social", data.get("nombre")))));
+                    result.put("direccion", String.valueOf(data.getOrDefault("direccion_completa", data.getOrDefault("direccion", ""))));
+                    result.put("estado", String.valueOf(data.getOrDefault("estado", "ACTIVO")));
+                    result.put("condicion", String.valueOf(data.getOrDefault("condicion", "HABIDO")));
                     return result;
                 }
             }
-        } catch (Exception e) {
-            // Siguiente fallback
-        }
-
-        // 4. Fallback: apiperu.dev
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            String url = "https://apiperu.dev/api/ruc/" + cleanRuc;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                Map data = body.containsKey("data") && body.get("data") instanceof Map ? (Map) body.get("data") : body;
-                if (data != null && (data.containsKey("nombre_o_razon_social") || data.containsKey("razon_social")
-                        || data.containsKey("nombre"))) {
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("success", true);
-                    result.put("nro_documento", cleanRuc);
-                    result.put("nombre_cliente", data.getOrDefault("nombre_o_razon_social",
-                            data.getOrDefault("razon_social", data.get("nombre"))));
-                    result.put("direccion",
-                            data.getOrDefault("direccion_completa", data.getOrDefault("direccion", "")));
-                    result.put("estado", data.getOrDefault("estado", "ACTIVO"));
-                    result.put("condicion", data.getOrDefault("condicion", "HABIDO"));
-                    return result;
-                }
-            }
-        } catch (Exception e) {
-            // Final
+        } catch (Throwable t) {
+            System.err.println("Advertencia ApiPeru RUC: " + t.getMessage());
         }
 
         response.put("success", false);
@@ -181,41 +148,73 @@ public class SunatClientUtil {
         return response;
     }
 
-    private Map<String, Object> parseDecolectaRucResponse(String cleanRuc, Map body) {
-        if (body == null)
+    private Map<String, Object> parseApisNetPeRuc(String cleanRuc, Map<String, Object> body) {
+        if (body == null) return null;
+
+        Object nameObj = body.get("nombre");
+        if (nameObj == null) nameObj = body.get("razonSocial");
+        if (nameObj == null) nameObj = body.get("razon_social");
+
+        if (nameObj == null || nameObj.toString().trim().isEmpty()) {
             return null;
-
-        // Decolecta can return data directly or inside "data"
-        Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
-
-        String nombre = null;
-        if (data.containsKey("razon_social") && data.get("razon_social") != null) {
-            nombre = data.get("razon_social").toString();
-        } else if (data.containsKey("razonSocial") && data.get("razonSocial") != null) {
-            nombre = data.get("razonSocial").toString();
-        } else if (data.containsKey("nombre_o_razon_social") && data.get("nombre_o_razon_social") != null) {
-            nombre = data.get("nombre_o_razon_social").toString();
-        } else if (data.containsKey("nombre") && data.get("nombre") != null) {
-            nombre = data.get("nombre").toString();
         }
 
-        if (nombre == null || nombre.trim().isEmpty()) {
+        String nombre = nameObj.toString().trim();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("nro_documento", cleanRuc);
+        result.put("nombre_cliente", nombre);
+
+        Object dirObj = body.get("direccion");
+        if (dirObj == null) dirObj = body.get("domicilio_fiscal");
+        String dir = dirObj != null ? dirObj.toString().trim() : "";
+
+        String dist = body.get("distrito") != null ? body.get("distrito").toString().trim() : "";
+        String prov = body.get("provincia") != null ? body.get("provincia").toString().trim() : "";
+        String dpto = body.get("departamento") != null ? body.get("departamento").toString().trim() : "";
+
+        if (!dir.isEmpty() && !dist.isEmpty() && !dir.toUpperCase().contains(dist.toUpperCase())) {
+            StringBuilder ubigeoStr = new StringBuilder();
+            if (!dpto.isEmpty()) ubigeoStr.append(dpto).append(" - ");
+            if (!prov.isEmpty()) ubigeoStr.append(prov).append(" - ");
+            ubigeoStr.append(dist);
+            dir = dir + " - " + ubigeoStr.toString();
+        }
+
+        result.put("direccion", dir);
+        result.put("distrito", dist);
+        result.put("provincia", prov);
+        result.put("departamento", dpto);
+        result.put("estado", String.valueOf(body.getOrDefault("estado", "ACTIVO")));
+        result.put("condicion", String.valueOf(body.getOrDefault("condicion", "HABIDO")));
+
+        return result;
+    }
+
+    private Map<String, Object> parseDecolectaRuc(String cleanRuc, Map<String, Object> body) {
+        if (body == null) return null;
+
+        Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
+
+        Object nameObj = data.get("razon_social");
+        if (nameObj == null) nameObj = data.get("razonSocial");
+        if (nameObj == null) nameObj = data.get("nombre_o_razon_social");
+        if (nameObj == null) nameObj = data.get("nombre");
+
+        if (nameObj == null || nameObj.toString().trim().isEmpty()) {
             return null;
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("nro_documento", cleanRuc);
-        result.put("nombre_cliente", nombre.trim());
+        result.put("nombre_cliente", nameObj.toString().trim());
 
-        String dir = "";
-        if (data.containsKey("direccion") && data.get("direccion") != null) {
-            dir = data.get("direccion").toString().trim();
-        } else if (data.containsKey("domicilio_fiscal") && data.get("domicilio_fiscal") != null) {
-            dir = data.get("domicilio_fiscal").toString().trim();
-        } else if (data.containsKey("direccion_completa") && data.get("direccion_completa") != null) {
-            dir = data.get("direccion_completa").toString().trim();
-        }
+        Object dirObj = data.get("direccion");
+        if (dirObj == null) dirObj = data.get("domicilio_fiscal");
+        if (dirObj == null) dirObj = data.get("direccion_completa");
+        String dir = dirObj != null ? dirObj.toString().trim() : "";
 
         String distrito = data.get("distrito") != null ? data.get("distrito").toString().trim() : "";
         String provincia = data.get("provincia") != null ? data.get("provincia").toString().trim() : "";
@@ -223,10 +222,8 @@ public class SunatClientUtil {
 
         if (!dir.isEmpty() && !distrito.isEmpty() && !dir.toUpperCase().contains(distrito.toUpperCase())) {
             StringBuilder ubigeoStr = new StringBuilder();
-            if (!departamento.isEmpty())
-                ubigeoStr.append(departamento).append(" - ");
-            if (!provincia.isEmpty())
-                ubigeoStr.append(provincia).append(" - ");
+            if (!departamento.isEmpty()) ubigeoStr.append(departamento).append(" - ");
+            if (!provincia.isEmpty()) ubigeoStr.append(provincia).append(" - ");
             ubigeoStr.append(distrito);
             dir = dir + " - " + ubigeoStr.toString();
         }
@@ -235,9 +232,8 @@ public class SunatClientUtil {
         result.put("distrito", distrito);
         result.put("provincia", provincia);
         result.put("departamento", departamento);
-        result.put("ubigeo", data.getOrDefault("ubigeo", ""));
-        result.put("estado", data.getOrDefault("estado", "ACTIVO"));
-        result.put("condicion", data.getOrDefault("condicion", "HABIDO"));
+        result.put("estado", String.valueOf(data.getOrDefault("estado", "ACTIVO")));
+        result.put("condicion", String.valueOf(data.getOrDefault("condicion", "HABIDO")));
 
         return result;
     }
@@ -258,24 +254,60 @@ public class SunatClientUtil {
         }
 
         String token = getEffectiveToken();
-        RestTemplate restTemplate = createRestTemplate(3500);
+        HttpClient client = createHttpClient();
 
-        // 1. Intentar Decolecta RENIEC DNI
+        // 1. Intentar apis.net.pe v1 DNI (Público y rápido)
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("User-Agent", "InplabelSistemaPedidos/1.0");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.apis.net.pe/v1/dni?numero=" + cleanDni))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET();
 
-            String url = "https://api.decolecta.com/v1/reniec/dni?numero=" + cleanDni;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data")
-                        : body;
+            if (!token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
+            }
+
+            HttpResponse<String> httpRes = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> body = objectMapper.readValue(httpRes.body(), Map.class);
+                Object nameObj = body.get("nombre");
+                if (nameObj == null) nameObj = body.get("nombres");
+
+                if (nameObj != null && !nameObj.toString().trim().isEmpty()) {
+                    response.put("success", true);
+                    response.put("nro_documento", cleanDni);
+                    response.put("nombre_cliente", nameObj.toString().trim());
+                    response.put("nombres", String.valueOf(body.getOrDefault("nombres", "")));
+                    response.put("apellidoPaterno", String.valueOf(body.getOrDefault("apellidoPaterno", "")));
+                    response.put("apellidoMaterno", String.valueOf(body.getOrDefault("apellidoMaterno", "")));
+                    return response;
+                }
+            }
+        } catch (Throwable t) {
+            System.err.println("Advertencia apis.net.pe DNI: " + t.getMessage());
+        }
+
+        // 2. Intentar Decolecta RENIEC DNI
+        try {
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.decolecta.com/v1/reniec/dni?numero=" + cleanDni))
+                    .header("User-Agent", "InplabelSistemaPedidos/1.0")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET();
+
+            if (!token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
+            }
+
+            HttpResponse<String> httpRes = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (httpRes.statusCode() == 200 && httpRes.body() != null && !httpRes.body().isEmpty()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> body = objectMapper.readValue(httpRes.body(), Map.class);
+                Map data = (body.containsKey("data") && body.get("data") instanceof Map) ? (Map) body.get("data") : body;
 
                 String nombres = data.get("nombres") != null ? data.get("nombres").toString() : "";
                 String apPaterno = data.get("apellido_paterno") != null ? data.get("apellido_paterno").toString()
@@ -297,36 +329,8 @@ public class SunatClientUtil {
                     return response;
                 }
             }
-        } catch (Exception e) {
-            // Intento con fallback
-        }
-
-        // 2. Fallback apis.net.pe
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            if (!token.isEmpty()) {
-                headers.set("Authorization", "Bearer " + token);
-            }
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            String url = "https://api.apis.net.pe/v1/dni?numero=" + cleanDni;
-            ResponseEntity<Map> apiRes = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            if (apiRes.getStatusCode().is2xxSuccessful() && apiRes.getBody() != null) {
-                Map body = apiRes.getBody();
-                if (body.containsKey("nombre") || body.containsKey("nombres")) {
-                    response.put("success", true);
-                    response.put("nro_documento", cleanDni);
-                    response.put("nombre_cliente", body.getOrDefault("nombre", body.get("nombres")));
-                    response.put("nombres", body.get("nombres"));
-                    response.put("apellidoPaterno", body.get("apellidoPaterno"));
-                    response.put("apellidoMaterno", body.get("apellidoMaterno"));
-                    return response;
-                }
-            }
-        } catch (Exception e) {
-            // Final
+        } catch (Throwable t) {
+            System.err.println("Advertencia Decolecta DNI: " + t.getMessage());
         }
 
         response.put("success", false);

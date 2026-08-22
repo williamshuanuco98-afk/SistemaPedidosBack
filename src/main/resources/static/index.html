@@ -29,8 +29,16 @@
   <!-- Chart.js 4 Library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Flatpickr DatePicker CSS -->
+  <link rel="stylesheet" href="css/flatpickr.dark.css">
+
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/styles.css?v=883.0">
+  <link rel="stylesheet" href="css/styles.css?v=886.0">
+
+  <!-- Flatpickr DatePicker JS -->
+  <script src="js/flatpickr.min.js"></script>
+  <script src="js/flatpickr.es.js"></script>
+
 </head>
 
 <body>
@@ -41,7 +49,8 @@
       <div>
         <div class="sidebar-header">
           <a href="#dashboard" class="brand-logo" onclick="app.navigateTo('dashboard')">
-            <img id="brandLogoImg" src="img/inplabel-logo.png" alt="Inplabel" class="brand-logo-img">
+            <img id="brandLogoImg" src="img/inplabel-logo.png" alt="Inplabel" class="brand-logo-img logo-light">
+            <img src="img/inplabel-logo-dark.png" alt="Inplabel" class="brand-logo-img logo-dark">
           </a>
           <button id="toggleSidebarBtn" class="toggle-sidebar-btn" title="Alternar menú">
             <i class="bi bi-chevron-left"></i>
@@ -360,7 +369,7 @@
   </div>
 
   <!-- Application Modular Script -->
-  <script type="module" src="js/main.js?v=1107.0"></script>
+  <script type="module" src="js/main.js?v=9999.0"></script>
 </body>
 
 </html>

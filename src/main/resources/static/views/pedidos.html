@@ -38,15 +38,16 @@
           <input type="date" id="filterDateTo" class="form-control form-control-sm">
         </div>
 
-        <!-- Filtro Estado del Pedido (Predeterminado: TODOS) -->
+        <!-- Filtro Estado del Pedido -->
         <div class="col-md-2">
           <label for="filterOrderStatus" class="form-label small fw-bold mb-1">Estado</label>
           <select id="filterOrderStatus" class="form-select form-select-sm">
             <option value="ALL" selected>TODOS LOS ESTADOS</option>
             <option value="PENDIENTE">PENDIENTE</option>
-            <option value="EN_PROCESO">EN PROCESO / PARCIAL</option>
-            <option value="FUERA_DE_PLAZO">FUERA DE PLAZO</option>
+            <option value="EN_PROCESO">EN PROCESO</option>
+            <option value="FUERA_DE_TIEMPO">FUERA DE TIEMPO</option>
             <option value="COMPLETADO">COMPLETADO</option>
+            <option value="FINALIZADO">FINALIZADO</option>
             <option value="CANCELADO">CANCELADO</option>
           </select>
         </div>
@@ -89,6 +90,7 @@
       </thead>
       <tbody id="pedidosTableBody"></tbody>
     </table>
+    <div id="pedidosPaginationContainer"></div>
   </div>
 </div>
 
@@ -116,17 +118,23 @@
 
           <div class="mb-3">
             <label class="form-label fw-bold mb-2">Resolución de la Orden *</label>
-            <div class="d-flex gap-4">
+            <div class="d-flex flex-wrap gap-3">
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCompletado" value="ENTREGADO" checked onchange="pedidosModule.toggleFinalizarFields('ENTREGADO')">
-                <label class="form-check-label fw-semibold text-success" for="optCompletado">
-                  <i class="bi bi-check-circle-fill me-1"></i> Orden Entregada (COMPLETADA)
+                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCompletado" value="COMPLETADO" checked onchange="pedidosModule.toggleFinalizarFields('COMPLETADO')">
+                <label class="form-check-label fw-bold text-success" for="optCompletado">
+                  <i class="bi bi-check-circle-fill me-1"></i> Completado (100% Entregado)
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optFinalizado" value="FINALIZADO" onchange="pedidosModule.toggleFinalizarFields('FINALIZADO')">
+                <label class="form-check-label fw-bold" style="color:#8b5cf6;" for="optFinalizado">
+                  <i class="bi bi-flag-fill me-1"></i> Finalizado (Entrega Parcial / Cierra Saldo)
                 </label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="finalizarStatusOption" id="optCancelado" value="CANCELADO" onchange="pedidosModule.toggleFinalizarFields('CANCELADO')">
                 <label class="form-check-label fw-semibold text-danger" for="optCancelado">
-                  <i class="bi bi-x-circle-fill me-1"></i> Orden Cancelada (CANCELADO)
+                  <i class="bi bi-x-circle-fill me-1"></i> Cancelado (Sin Entregas)
                 </label>
               </div>
             </div>
@@ -197,6 +205,14 @@
               </thead>
               <tbody id="envioProductsTableBody"></tbody>
             </table>
+          </div>
+
+          <div class="form-check p-3 rounded bg-body-tertiary border mb-3">
+            <input class="form-check-input" type="checkbox" id="envioCerrarSaldoCheck">
+            <label class="form-check-label fw-bold text-primary" for="envioCerrarSaldoCheck">
+              <i class="bi bi-flag-fill text-warning me-1"></i> Dar por FINALIZADO el pedido (Si es una entrega parcial y ya no se enviará más saldo)
+            </label>
+            <div class="form-text fs-8 mt-0 ms-4">Si se marca, el estado cambiará a <strong>FINALIZADO</strong> en lugar de mantenerse EN PROCESO.</div>
           </div>
 
           <div class="d-flex justify-content-end gap-2 mt-4">

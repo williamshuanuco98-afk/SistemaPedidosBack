@@ -25,7 +25,10 @@ export function renderNuevoPedidoPage(clients = [], products = []) {
   // Set default dates
   const todayStr = new Date().toISOString().split('T')[0];
   const fechaIngresoElem = document.getElementById('fechaIngresoInput');
-  if (fechaIngresoElem) fechaIngresoElem.value = todayStr;
+  if (fechaIngresoElem) {
+    fechaIngresoElem.value = todayStr;
+    fechaIngresoElem.max = todayStr;
+  }
 
   const fechaEntregaElem = document.getElementById('fechaEntregaInput');
   if (fechaEntregaElem) fechaEntregaElem.value = todayStr;
@@ -286,8 +289,7 @@ export function openAdelantoModal() {
   if (montoInput) montoInput.value = '';
   if (voucherInput) voucherInput.value = '';
 
-  const modal = new bootstrap.Modal(modalElem);
-  modal.show();
+  showBootstrapModal(modalElem);
 }
 
 export function addAdelantoFromModal() {
@@ -310,10 +312,7 @@ export function addAdelantoFromModal() {
   });
 
   renderAdelantosTable();
-
-  const modalElem = document.getElementById('modalAdelantoPago');
-  const modal = bootstrap.Modal.getInstance(modalElem);
-  if (modal) modal.hide();
+  hideBootstrapModal('modalAdelantoPago');
 }
 
 function renderAdelantosTable() {
@@ -476,6 +475,14 @@ export async function submitNuevoPedido() {
   const condicionPago = document.getElementById('condicionPagoSelect')?.value || 'CONTADO';
   const diasCredito = condicionPago !== 'CONTADO' ? parseInt(document.getElementById('diasCreditoInput')?.value || 30, 10) : 0;
   const fechaIngreso = document.getElementById('fechaIngresoInput')?.value || new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  if (fechaIngreso > todayStr) {
+    alert(`¡Atención! La fecha del pedido no puede ser posterior al día de hoy (${formatDate(todayStr)}). No se pueden registrar pedidos con fecha futura (${formatDate(fechaIngreso)}).`);
+    document.getElementById('fechaIngresoInput')?.focus();
+    return;
+  }
+
   const fechaEntrega = document.getElementById('fechaEntregaInput')?.value || fechaIngreso;
   const observaciones = document.getElementById('observacionesInput')?.value.trim() || '';
   const storagePath = localStorage.getItem('inplabel_pdf_storage_path') || 'C:\\Users\\User\\OneDrive\\Escritorio\\OrdenesI';
