@@ -86,10 +86,27 @@ public class GuiaDaoImpl implements GuiaDao {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> save(Map<String, Object> body) {
-        Number idClienteNum = (Number) body.get("id_cliente");
-        int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
-        Number idPedidoNum = (Number) body.get("id_pedido");
-        Integer idPedido = idPedidoNum != null ? idPedidoNum.intValue() : null;
+        int idCliente = 0;
+        Object idClienteRaw = body.get("id_cliente");
+        if (idClienteRaw instanceof Number) {
+            idCliente = ((Number) idClienteRaw).intValue();
+        } else if (idClienteRaw instanceof String) {
+            try {
+                String str = ((String) idClienteRaw).replaceAll("[^0-9]", "");
+                if (!str.isEmpty()) idCliente = Integer.parseInt(str);
+            } catch (Exception ignored) {}
+        }
+
+        Integer idPedido = null;
+        Object idPedidoRaw = body.get("id_pedido");
+        if (idPedidoRaw instanceof Number) {
+            idPedido = ((Number) idPedidoRaw).intValue();
+        } else if (idPedidoRaw instanceof String) {
+            try {
+                String str = ((String) idPedidoRaw).replaceAll("[^0-9]", "");
+                if (!str.isEmpty()) idPedido = Integer.parseInt(str);
+            } catch (Exception ignored) {}
+        }
 
         String fecha = (String) body.getOrDefault("fecha_guia", LocalDate.now().toString());
         String nroGuia = (String) body.get("nro_guia");
@@ -110,6 +127,8 @@ public class GuiaDaoImpl implements GuiaDao {
 
         List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
 
+        final int finalIdCliente = idCliente;
+        final Integer finalIdPedido = idPedido;
         final String finalNroGuia = nroGuia;
         final String finalDocRef = docRef;
         final String finalPuntoPartida = puntoPartida;
@@ -126,8 +145,8 @@ public class GuiaDaoImpl implements GuiaDao {
                 "VALUES (?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS
             );
-            ps.setInt(1, idCliente);
-            if (idPedido != null) ps.setInt(2, idPedido); else ps.setNull(2, java.sql.Types.INTEGER);
+            ps.setInt(1, finalIdCliente);
+            if (finalIdPedido != null) ps.setInt(2, finalIdPedido); else ps.setNull(2, java.sql.Types.INTEGER);
             ps.setString(3, fecha);
             ps.setString(4, finalNroGuia);
             ps.setString(5, estado);

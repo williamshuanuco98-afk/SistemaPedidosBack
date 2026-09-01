@@ -252,9 +252,7 @@ const EMBEDDED_VIEWS = {
           <th>Fecha Pedido</th>
           <th>Establecimiento</th>
           <th>Estado</th>
-          <th class="text-center" style="width: 85px;">FINALIZAR</th>
-          <th class="text-center" style="width: 75px;">ENVÍO</th>
-          <th class="text-center" style="width: 75px;">DETALLE</th>
+          <th class="text-center" style="width: 140px;">ACCIONES</th>
         </tr>
       </thead>
       <tbody id="pedidosTableBody"></tbody>

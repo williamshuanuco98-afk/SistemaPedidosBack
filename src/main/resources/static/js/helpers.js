@@ -8,13 +8,17 @@ export function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Remove accents/diacritics and convert to lowercase for fuzzy matching
+// Clean text for search matching: remove accents, normalize punctuation and common abbreviations
 export function normalizeText(str) {
   if (!str) return '';
   return String(str)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/c\//g, 'con ')
+    .replace(/[\.\,\-\_\/\(\)\[\]]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Advanced multi-token search with high-precision relevance ranking (order independent & word-prefix priority)
@@ -24,53 +28,98 @@ export function filterAndRankItems(items, queryStr, getSearchableText) {
   if (!rawQuery) return items;
 
   const normalizedQuery = normalizeText(rawQuery);
-  const tokens = normalizedQuery.split(/\s+/).filter(t => t.length > 0);
+  const rawTokens = rawQuery.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  const normTokens = normalizedQuery.split(/\s+/).filter(t => t.length > 0);
+
+  // Combine raw tokens and normalized tokens (deduplicated)
+  const tokens = Array.from(new Set([...rawTokens, ...normTokens]));
   if (tokens.length === 0) return items;
 
   const matched = [];
 
   for (const item of items) {
-    const text = normalizeText(getSearchableText(item));
-    
-    // Every single token typed by user must exist somewhere in the normalized item text
-    const isMatch = tokens.every(token => text.includes(token));
+    const rawText = getSearchableText(item) || '';
+    const normText = normalizeText(rawText);
+    const words = normText.split(/\s+/).filter(w => w.length > 0);
 
-    if (isMatch) {
-      let score = 0;
+    let matchedTokenCount = 0;
+    let tokenMatchScore = 0;
 
-      // 1. Exact full query match
-      if (text === normalizedQuery) score += 10000;
-      if (text.startsWith(normalizedQuery)) score += 5000;
+    // Evaluate token matches
+    for (const token of tokens) {
+      if (!token) continue;
+      let tokenMatched = false;
+      let highestTokenScore = 0;
 
-      // 2. Main field prefix bonus
-      const mainName = normalizeText(item.nombre_cliente || item.razon_social || item.nombre_producto || '');
-      if (mainName && mainName.startsWith(tokens[0])) {
-        score += 2500;
-      }
-
-      // 3. Document / Code prefix bonus
-      const docCode = normalizeText(item.nro_documento || item.codigo_producto || '');
-      if (docCode && docCode.startsWith(rawQuery)) {
-        score += 3000;
-      }
-
-      // 4. Word boundary prefix bonus (e.g. typing "che" matches words starting with "che" like "CHEMIFABRIK")
-      const words = text.split(/[\s\-\,\.\/]+/);
-      for (const token of tokens) {
-        for (const word of words) {
-          if (word === token) {
-            score += 1500;
-          } else if (word.startsWith(token)) {
-            score += 1000; // High score for word prefix match
-          } else if (word.includes(token)) {
-            score += 50;   // Low score for infix match (e.g. "sanchez")
-          }
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        if (word === token) {
+          tokenMatched = true;
+          highestTokenScore = Math.max(highestTokenScore, 1000 + (token.length * 10)); // Exact word match
+        } else if (word.startsWith(token)) {
+          tokenMatched = true;
+          highestTokenScore = Math.max(highestTokenScore, 500 + (token.length * 5)); // Word prefix match
+        } else if (word.includes(token)) {
+          tokenMatched = true;
+          highestTokenScore = Math.max(highestTokenScore, 100); // Substring match inside word
         }
       }
 
-      // 5. Short string length bonus (prefer concise matches over long paragraphs)
-      if (text.length > 0) {
-        score += Math.max(0, 100 - text.length);
+      // Also check full normText if not matched per word (e.g. compressed number or code)
+      if (!tokenMatched && normText.includes(token)) {
+        tokenMatched = true;
+        highestTokenScore = 80;
+      }
+
+      if (tokenMatched) {
+        matchedTokenCount++;
+        tokenMatchScore += highestTokenScore;
+      }
+    }
+
+    // Must match at least 1 token if query is 1-2 tokens, or at least 50% of tokens for long queries
+    const minTokensRequired = tokens.length <= 2 ? 1 : Math.ceil(tokens.length * 0.5);
+
+    if (matchedTokenCount >= minTokensRequired) {
+      let score = 0;
+
+      // Primary Boost: Exponential reward for matching MORE tokens (Rank items with most token matches highest!)
+      score += (matchedTokenCount * 50000);
+
+      // Full Match Bonus: If all tokens matched
+      if (matchedTokenCount === tokens.length) {
+        score += 100000;
+      }
+
+      // Token Match Quality Score sum
+      score += tokenMatchScore;
+
+      // Exact full string or exact prefix matches
+      if (normText === normalizedQuery) score += 80000;
+      if (normText.startsWith(normalizedQuery)) score += 40000;
+
+      // Sequential phrase match: If normalizedQuery appears as continuous substring
+      if (normText.includes(normalizedQuery)) {
+        score += 30000;
+      }
+
+      // Main Product / Client Name Prefix Match
+      const mainName = normalizeText(item.nombre_producto || item.nombre_cliente || item.razon_social || '');
+      if (mainName) {
+        if (mainName.startsWith(normalizedQuery)) score += 25000;
+        if (mainName.startsWith(tokens[0])) score += 10000;
+      }
+
+      // Code / ID exact match (e.g. #140 or PROD-140)
+      const docCode = normalizeText(item.codigo_producto || item.id_producto || item.nro_documento || '');
+      if (docCode) {
+        if (docCode === normalizedQuery || docCode === `#${normalizedQuery}`) score += 90000;
+        else if (docCode.startsWith(normalizedQuery)) score += 45000;
+      }
+
+      // Length Penalty: Slightly favor concise text when scores are close
+      if (normText.length > 0) {
+        score += Math.max(0, 50 - Math.floor(normText.length / 5));
       }
 
       matched.push({ item, score });
@@ -121,45 +170,40 @@ export function formatDate(dateStr) {
 // Universal Clean Bootstrap Modal Opener & Controller
 export function showBootstrapModal(modalElemOrId) {
   const elem = typeof modalElemOrId === 'string' ? document.getElementById(modalElemOrId) : modalElemOrId;
-  if (!elem) {
-    console.error("showBootstrapModal: Element not found:", modalElemOrId);
-    alert("No se encontró la ventana emergente.");
-    return;
-  }
   if (!elem) return;
 
-  elem.style.removeProperty('pointer-events');
-  elem.style.pointerEvents = 'auto';
+  elem.style.setProperty('display', 'block', 'important');
+  elem.style.setProperty('pointer-events', 'auto', 'important');
+  elem.classList.add('show');
+  elem.removeAttribute('aria-hidden');
+  elem.setAttribute('aria-modal', 'true');
+
+  document.body.classList.add('modal-open');
+
+  // Ensure backdrop element exists and is shown
+  let backdrop = document.querySelector('.modal-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    document.body.appendChild(backdrop);
+  } else {
+    backdrop.classList.add('show');
+    backdrop.style.removeProperty('display');
+  }
+
+  backdrop.onclick = () => hideBootstrapModal(elem);
 
   try {
     const bsModal = window.bootstrap && window.bootstrap.Modal;
     if (bsModal) {
       let modalInstance = bsModal.getInstance(elem);
-      if (modalInstance) {
-        modalInstance.dispose();
+      if (!modalInstance) {
+        modalInstance = new bsModal(elem, { backdrop: false, keyboard: true });
       }
-      modalInstance = new bsModal(elem, { backdrop: true, keyboard: true });
-      modalInstance.show();
-
-      setTimeout(() => {
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-          backdrop.onclick = () => hideBootstrapModal(elem);
-        }
-      }, 100);
-      return;
     }
   } catch (err) {
     console.warn("Bootstrap JS modal show error:", err);
   }
-
-  // UI Fallback if Bootstrap JS is absent
-  document.body.classList.add('modal-open');
-  elem.classList.add('show');
-  elem.style.display = 'block';
-  elem.style.pointerEvents = 'auto';
-  elem.removeAttribute('aria-hidden');
-  elem.setAttribute('aria-modal', 'true');
 }
 
 export function hideBootstrapModal(modalElemOrId) {
@@ -176,16 +220,21 @@ export function hideBootstrapModal(modalElemOrId) {
     } catch (e) {}
 
     elem.classList.remove('show');
-    elem.style.display = 'none';
-    elem.style.removeProperty('pointer-events');
+    elem.style.setProperty('display', 'none', 'important');
+    elem.style.setProperty('pointer-events', 'none', 'important');
     elem.setAttribute('aria-hidden', 'true');
     elem.removeAttribute('aria-modal');
   }
 
-  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-  document.body.classList.remove('modal-open');
-  document.body.style.removeProperty('overflow');
-  document.body.style.removeProperty('pointer-events');
+  // Only remove backdrop and body lock if NO open modals remain
+  const remainingOpen = document.querySelectorAll('.modal.show');
+  if (remainingOpen.length === 0) {
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('pointer-events');
+  }
 }
 window.hideBootstrapModal = hideBootstrapModal;
 window.showBootstrapModal = showBootstrapModal;

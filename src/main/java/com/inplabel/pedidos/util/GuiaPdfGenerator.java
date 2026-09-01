@@ -125,6 +125,18 @@ public class GuiaPdfGenerator {
         String cliente = String.valueOf(guia.getOrDefault("nombre_cliente", "Cliente General"));
         String ruc = String.valueOf(guia.getOrDefault("nro_documento", "-"));
         String fecha = formatFecha(guia.get("fecha_guia") != null ? guia.get("fecha_guia") : guia.get("fecha_emision"));
+        
+        Object docRefRaw = guia.get("doc_referencia");
+        if (docRefRaw == null || String.valueOf(docRefRaw).trim().isEmpty()) {
+            docRefRaw = guia.get("nro_orden");
+        }
+        if (docRefRaw == null || String.valueOf(docRefRaw).trim().isEmpty()) {
+            docRefRaw = guia.get("nro_pedido");
+        }
+        String docRef = (docRefRaw != null && !String.valueOf(docRefRaw).trim().isEmpty() && !"null".equalsIgnoreCase(String.valueOf(docRefRaw))) 
+                ? String.valueOf(docRefRaw).trim() 
+                : "-";
+
         String puntoPartida = String.valueOf(guia.getOrDefault("punto_partida", "C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - CARABAYLLO - LIMA - LIMA"));
         String puntoLlegada = String.valueOf(guia.getOrDefault("punto_llegada", guia.getOrDefault("direccion_destino", "Dirección del Cliente - LIMA - LIMA")));
         String obs = String.valueOf(guia.getOrDefault("observaciones", ""));
@@ -199,18 +211,17 @@ public class GuiaPdfGenerator {
 
         // -------------------------------------------------------------
         // 2. DATOS DEL CLIENTE:
-        // Row 1: DESTINATARIO: [Nombre]
-        // Row 2: RUC: [RUC]              FECHA: [Fecha]
+        // Row 1: DESTINATARIO: [Nombre]                  RUC: [RUC]
+        // Row 2: DOC. REFERENCIA: [docRef]               FECHA: [Fecha]
         // -------------------------------------------------------------
         PdfPTable clientTable = new PdfPTable(2);
         clientTable.setWidthPercentage(100);
         try {
-            clientTable.setWidths(new float[]{55f, 45f});
+            clientTable.setWidths(new float[]{65f, 35f});
         } catch (Exception ignored) {}
 
-        // DESTINATARIO
+        // Row 1 - Col 1: DESTINATARIO
         PdfPCell cDest = new PdfPCell();
-        cDest.setColspan(2);
         cDest.setBorder(Rectangle.NO_BORDER);
         cDest.setPadding(1.5f);
         Paragraph pDest = new Paragraph();
@@ -219,7 +230,7 @@ public class GuiaPdfGenerator {
         cDest.addElement(pDest);
         clientTable.addCell(cDest);
 
-        // RUC
+        // Row 1 - Col 2: RUC
         PdfPCell cRuc = new PdfPCell();
         cRuc.setBorder(Rectangle.NO_BORDER);
         cRuc.setPadding(1.5f);
@@ -229,7 +240,17 @@ public class GuiaPdfGenerator {
         cRuc.addElement(pRucCli);
         clientTable.addCell(cRuc);
 
-        // FECHA
+        // Row 2 - Col 1: DOC. REFERENCIA
+        PdfPCell cRef = new PdfPCell();
+        cRef.setBorder(Rectangle.NO_BORDER);
+        cRef.setPadding(1.5f);
+        Paragraph pRef = new Paragraph();
+        pRef.add(new Chunk("DOC. REFERENCIA: ", FONT_FIELD_LABEL));
+        pRef.add(new Chunk(docRef, FONT_FIELD_VAL));
+        cRef.addElement(pRef);
+        clientTable.addCell(cRef);
+
+        // Row 2 - Col 2: FECHA
         PdfPCell cFecha = new PdfPCell();
         cFecha.setBorder(Rectangle.NO_BORDER);
         cFecha.setPadding(1.5f);

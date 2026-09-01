@@ -353,6 +353,10 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
   const fechaStr = formatDate(guia.fecha_guia || guia.fecha_emision);
   const clienteNombre = escapeHtml(guia.nombre_cliente || 'Cliente General');
   const clienteRuc = escapeHtml(guia.nro_documento || '-');
+  
+  const docRefVal = String(guia.doc_referencia || guia.nro_orden || guia.nro_pedido || '').trim();
+  const docRef = escapeHtml((docRefVal && docRefVal !== 'null' && docRefVal !== 'undefined') ? docRefVal : '-');
+
   const puntoPartida = escapeHtml(guia.punto_partida || 'C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - CARABAYLLO - LIMA - LIMA');
   const puntoLlegada = escapeHtml(guia.punto_llegada || guia.direccion_destino || 'Dirección del cliente - LIMA - LIMA');
   const observaciones = escapeHtml(guia.observaciones || '');
@@ -404,18 +408,21 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
           </tr>
         </table>
 
-        <!-- 2. Datos del Destinatario, RUC y Fecha -->
+        <!-- 2. Datos del Destinatario, RUC, Doc Referencia y Fecha -->
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 7px; font-size: 8px;">
           <tr>
-            <td colspan="2" style="padding: 2px 0;">
+            <td style="padding: 2px 0; width: 65%;">
               <strong>DESTINATARIO:</strong> <span style="font-weight: 500;">${clienteNombre}</span>
+            </td>
+            <td style="padding: 2px 0; width: 35%;">
+              <strong>RUC:</strong> <span style="font-weight: 500;">${clienteRuc}</span>
             </td>
           </tr>
           <tr>
-            <td style="padding: 2px 0; width: 55%;">
-              <strong>RUC:</strong> <span style="font-weight: 500;">${clienteRuc}</span>
+            <td style="padding: 2px 0; width: 65%;">
+              <strong>DOC. REFERENCIA:</strong> <span style="font-weight: 500;">${docRef}</span>
             </td>
-            <td style="padding: 2px 0; width: 45%;">
+            <td style="padding: 2px 0; width: 35%;">
               <strong>FECHA:</strong> <span style="font-weight: 500;">${fechaStr}</span>
             </td>
           </tr>
@@ -565,6 +572,19 @@ export function printGuiaDirectWithoutNewTab(guia) {
   doc.write(htmlContent);
   doc.close();
 
+  const cleanup = () => {
+    try {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    } catch (e) {}
+  };
+
+  try {
+    iframe.contentWindow.addEventListener('afterprint', cleanup);
+    iframe.contentWindow.onafterprint = cleanup;
+  } catch (e) {}
+
   setTimeout(() => {
     try {
       iframe.contentWindow.focus();
@@ -572,15 +592,12 @@ export function printGuiaDirectWithoutNewTab(guia) {
     } catch (e) {
       console.error("Error al disparar impresión nativa:", e);
     }
-    setTimeout(() => {
-      try { document.body.removeChild(iframe); } catch (e) { }
-    }, 3000);
   }, 350);
 }
 
 export function printGuiaPDF(guia) {
   if (guia && (guia.id_guia || guia.id)) {
-    printPDF(guia.id_guia || guia.id);
+    openPDF(guia.id_guia || guia.id);
     return;
   }
   printGuiaDirectWithoutNewTab(guia);

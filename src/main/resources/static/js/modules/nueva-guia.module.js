@@ -197,8 +197,8 @@ function setupProductSearch() {
     const matches = filterAndRankItems(
       products,
       val,
-      p => `#${p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''}`
-    ).slice(0, 15);
+      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''}`
+    ).slice(0, 25);
 
     if (matches.length === 0) {
       list.innerHTML = `<li class="list-group-item text-muted py-2 fs-7">No se encontraron productos para "${escapeHtml(val)}"</li>`;

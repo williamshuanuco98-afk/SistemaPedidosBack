@@ -14,8 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Order(1)
 public class RateLimitingFilter implements Filter {
 
-    // Límite: Máximo 120 peticiones por minuto por dirección IP
-    private static final int MAX_REQUESTS_PER_MINUTE = 120;
+    // Límite: Máximo 2000 peticiones por minuto por dirección IP
+    private static final int MAX_REQUESTS_PER_MINUTE = 2000;
     private static final long WINDOW_DURATION_MS = 60_000L;
 
     private static class RequestTracker {
@@ -38,13 +38,17 @@ public class RateLimitingFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Agregar cabeceras de seguridad fundamentales (Protección XSS, Clickjacking, MIME-Sniffing)
+        // Agregar cabeceras de seguridad y control de caché (Prevenir almacenamiento en caché obsoleto)
         httpResponse.setHeader("X-Content-Type-Options", "nosniff");
         httpResponse.setHeader("X-Frame-Options", "SAMEORIGIN");
         httpResponse.setHeader("X-XSS-Protection", "1; mode=block");
+        httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        httpResponse.setHeader("Pragma", "no-cache");
+        httpResponse.setHeader("Expires", "0");
 
-        // Permitir pre-flight OPTIONS de CORS sin computar en el limitador
-        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+        // Excluir pre-flight OPTIONS y todos los recursos estáticos (CSS, JS, imágenes, HTML) del rate limiter
+        String path = httpRequest.getRequestURI();
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod()) || !path.startsWith("/api/")) {
             chain.doFilter(request, response);
             return;
         }

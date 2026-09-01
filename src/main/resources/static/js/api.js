@@ -1,9 +1,9 @@
-export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http') && window.location.port === '8080')
-  ? '/api'
+export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
+  ? (window.location.port === '8080' ? '/api' : `${window.location.protocol}//${window.location.hostname}:8080/api`)
   : 'http://localhost:8080/api';
 
 async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = 3000, headers = {}, ...fetchOptions } = options;
+  const { timeout = 10000, headers = {}, ...fetchOptions } = options;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
@@ -80,7 +80,7 @@ export const api = {
 
   async getStatus() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/status`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/status`, { timeout: 10000 });
       if (res && res.ok) return await res.json();
     } catch (e) {}
     return { connected: false, message: 'Spring Boot Backend Desconectado (Modo Local Activo)' };
@@ -88,7 +88,7 @@ export const api = {
 
   async getClientes() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 2500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -224,7 +224,7 @@ export const api = {
 
   async getProductos() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/productos`, { timeout: 2500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/productos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -242,7 +242,7 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productoData),
-        timeout: 2000
+        timeout: 10000
       });
       if (res.ok) return await res.json();
     } catch (e) {}
@@ -259,7 +259,7 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productoData),
-        timeout: 2000
+        timeout: 10000
       });
       if (res.ok) return await res.json();
     } catch (e) {}
@@ -277,7 +277,7 @@ export const api = {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/productos/${id}`, {
         method: 'DELETE',
-        timeout: 2000
+        timeout: 10000
       });
       if (res.ok) return await res.json();
     } catch (e) {}
@@ -289,7 +289,7 @@ export const api = {
 
   async getPedidos() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/pedidos`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/pedidos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -362,7 +362,7 @@ export const api = {
 
   async getGuias() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/guias`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/guias`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) return data;

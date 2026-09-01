@@ -155,22 +155,9 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
       <td>${formatDate(o.fecha_pedido)}</td>
       <td><span class="small text-muted">${estabText}</span></td>
       <td><span class="status-badge ${displayStatus}">${statusBadgeText}</span></td>
-      <!-- 1. Columna FINALIZAR -->
       <td class="text-center">
-        <button class="btn-action-solid btn-finish" onclick="pedidosModule.openFinalizarOrdenModal('${o.id_pedido || o.id || o.nro_pedido}')" title="Finalizar Orden (Entregado / Cancelado)">
-          <i class="bi bi-flag-fill"></i>
-        </button>
-      </td>
-      <!-- 2. Columna ENVÍO -->
-      <td class="text-center">
-        <button class="btn-action-solid btn-envio" onclick="pedidosModule.openRegistrarEnvioModal('${o.id_pedido || o.id || o.nro_pedido}')" title="Registrar Envío de Productos">
-          <i class="bi bi-truck text-white"></i>
-        </button>
-      </td>
-      <!-- 3. Columna DETALLE -->
-      <td class="text-center">
-        <button class="btn-action-solid btn-view" onclick="pedidosModule.viewOrderDetail('${o.id_pedido || o.id || o.nro_pedido}')" title="Ver Detalles del Pedido">
-          <i class="bi bi-eye-fill"></i>
+        <button class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm" onclick="pedidosModule.viewOrderDetail('${o.id_pedido || o.id || o.nro_pedido}')" title="Ver Detalles y Gestionar Pedido">
+          <i class="bi bi-eye-fill"></i> Ver Detalle
         </button>
       </td>
     `;
@@ -198,72 +185,181 @@ export function setupDefaultDateFilters() {
   }
 }
 
-// 1. Finalizar Orden Modal Handlers
+// Integrated Detail Workspace Actions (Registrar Envío & Finalizar Orden via Sub-Tabs)
+export function openRegistrarEnvioModal(idPedido) {
+  viewOrderDetail(idPedido);
+  switchDetailTab('shipment');
+}
+
 export function openFinalizarOrdenModal(idPedido) {
-  const order = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
-  if (!order) return;
+  viewOrderDetail(idPedido);
+  switchDetailTab('resolution');
+}
 
-  document.getElementById('finalizarOrderId').value = idPedido;
-  document.getElementById('finalizarOrderNroBadge').textContent = order.nro_pedido || ('PED-' + idPedido);
+export function openRegistrarEnvioFromDetails(idPedido) {
+  viewOrderDetail(idPedido);
+  switchDetailTab('shipment');
+}
 
-  document.getElementById('optCompletado').checked = true;
-  toggleFinalizarFields('COMPLETADO');
+export function openFinalizarOrdenFromDetails(idPedido) {
+  viewOrderDetail(idPedido);
+  switchDetailTab('resolution');
+}
 
-  document.getElementById('finalizarNroGuia').value = order.nro_guia || '';
-  document.getElementById('finalizarFechaEntrega').value = order.fecha_entrega || new Date().toISOString().split('T')[0];
+export function toggleFinalizarFields(status) { toggleTabFinalizarFields(status); }
+export function saveFinalizarOrden() {}
+export function saveRegistrarEnvio() {}
 
-  const motivoElem = document.getElementById('finalizarMotivoInput');
-  if (motivoElem) motivoElem.value = order.motivo_cancelacion || '';
+// Tab Switching Helper inside Order Details Workspace
+export function switchDetailTab(tabName) {
+  const tabs = ['overview', 'shipment', 'resolution'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-${t}-btn`);
+    const pane = document.getElementById(`tab-${t}-pane`);
+    if (btn) btn.classList.remove('active');
+    if (pane) pane.classList.add('d-none');
+  });
 
-  const modalElem = document.getElementById('modalFinalizarOrden');
-  if (modalElem) {
-    const modal = new bootstrap.Modal(modalElem);
-    modal.show();
+  const activeBtn = document.getElementById(`tab-${tabName}-btn`);
+  const activePane = document.getElementById(`tab-${tabName}-pane`);
+  if (activeBtn) activeBtn.classList.add('active');
+  if (activePane) {
+    activePane.classList.remove('d-none');
+    activePane.classList.add('tab-pane-animated');
   }
 }
 
-export function toggleFinalizarFields(status) {
-  const deliveryFields = document.getElementById('finalizarDeliveryFields');
-  const motivoContainer = document.getElementById('finalizarMotivoContainer');
-
-  if (deliveryFields) {
-    if (status === 'COMPLETADO' || status === 'FINALIZADO' || status === 'ENTREGADO') {
-      deliveryFields.style.display = 'block';
-    } else {
-      deliveryFields.style.display = 'none';
-    }
-  }
+export function toggleTabFinalizarFields(status) {
+  const motivoContainer = document.getElementById('tabFinalizarMotivoContainer');
+  const guiaFields = document.getElementById('tabFinalizarGuiaFields');
 
   if (motivoContainer) {
-    if (status === 'FINALIZADO' || status === 'CANCELADO') {
-      motivoContainer.style.display = 'block';
-    } else {
-      motivoContainer.style.display = 'none';
-    }
+    motivoContainer.style.display = (status === 'FINALIZADO' || status === 'CANCELADO') ? 'block' : 'none';
+  }
+  if (guiaFields) {
+    guiaFields.style.display = (status === 'CANCELADO') ? 'none' : 'flex';
   }
 }
 
-export async function saveFinalizarOrden() {
-  const idPedido = parseInt(document.getElementById('finalizarOrderId')?.value);
-  if (!idPedido) return;
+export async function saveRegistrarEnvioFromTab(idPedido) {
+  const nroGuia = document.getElementById('tabEnvioNroGuia')?.value.trim();
+  const fechaGuia = document.getElementById('tabEnvioFechaGuia')?.value;
 
-  const isCompletado = document.getElementById('optCompletado')?.checked;
-  const isFinalizado = document.getElementById('optFinalizado')?.checked;
-
-  let nuevoEstado = 'CANCELADO';
-  if (isCompletado) {
-    nuevoEstado = 'COMPLETADO';
-  } else if (isFinalizado) {
-    nuevoEstado = 'FINALIZADO';
+  if (!nroGuia || !fechaGuia) {
+    alert('Ingrese el N° de Guía y la Fecha del Envío.');
+    return;
   }
 
-  const needsDeliveryFields = (nuevoEstado === 'COMPLETADO' || nuevoEstado === 'FINALIZADO');
-  const nroGuia = needsDeliveryFields ? document.getElementById('finalizarNroGuia')?.value.trim() : null;
-  const fechaEntrega = needsDeliveryFields ? document.getElementById('finalizarFechaEntrega')?.value : null;
-  const motivo = document.getElementById('finalizarMotivoInput')?.value?.trim() || '';
+  const quantityInputs = document.querySelectorAll('.tab-input-envio-cantidad');
+  const detallesEnvio = [];
+  const localOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
 
-  if (needsDeliveryFields && !nroGuia) {
-    alert('Por favor ingrese el N° de Guía de Remisión para guardar el estado del pedido.');
+  quantityInputs.forEach(input => {
+    const idProd = parseInt(input.getAttribute('data-product-id'));
+    const cant = parseInt(input.value) || 0;
+    if (idProd && cant > 0) {
+      const matchOrderProd = (localOrder && localOrder.detalles) ? localOrder.detalles.find(p => Number(p.id_producto) === idProd) : null;
+      const matchAppProd = (window.app && window.app.products) ? window.app.products.find(p => Number(p.id_producto) === idProd) : null;
+      const prodName = matchOrderProd?.nombre_producto || matchAppProd?.nombre_producto || 'Producto';
+
+      detallesEnvio.push({
+        id_producto: idProd,
+        cantidad: cant,
+        nombre_producto: prodName
+      });
+    }
+  });
+
+  if (detallesEnvio.length === 0) {
+    alert('Por favor ingrese al menos una cantidad a enviar mayor a 0.');
+    return;
+  }
+
+  const cerrarSaldoChecked = document.getElementById('tabEnvioCerrarSaldoCheck')?.checked;
+
+  const payload = {
+    id_pedido: idPedido,
+    id_cliente: localOrder?.id_cliente || 0,
+    nro_guia: nroGuia,
+    fecha_guia: fechaGuia,
+    estado: 'EMITIDA',
+    cerrar_saldo: cerrarSaldoChecked,
+    detalles: detallesEnvio
+  };
+
+  const res = await api.addGuia(payload);
+  if (res) {
+    try {
+      const freshOrders = await api.getPedidos();
+      if (Array.isArray(freshOrders) && freshOrders.length > 0) {
+        currentOrders = freshOrders;
+        if (window.app) window.app.orders = freshOrders;
+      }
+    } catch (e) {}
+
+    const targetOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
+
+    if (targetOrder) {
+      targetOrder.nro_guia = nroGuia;
+      targetOrder.fecha_entrega = fechaGuia;
+
+      if (!targetOrder.guias) targetOrder.guias = [];
+      const hasGuiaInList = targetOrder.guias.some(g => String(g.nro_guia) === String(nroGuia));
+      if (!hasGuiaInList) {
+        targetOrder.guias.push({
+          id_guia: res.id_guia || Date.now(),
+          nro_guia: nroGuia,
+          fecha_guia: fechaGuia,
+          detalles: detallesEnvio
+        });
+      }
+
+      let totalRequested = 0;
+      let totalDelivered = 0;
+
+      if (targetOrder.detalles) {
+        targetOrder.detalles.forEach(item => {
+          const matchEnvio = detallesEnvio.find(d => Number(d.id_producto) === Number(item.id_producto));
+          if (matchEnvio) {
+            item.cantidad_entregada = (Number(item.cantidad_entregada) || 0) + Number(matchEnvio.cantidad);
+          }
+          totalRequested += (Number(item.cantidad) || 0);
+          totalDelivered += (Number(item.cantidad_entregada) || 0);
+        });
+      }
+
+      let nuevoEstado = 'EN PROCESO';
+      if (totalDelivered >= totalRequested && totalRequested > 0) {
+        nuevoEstado = 'COMPLETADO';
+      } else if (cerrarSaldoChecked) {
+        nuevoEstado = 'FINALIZADO';
+      }
+
+      targetOrder.estado = nuevoEstado;
+      await api.updatePedidoStatus(idPedido, { estado: nuevoEstado, nro_guia: nroGuia, fecha_entrega: fechaGuia });
+    }
+  }
+
+  renderPedidosTable(currentOrders);
+  viewOrderDetail(idPedido);
+}
+
+export async function saveFinalizarOrdenFromTab(idPedido) {
+  const options = document.getElementsByName('tabFinalizarStatusOption');
+  let nuevoEstado = 'COMPLETADO';
+  for (const opt of options) {
+    if (opt.checked) {
+      nuevoEstado = opt.value;
+      break;
+    }
+  }
+
+  const nroGuia = document.getElementById('tabFinalizarNroGuia')?.value.trim();
+  const fechaEntrega = document.getElementById('tabFinalizarFechaEntrega')?.value;
+  const motivo = document.getElementById('tabFinalizarMotivoInput')?.value.trim();
+
+  if ((nuevoEstado === 'FINALIZADO' || nuevoEstado === 'CANCELADO') && !motivo) {
+    alert('Por favor especifique la razón o motivo de la resolución.');
     return;
   }
 
@@ -276,7 +372,7 @@ export async function saveFinalizarOrden() {
 
   const res = await api.updatePedidoStatus(idPedido, payload);
   if (res) {
-    const localOrder = currentOrders.find(o => (o.id_pedido || o.id) === idPedido);
+    const localOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
     if (localOrder) {
       localOrder.estado = nuevoEstado;
       localOrder.nro_guia = nroGuia;
@@ -285,149 +381,8 @@ export async function saveFinalizarOrden() {
     }
   }
 
-  const modalElem = document.getElementById('modalFinalizarOrden');
-  const modal = bootstrap.Modal.getInstance(modalElem);
-  if (modal) modal.hide();
-
   renderPedidosTable(currentOrders);
-}
-
-// 2. Registrar Envío Modal Handlers
-export function openRegistrarEnvioModal(idPedido) {
-  const order = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
-  if (!order) return;
-
-  document.getElementById('envioOrderId').value = idPedido;
-  document.getElementById('envioClientId').value = order.id_cliente || 0;
-  document.getElementById('envioOrderNroBadge').textContent = order.nro_pedido || ('PED-' + idPedido);
-  document.getElementById('envioNroGuia').value = '';
-  document.getElementById('envioNroGuia').placeholder = 'Ej: G001-001234';
-  document.getElementById('envioFechaGuia').value = new Date().toISOString().split('T')[0];
-
-  const tbody = document.getElementById('envioProductsTableBody');
-  if (tbody) {
-    tbody.innerHTML = '';
-    const items = order.detalles || [];
-    if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No hay productos en esta orden.</td></tr>`;
-    } else {
-      items.forEach(item => {
-        const cantSolicitada = item.cantidad || 0;
-        const cantEntregada = item.cantidad_entregada || 0;
-        const pendiente = Math.max(0, cantSolicitada - cantEntregada);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <div class="fw-bold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
-            <span class="small text-muted">${item.codigo_producto || ''}</span>
-          </td>
-          <td class="text-center fw-bold">${cantSolicitada}</td>
-          <td class="text-center text-muted">${cantEntregada}</td>
-          <td class="text-center">
-            <input type="number" class="form-control form-control-sm text-center input-envio-cantidad" 
-              data-product-id="${item.id_producto}" 
-              min="0" max="${cantSolicitada}" value="" placeholder="0">
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-  }
-
-  const modalElem = document.getElementById('modalRegistrarEnvio');
-  if (modalElem) {
-    const modal = new bootstrap.Modal(modalElem);
-    modal.show();
-  }
-}
-
-export async function saveRegistrarEnvio() {
-  const idPedido = parseInt(document.getElementById('envioOrderId')?.value);
-  const idCliente = parseInt(document.getElementById('envioClientId')?.value) || 0;
-  const nroGuia = document.getElementById('envioNroGuia')?.value.trim();
-  const fechaGuia = document.getElementById('envioFechaGuia')?.value;
-
-  if (!nroGuia || !fechaGuia) {
-    alert('Ingrese el N° de Guía y la Fecha del Envío.');
-    return;
-  }
-
-  const quantityInputs = document.querySelectorAll('.input-envio-cantidad');
-  const detallesEnvio = [];
-  quantityInputs.forEach(input => {
-    const idProd = parseInt(input.getAttribute('data-product-id'));
-    const cant = parseInt(input.value) || 0;
-    if (idProd && cant > 0) {
-      detallesEnvio.push({ id_producto: idProd, cantidad: cant });
-    }
-  });
-
-  if (detallesEnvio.length === 0) {
-    alert('Por favor ingrese al menos una cantidad a enviar mayor a 0.');
-    return;
-  }
-
-  const cerrarSaldoChecked = document.getElementById('envioCerrarSaldoCheck')?.checked;
-
-  const payload = {
-    id_pedido: idPedido,
-    id_cliente: idCliente,
-    nro_guia: nroGuia,
-    fecha_guia: fechaGuia,
-    estado: 'EMITIDA',
-    cerrar_saldo: cerrarSaldoChecked,
-    detalles: detallesEnvio
-  };
-
-  const res = await api.addGuia(payload);
-  if (res) {
-    const localOrder = currentOrders.find(o => (o.id_pedido || o.id) === idPedido);
-    if (localOrder) {
-      localOrder.nro_guia = nroGuia;
-      localOrder.fecha_entrega = fechaGuia;
-
-      // Update local order guias list
-      if (!localOrder.guias) localOrder.guias = [];
-      localOrder.guias.push({
-        id_guia: res.id_guia || Date.now(),
-        nro_guia: nroGuia,
-        fecha_guia: fechaGuia,
-        detalles: detallesEnvio
-      });
-
-      let totalRequested = 0;
-      let totalDelivered = 0;
-
-      // Update accumulated delivered quantities
-      if (localOrder.detalles) {
-        localOrder.detalles.forEach(item => {
-          const matchEnvio = detallesEnvio.find(d => d.id_producto === item.id_producto);
-          if (matchEnvio) {
-            item.cantidad_entregada = (item.cantidad_entregada || 0) + matchEnvio.cantidad;
-          }
-          totalRequested += (item.cantidad || 0);
-          totalDelivered += (item.cantidad_entregada || 0);
-        });
-      }
-
-      let nuevoEstado = 'EN PROCESO';
-      if (totalDelivered >= totalRequested && totalRequested > 0) {
-        nuevoEstado = 'COMPLETADO';
-      } else if (cerrarSaldoChecked) {
-        nuevoEstado = 'FINALIZADO';
-      }
-
-      localOrder.estado = nuevoEstado;
-      await api.updatePedidoStatus(idPedido, { estado: nuevoEstado, nro_guia: nroGuia, fecha_entrega: fechaGuia });
-    }
-  }
-
-  const modalElem = document.getElementById('modalRegistrarEnvio');
-  const modal = bootstrap.Modal.getInstance(modalElem);
-  if (modal) modal.hide();
-
-  renderPedidosTable(currentOrders);
+  viewOrderDetail(idPedido);
 }
 
 // 3. Ver Detalles del Pedido (Modal #orderDetailModal)
@@ -450,11 +405,11 @@ export function viewOrderDetail(idPedido) {
       return;
     }
 
-    if (modalTitle) {
-      modalTitle.innerHTML = `<i class="bi bi-file-earmark-text me-2 text-primary"></i> Detalle del Pedido ${order.nro_pedido || ('PED-' + idPedido)}`;
-    }
-
     const estadoClass = (order.estado || 'PENDIENTE').toUpperCase();
+
+    if (modalTitle) {
+      modalTitle.innerHTML = `<div class="d-flex align-items-center justify-content-between w-100 me-2"><span><i class="bi bi-file-earmark-text me-2 text-primary"></i> Pedido ${order.nro_pedido || ('PED-' + idPedido)} | ${escapeHtml(order.nombre_cliente || 'Cliente General')}</span><span class="status-badge ${estadoClass}">${estadoClass}</span></div>`;
+    }
     const estabRaw = (order.establecimiento || 'CARABAYLLO').toUpperCase();
     const estabText = (estabRaw === 'COMAS' || estabRaw.includes('COMAS'))
       ? 'Planta Principal - Comas'
@@ -487,7 +442,13 @@ export function viewOrderDetail(idPedido) {
                     <td>${formatDate(g.fecha_guia)}</td>
                     <td>
                       <ul class="mb-0 ps-3 small text-muted">
-                        ${(g.detalles || []).map(d => `<li>${escapeHtml(d.nombre_producto || 'Producto')}: <strong>${d.cantidad} un.</strong></li>`).join('')}
+                        ${(g.detalles || []).map(d => {
+                          const pName = d.nombre_producto 
+                            || (detalles && detalles.find(item => Number(item.id_producto) === Number(d.id_producto))?.nombre_producto)
+                            || (window.app && window.app.products && window.app.products.find(p => Number(p.id_producto) === Number(d.id_producto))?.nombre_producto)
+                            || 'Producto';
+                          return `<li>${escapeHtml(pName)}: <strong>${d.cantidad} un.</strong></li>`;
+                        }).join('')}
                       </ul>
                     </td>
                   </tr>
@@ -575,8 +536,8 @@ export function viewOrderDetail(idPedido) {
     <div class="alert alert-warning border-warning d-flex align-items-start py-2.5 px-3 fs-7 mb-3" role="alert">
       <i class="bi bi-chat-left-text-fill text-warning me-2.5 fs-5 mt-0.5"></i>
       <div>
-        <strong class="d-block text-dark">Razón / Motivo de Resolución (${estadoClass}):</strong>
-        <span class="text-dark">${escapeHtml(order.motivo_cancelacion)}</span>
+        <strong class="d-block text-warning-emphasis">Razón / Motivo de Resolución (${estadoClass}):</strong>
+        <span class="text-warning-emphasis">${escapeHtml(order.motivo_cancelacion)}</span>
       </div>
     </div>
   ` : '';
@@ -662,91 +623,264 @@ export function viewOrderDetail(idPedido) {
     `;
 
     modalBody.innerHTML = `
-    ${overdueBanner}
-    ${motivoBanner}
-    <div class="row g-3 mb-3">
-      <div class="col-md-6">
-        <div class="p-3 border rounded bg-body-tertiary h-100">
-          <div class="text-muted small text-uppercase font-monospace fw-bold mb-1">Cliente / Razón Social</div>
-          <div class="fw-bold fs-6 mb-1">${escapeHtml(order.nombre_cliente || 'Cliente General')}</div>
-          <div class="small text-muted mb-1">RUC/DNI: ${order.nro_documento || 'No registrado'}</div>
-          <div class="small text-muted"><strong>Establecimiento:</strong> ${estabText}</div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="p-3 border rounded bg-body-tertiary h-100">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="text-muted small text-uppercase font-monospace fw-bold">Estado Actual</span>
-            <span class="status-badge ${estadoClass}">${estadoClass}</span>
+    <!-- Tarjeta Compacta de Gestión Directa y Navegación del Pedido -->
+    <div class="card border-0 bg-body-tertiary mb-3 shadow-sm">
+      <div class="card-body p-2.5 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-gear-fill text-primary fs-5"></i>
+          <div>
+            <strong class="d-block text-body fs-7">Gestión Directa del Pedido ${escapeHtml(order.nro_pedido || ('PED-' + idPedido))}</strong>
+            <span class="text-muted small fs-8">Seleccione la opción deseada para administrar o consultar el pedido</span>
           </div>
-          <div class="small mb-1"><strong>N° Orden Compra:</strong> ${order.nro_orden ? escapeHtml(order.nro_orden) : '<span class="text-muted">Sin Asignar</span>'}</div>
-          <div class="small mb-1"><strong>Fecha Pedido:</strong> ${formatDate(order.fecha_pedido)}</div>
-          <div class="small mb-1"><strong>Fecha de Entrega:</strong> ${formatDate(order.fecha_entrega)} ${isOverdue && order.estado !== 'COMPLETADO' ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">Fuera del plazo</span>' : ''}</div>
-          ${order.nro_guia ? `<div class="small"><strong>N° Guía Oficial:</strong> ${escapeHtml(order.nro_guia)}</div>` : ''}
+        </div>
+        <div class="d-flex align-items-center gap-1.5 custom-detail-tabs p-1 border-0" id="orderDetailTabs">
+          <button type="button" class="nav-link active btn btn-sm py-1 px-3 fw-bold d-inline-flex align-items-center gap-1" id="tab-overview-btn" onclick="pedidosModule.switchDetailTab('overview')">
+            <i class="bi bi-file-earmark-text"></i> Ficha del Pedido
+          </button>
+          <button type="button" class="nav-link btn btn-sm py-1 px-3 fw-bold d-inline-flex align-items-center gap-1 text-warning-emphasis" id="tab-shipment-btn" onclick="pedidosModule.switchDetailTab('shipment')">
+            <i class="bi bi-truck"></i> Registrar Envío
+          </button>
+          <button type="button" class="nav-link btn btn-sm py-1 px-3 fw-bold d-inline-flex align-items-center gap-1 text-primary" id="tab-resolution-btn" onclick="pedidosModule.switchDetailTab('resolution')">
+            <i class="bi bi-flag-fill"></i> Finalizar Orden
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Tabla de Productos Solicitados y Entregados -->
-    <h6 class="fw-bold mb-2 text-secondary"><i class="bi bi-box-seam me-1"></i> Ítems del Pedido:</h6>
-    <div class="table-responsive border rounded mb-3">
-      <table class="table custom-table table-sm align-middle mb-0">
-        <thead class="bg-body-tertiary">
-          <tr>
-            <th>Producto</th>
-            <th class="text-center">Solicitado</th>
-            <th class="text-center">Entregado</th>
-            <th class="text-center">Estado Entrega</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${consolidatedDetalles.length === 0 ? '<tr><td colspan="4" class="text-center text-muted py-3">Sin productos especificados.</td></tr>' :
-        consolidatedDetalles.map(item => {
-          const sol = item.cantidad || 0;
-          const ent = item.cantidad_entregada || 0;
-          const isDone = ent >= sol && sol > 0;
+    <!-- PANE 1: FICHA Y RESUMEN DEL PEDIDO -->
+    <div id="tab-overview-pane" class="tab-pane-animated">
+      ${overdueBanner}
+      ${motivoBanner}
 
-          let entregaBadge = '';
-          if (isDone) {
-            entregaBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-all me-1"></i> Completo</span>';
-          } else if (isOverdue) {
-            entregaBadge = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-exclamation-triangle-fill me-1"></i> Fuera del plazo</span>';
-          } else if (ent > 0) {
-            entregaBadge = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-clock-history me-1"></i> Parcial</span>';
-          } else {
-            entregaBadge = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-clock me-1"></i> Pendiente</span>';
-          }
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="text-muted small text-uppercase font-monospace fw-bold mb-1">Cliente / Razón Social</div>
+            <div class="fw-bold fs-6 mb-1">${escapeHtml(order.nombre_cliente || 'Cliente General')}</div>
+            <div class="small text-muted mb-1">RUC/DNI: ${order.nro_documento || 'No registrado'}</div>
+            <div class="small text-muted"><strong>Establecimiento:</strong> ${estabText}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted small text-uppercase font-monospace fw-bold">Estado Actual</span>
+              <span class="status-badge ${estadoClass}">${estadoClass}</span>
+            </div>
+            <div class="small mb-1"><strong>N° Orden Compra:</strong> ${order.nro_orden ? escapeHtml(order.nro_orden) : '<span class="text-muted">Sin Asignar</span>'}</div>
+            <div class="small mb-1"><strong>Fecha Pedido:</strong> ${formatDate(order.fecha_pedido)}</div>
+            <div class="small mb-1"><strong>Fecha de Entrega:</strong> ${formatDate(order.fecha_entrega)} ${isOverdue && order.estado !== 'COMPLETADO' ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">Fuera del plazo</span>' : ''}</div>
+            ${order.nro_guia ? `<div class="small"><strong>N° Guía Oficial:</strong> ${escapeHtml(order.nro_guia)}</div>` : ''}
+          </div>
+        </div>
+      </div>
 
-          return `
-                <tr>
-                  <td>
-                    <div class="fw-semibold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
-                    <span class="small text-muted">${item.codigo_producto || ''}</span>
-                  </td>
-                  <td class="text-center fw-bold">${sol}</td>
-                  <td class="text-center text-success fw-bold">${ent}</td>
-                  <td class="text-center">
-                    ${entregaBadge}
-                  </td>
-                </tr>
-              `;
-        }).join('')
-      }
-        </tbody>
-      </table>
+      <!-- Tabla de Productos Solicitados y Entregados -->
+      <h6 class="fw-bold mb-2 text-secondary"><i class="bi bi-box-seam me-1"></i> Ítems del Pedido:</h6>
+      <div class="table-responsive border rounded mb-3">
+        <table class="table custom-table table-sm align-middle mb-0">
+          <thead class="bg-body-tertiary">
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Solicitado</th>
+              <th class="text-center">Entregado</th>
+              <th class="text-center">Estado Entrega</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${consolidatedDetalles.length === 0 ? '<tr><td colspan="4" class="text-center text-muted py-3">Sin productos especificados.</td></tr>' :
+          consolidatedDetalles.map(item => {
+            const sol = item.cantidad || 0;
+            const ent = item.cantidad_entregada || 0;
+            const isDone = ent >= sol && sol > 0;
+
+            let entregaBadge = '';
+            if (isDone) {
+              entregaBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-all me-1"></i> Completo</span>';
+            } else if (isOverdue) {
+              entregaBadge = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-exclamation-triangle-fill me-1"></i> Fuera del plazo</span>';
+            } else if (ent > 0) {
+              entregaBadge = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-clock-history me-1"></i> Parcial</span>';
+            } else {
+              entregaBadge = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-clock me-1"></i> Pendiente</span>';
+            }
+
+            return `
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
+                      <span class="small text-muted">${item.codigo_producto || ''}</span>
+                    </td>
+                    <td class="text-center fw-bold">${sol}</td>
+                    <td class="text-center text-success fw-bold">${ent}</td>
+                    <td class="text-center">
+                      ${entregaBadge}
+                    </td>
+                  </tr>
+                `;
+          }).join('')
+        }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Observaciones del Pedido -->
+      <h6 class="fw-bold mb-2 text-secondary"><i class="bi bi-chat-left-text me-1"></i> Observaciones:</h6>
+      <div class="p-3 border rounded bg-body-tertiary mb-3 fs-7">
+        ${order.observaciones ? escapeHtml(order.observaciones) : '<span class="text-muted">-</span>'}
+      </div>
+
+      ${adelantosHtml}
+
+      ${guiasHtml}
+
+      ${adjuntosHtml}
     </div>
 
-    <!-- Observaciones del Pedido -->
-    <h6 class="fw-bold mb-2 text-secondary"><i class="bi bi-chat-left-text me-1"></i> Observaciones:</h6>
-    <div class="p-3 border rounded bg-body-tertiary mb-3 fs-7">
-      ${order.observaciones ? escapeHtml(order.observaciones) : '<span class="text-muted">-</span>'}
+    <!-- PANE 2: REGISTRAR ENVÍO INTEGRADO -->
+    <div id="tab-shipment-pane" class="tab-pane-animated d-none">
+      <div class="card border-0 bg-body-tertiary shadow-sm mb-3">
+        <div class="card-header bg-transparent fw-bold text-warning-emphasis d-flex align-items-center justify-content-between py-2.5">
+          <span><i class="bi bi-truck me-2"></i> Registrar Despacho / Envío de Productos</span>
+          <span class="badge bg-warning text-dark fs-8">Envío de Mercado</span>
+        </div>
+        <div class="card-body p-3">
+          <form id="formTabRegistrarEnvio" onsubmit="event.preventDefault(); pedidosModule.saveRegistrarEnvioFromTab('${order.id_pedido || order.id || idPedido}');">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold mb-1">N° Guía de Remisión *</label>
+                <input type="text" id="tabEnvioNroGuia" class="form-control form-control-sm" placeholder="Ej: GR001-000458" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold mb-1">Fecha del Envío *</label>
+                <input type="date" id="tabEnvioFechaGuia" class="form-control form-control-sm" value="${todayStr}" required>
+              </div>
+            </div>
+
+            <h6 class="fw-bold mb-2 text-secondary"><i class="bi bi-boxes me-1"></i> Cantidades a Despachar Hoy:</h6>
+            <div class="table-responsive border rounded mb-3">
+              <table class="table custom-table table-sm align-middle mb-0">
+                <thead class="bg-body-tertiary">
+                  <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Solicitado</th>
+                    <th class="text-center">Entregado Previo</th>
+                    <th class="text-center" style="width: 130px;">Enviar Hoy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${consolidatedDetalles.map(item => {
+                    const sol = item.cantidad || 0;
+                    const ent = item.cantidad_entregada || 0;
+                    const pend = Math.max(0, sol - ent);
+                    return `
+                      <tr>
+                        <td>
+                          <div class="fw-semibold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
+                          <span class="small text-muted">${item.codigo_producto || ''}</span>
+                        </td>
+                        <td class="text-center fw-bold">${sol}</td>
+                        <td class="text-center text-muted">${ent}</td>
+                        <td class="text-center">
+                          <input type="number" class="form-control form-control-sm text-center tab-input-envio-cantidad" 
+                            data-product-id="${item.id_producto}" 
+                            min="0" max="${sol}" value="0" placeholder="0">
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="form-check mb-4 bg-warning-subtle p-2.5 rounded border border-warning-subtle">
+              <input class="form-check-input ms-1 me-2" type="checkbox" id="tabEnvioCerrarSaldoCheck">
+              <label class="form-check-label fw-bold small" for="tabEnvioCerrarSaldoCheck">
+                Marcar pedido como FINALIZADO si este envío completa las entregas requeridas.
+              </label>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold" onclick="pedidosModule.switchDetailTab('overview')">
+                Volver a Ficha
+              </button>
+              <button type="submit" class="btn btn-success btn-sm px-4 fw-bold shadow-sm">
+                <i class="bi bi-check-circle-fill me-1"></i> Confirmar y Guardar Envío
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
-    ${adelantosHtml}
+    <!-- PANE 3: FINALIZAR / CANCELAR ORDEN INTEGRADO -->
+    <div id="tab-resolution-pane" class="tab-pane-animated d-none">
+      <div class="card border-0 bg-body-tertiary shadow-sm mb-3">
+        <div class="card-header bg-transparent fw-bold text-primary d-flex align-items-center justify-content-between py-2.5">
+          <span><i class="bi bi-flag-fill me-2"></i> Cambiar Resolución / Estado Final de la Orden</span>
+        </div>
+        <div class="card-body p-3">
+          <form id="formTabFinalizarOrden" onsubmit="event.preventDefault(); pedidosModule.saveFinalizarOrdenFromTab('${order.id_pedido || order.id || idPedido}');">
+            <div class="alert alert-warning d-flex align-items-center mb-3">
+              <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+              <div>
+                <strong>¿Desea cambiar el estado final de esta orden?</strong><br>
+                Seleccione la resolución correspondiente para actualizar el flujo del pedido:
+              </div>
+            </div>
 
-    ${guiasHtml}
+            <div class="mb-3">
+              <label class="form-label fw-bold mb-2">Resolución de la Orden *</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tabFinalizarStatusOption" id="tabOptCompletado" value="COMPLETADO" ${estadoClass === 'COMPLETADO' ? 'checked' : ''} onchange="pedidosModule.toggleTabFinalizarFields('COMPLETADO')">
+                  <label class="form-check-label fw-bold text-success" for="tabOptCompletado">
+                    <i class="bi bi-check-circle-fill me-1"></i> Completado (100% Entregado)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tabFinalizarStatusOption" id="tabOptFinalizado" value="FINALIZADO" ${estadoClass === 'FINALIZADO' ? 'checked' : ''} onchange="pedidosModule.toggleTabFinalizarFields('FINALIZADO')">
+                  <label class="form-check-label fw-bold" style="color:#8b5cf6;" for="tabOptFinalizado">
+                    <i class="bi bi-flag-fill me-1"></i> Finalizado (Entrega Parcial / Cierra Saldo)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tabFinalizarStatusOption" id="tabOptCancelado" value="CANCELADO" ${estadoClass === 'CANCELADO' ? 'checked' : ''} onchange="pedidosModule.toggleTabFinalizarFields('CANCELADO')">
+                  <label class="form-check-label fw-semibold text-danger" for="tabOptCancelado">
+                    <i class="bi bi-x-circle-fill me-1"></i> Cancelado (Sin Entregas)
+                  </label>
+                </div>
+              </div>
+            </div>
 
-    ${adjuntosHtml}
+            <div id="tabFinalizarGuiaFields" class="row g-2 mb-3" style="display: ${estadoClass === 'CANCELADO' ? 'none' : 'flex'};">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold mb-1">N° Guía Final (Opcional)</label>
+                <input type="text" id="tabFinalizarNroGuia" class="form-control form-control-sm" value="${order.nro_guia || ''}" placeholder="Ej: GR001-000458">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold mb-1">Fecha Entrega Final</label>
+                <input type="date" id="tabFinalizarFechaEntrega" class="form-control form-control-sm" value="${order.fecha_entrega || todayStr}">
+              </div>
+            </div>
+
+            <div id="tabFinalizarMotivoContainer" class="mb-3" style="display: ${['FINALIZADO', 'CANCELADO'].includes(estadoClass) ? 'block' : 'none'};">
+              <label for="tabFinalizarMotivoInput" class="form-label small fw-bold mb-1">Motivo / Razón de Finalización o Cancelación *</label>
+              <textarea id="tabFinalizarMotivoInput" class="form-control form-control-sm" rows="3" placeholder="Escriba detalladamente la razón...">${order.motivo_cancelacion || ''}</textarea>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold" onclick="pedidosModule.switchDetailTab('overview')">
+                Volver a Ficha
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+                <i class="bi bi-check-circle-fill me-1"></i> Guardar Resolución
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   `;
   } catch (err) {
     console.error("viewOrderDetail build error:", err);
