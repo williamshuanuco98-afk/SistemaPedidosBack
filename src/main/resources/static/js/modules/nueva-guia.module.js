@@ -259,17 +259,13 @@ function addProductToGuia(product) {
   if (input) input.value = '';
   if (list) list.classList.add('d-none');
 
-  const existing = state.guiaItems.find(i => String(i.id_producto) === String(product.id_producto));
-  if (existing) {
-    existing.cantidad += 1;
-  } else {
-    state.guiaItems.push({
-      id_producto: product.id_producto,
-      nombre_producto: product.nombre_producto,
-      codigo_producto: product.codigo_producto || '',
-      cantidad: 1
-    });
-  }
+  // Always append a new independent row for selected products
+  state.guiaItems.push({
+    id_producto: product.id_producto,
+    nombre_producto: product.nombre_producto,
+    codigo_producto: product.codigo_producto || '',
+    cantidad: 1
+  });
 
   renderGuiaProductsTable();
 }
