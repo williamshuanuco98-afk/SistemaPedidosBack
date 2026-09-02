@@ -167,6 +167,13 @@ export async function saveProductFromModal() {
   }
 
   if (modal) modal.hide();
+
+  // Reset modal fields for next product registration
+  const idElem = document.getElementById('modalProductoId');
+  const nombreElem = document.getElementById('modalProductoNombre');
+  if (idElem) idElem.value = '';
+  if (nombreElem) nombreElem.value = '';
+
   filterProductos();
 }
 

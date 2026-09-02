@@ -112,14 +112,41 @@ public class GuiaDaoImpl implements GuiaDao {
         String nroGuia = (String) body.get("nro_guia");
         String establecimiento = (String) body.getOrDefault("establecimiento", "CARABAYLLO");
         String seriePrefix = "CARABAYLLO".equalsIgnoreCase(establecimiento) ? "GR001" : "GR002";
+        boolean esInterna = Boolean.TRUE.equals(body.get("es_interna")) || (body.containsKey("id_pedido") && body.get("id_pedido") != null);
 
-        if (nroGuia == null || nroGuia.isEmpty()) {
-            Map<String, String> nextRes = getNextNumber(seriePrefix);
-            nroGuia = nextRes.get("next_nro_guia");
+        if (nroGuia == null || nroGuia.trim().isEmpty()) {
+            if (esInterna) {
+                // Internal order shipment log: use internal ENV- correlative so GR001/GR002 series is never touched
+                int nextId = 1;
+                try {
+                    Integer maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id_guia), 0) FROM guias", Integer.class);
+                    if (maxId != null) nextId = maxId + 1;
+                } catch (Exception ignored) {}
+                nroGuia = String.format("ENV-%04d", nextId);
+            } else {
+                Map<String, String> nextRes = getNextNumber(seriePrefix);
+                nroGuia = nextRes.get("next_nro_guia");
+            }
+        } else {
+            nroGuia = nroGuia.trim();
         }
 
         String estado = (String) body.getOrDefault("estado", "EMITIDA");
         String docRef = (String) body.getOrDefault("doc_referencia", "");
+
+        if (idPedido == null && docRef != null && !docRef.trim().isEmpty()) {
+            try {
+                String cleanRef = docRef.trim();
+                List<Integer> matched = jdbcTemplate.queryForList(
+                    "SELECT id_pedido FROM pedido WHERE (nro_orden IS NOT NULL AND TRIM(nro_orden) = ?) OR (nro_pedido IS NOT NULL AND TRIM(nro_pedido) = ?)",
+                    Integer.class, cleanRef, cleanRef
+                );
+                if (!matched.isEmpty()) {
+                    idPedido = matched.get(0);
+                }
+            } catch (Exception ignored) {}
+        }
+
         String puntoPartida = (String) body.getOrDefault("punto_partida", "");
         String puntoLlegada = (String) body.getOrDefault("punto_llegada", "");
         String observaciones = (String) body.getOrDefault("observaciones", "");
@@ -166,10 +193,27 @@ public class GuiaDaoImpl implements GuiaDao {
             for (Map<String, Object> item : detalles) {
                 Number pIdNum = (Number) item.get("id_producto");
                 Number cantNum = (Number) item.get("cantidad");
+                String prodName = (String) item.get("nombre_producto");
                 if (pIdNum != null) {
+                    int pId = pIdNum.intValue();
+                    // Ensure product exists in MySQL `producto` table to prevent Foreign Key constraint failure
+                    try {
+                        Integer exists = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM producto WHERE id_producto = ?",
+                            Integer.class, pId
+                        );
+                        if (exists == null || exists == 0) {
+                            if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
+                            jdbcTemplate.update(
+                                "INSERT INTO producto (id_producto, nombre_producto, tipo_producto) VALUES (?, ?, ?)",
+                                pId, prodName, "MERCADERIA"
+                            );
+                        }
+                    } catch (Exception ignored) {}
+
                     jdbcTemplate.update(
                         "INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)",
-                        newId, pIdNum.intValue(), cantNum != null ? cantNum.intValue() : 1
+                        newId, pId, cantNum != null ? cantNum.intValue() : 1
                     );
                 }
             }

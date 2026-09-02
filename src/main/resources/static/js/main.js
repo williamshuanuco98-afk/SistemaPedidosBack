@@ -389,6 +389,17 @@ class ModularSpaApp {
           }
         });
       }
+
+      // Universal close button handler for any modal close button (X or Cerrar)
+      const dismissBtn = e.target.closest('[data-bs-dismiss="modal"], .btn-close');
+      if (dismissBtn) {
+        const modalParent = dismissBtn.closest('.modal');
+        if (modalParent) {
+          if (typeof window.hideBootstrapModal === 'function') {
+            window.hideBootstrapModal(modalParent);
+          }
+        }
+      }
     });
 
     // Global double-click handler for date inputs to open native calendar picker

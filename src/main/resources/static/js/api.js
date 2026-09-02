@@ -421,6 +421,19 @@ export const api = {
     return this.addGuia(guiaData);
   },
 
+  async addEnvioPedido(envioData) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/envios-pedido`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(envioData),
+        timeout: 3000
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {}
+    return null;
+  },
+
   async updateGuia(id, fields) {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/guias/${id}`, {

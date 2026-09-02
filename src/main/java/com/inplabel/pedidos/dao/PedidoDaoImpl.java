@@ -46,45 +46,59 @@ public class PedidoDaoImpl implements PedidoDao {
                             "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_pedido = ?",
                     idPedido);
 
-            // Fetch linked guias/shipments for partial delivery tracking
-            List<Map<String, Object>> guias = jdbcTemplate.queryForList(
-                    "SELECT g.* FROM guias g WHERE g.id_pedido = ? ORDER BY g.id_guia ASC",
+            // Fetch linked internal order shipments for partial delivery tracking
+            List<Map<String, Object>> envios = jdbcTemplate.queryForList(
+                    "SELECT e.* FROM envios_pedido e WHERE e.id_pedido = ? ORDER BY e.id_envio ASC",
                     idPedido);
 
-            for (Map<String, Object> guia : guias) {
-                Integer idGuia = (Integer) guia.get("id_guia");
-                List<Map<String, Object>> detGuia = jdbcTemplate.queryForList(
-                        "SELECT dg.*, pr.nombre_producto FROM detalle_guias dg " +
-                                "LEFT JOIN producto pr ON dg.id_producto = pr.id_producto WHERE dg.id_guia = ?",
-                        idGuia);
-                guia.put("detalles", detGuia);
+            for (Map<String, Object> envio : envios) {
+                Integer idEnvio = (Integer) envio.get("id_envio");
+                List<Map<String, Object>> detEnvio = jdbcTemplate.queryForList(
+                        "SELECT de.*, pr.nombre_producto FROM detalle_envios_pedido de " +
+                                "LEFT JOIN producto pr ON de.id_producto = pr.id_producto WHERE de.id_envio = ?",
+                        idEnvio);
+                envio.put("detalles", detEnvio);
             }
 
-            // Calculate accumulated delivered quantity for each item
+            // Calculate accumulated delivered quantity for each item from envios_pedido ONLY
+            String dbEstado = (String) order.get("estado");
+            if (dbEstado == null) dbEstado = "PENDIENTE";
+            dbEstado = dbEstado.trim().toUpperCase();
+
+            boolean hasEnvios = (envios != null && !envios.isEmpty());
+            boolean isCompletedStatus = "COMPLETADO".equals(dbEstado) || "ENTREGADO".equals(dbEstado);
+
             for (Map<String, Object> item : detalles) {
                 Number idProdNum = (Number) item.get("id_producto");
+                Number reqCantNum = (Number) item.get("cantidad");
+                int reqCant = reqCantNum != null ? reqCantNum.intValue() : 0;
                 int totalDelivered = 0;
-                if (idProdNum != null) {
+
+                if (hasEnvios && idProdNum != null) {
                     int idProd = idProdNum.intValue();
-                    for (Map<String, Object> g : guias) {
-                        List<Map<String, Object>> gDetalles = (List<Map<String, Object>>) g.get("detalles");
-                        if (gDetalles != null) {
-                            for (Map<String, Object> gd : gDetalles) {
-                                Number gProdIdNum = (Number) gd.get("id_producto");
-                                if (gProdIdNum != null && gProdIdNum.intValue() == idProd) {
-                                    Number cant = (Number) gd.get("cantidad");
+                    for (Map<String, Object> e : envios) {
+                        List<Map<String, Object>> eDetalles = (List<Map<String, Object>>) e.get("detalles");
+                        if (eDetalles != null) {
+                            for (Map<String, Object> ed : eDetalles) {
+                                Number eProdIdNum = (Number) ed.get("id_producto");
+                                if (eProdIdNum != null && eProdIdNum.intValue() == idProd) {
+                                    Number cant = (Number) ed.get("cantidad");
                                     if (cant != null)
                                         totalDelivered += cant.intValue();
                                 }
                             }
                         }
                     }
+                } else if (!hasEnvios && isCompletedStatus) {
+                    // For legacy or manually completed orders without shipment logs, items default to 100% delivered
+                    totalDelivered = reqCant;
                 }
+
                 item.put("cantidad_entregada", totalDelivered);
             }
 
             order.put("detalles", detalles);
-            order.put("guias", guias);
+            order.put("envios", envios);
 
             // Parse adelantos JSON if present
             Object adelantosRaw = order.get("adelantos");
@@ -99,13 +113,7 @@ public class PedidoDaoImpl implements PedidoDao {
                 }
             }
 
-            // Calculate dynamic order status if not explicitly CANCELADO, ANULADO or
-            // FINALIZADO
-            String dbEstado = (String) order.get("estado");
-            if (dbEstado == null)
-                dbEstado = "PENDIENTE";
-            dbEstado = dbEstado.trim().toUpperCase();
-
+            // Calculate dynamic order status if not explicitly CANCELADO, ANULADO or FINALIZADO
             int sumRequested = 0;
             int sumDelivered = 0;
 
@@ -121,7 +129,7 @@ public class PedidoDaoImpl implements PedidoDao {
             if (!"CANCELADO".equals(dbEstado) && !"ANULADO".equals(dbEstado) && !"FINALIZADO".equals(dbEstado)) {
                 if (sumDelivered >= sumRequested && sumRequested > 0) {
                     order.put("estado", "COMPLETADO");
-                } else if ((guias != null && !guias.isEmpty()) || sumDelivered > 0 || "EN PROCESO".equals(dbEstado)
+                } else if ((envios != null && !envios.isEmpty()) || sumDelivered > 0 || "EN PROCESO".equals(dbEstado)
                         || "EN_PROCESO".equals(dbEstado)) {
                     order.put("estado", "EN PROCESO");
                 }

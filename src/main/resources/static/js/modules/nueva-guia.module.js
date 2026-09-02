@@ -389,6 +389,7 @@ export async function submitNuevaGuia() {
     }
 
     showGuiaSuccessModal(newGuia);
+    await resetNuevaGuiaForm();
 
   } catch (err) {
     console.error("Error al emitir la guía:", err);
@@ -399,6 +400,33 @@ export async function submitNuevaGuia() {
       btnGuardar.innerHTML = `<i class="bi bi-check-circle me-1"></i> Emitir Guía de Remisión`;
     }
   }
+}
+
+export async function resetNuevaGuiaForm() {
+  state.selectedClient = null;
+  state.guiaItems = [];
+  state.activeClientIndex = -1;
+  state.activeProductIndex = -1;
+
+  const clientInput = document.getElementById('searchClienteGuiaInput');
+  const rucInput = document.getElementById('rucDniGuiaInput');
+  const docRefInput = document.getElementById('docReferenciaGuiaInput');
+  const llegadaInput = document.getElementById('puntoLlegadaGuiaInput');
+  const obsInput = document.getElementById('observacionesGuiaInput');
+  const prodSearchInput = document.getElementById('searchProductGuiaInput');
+
+  if (clientInput) clientInput.value = '';
+  if (rucInput) rucInput.value = '';
+  if (docRefInput) docRefInput.value = '';
+  if (llegadaInput) llegadaInput.value = '';
+  if (obsInput) obsInput.value = '';
+  if (prodSearchInput) prodSearchInput.value = '';
+
+  const dateInput = document.getElementById('fechaEmisionGuiaInput');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  await updateLocalAndCorrelative(state.selectedLocal || 'CARABAYLLO');
+  renderGuiaProductsTable();
 }
 
 function showGuiaSuccessModal(guia) {

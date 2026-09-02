@@ -813,13 +813,13 @@ const EMBEDDED_VIEWS = {
         <h5 class="modal-title fw-bold" id="guiaDetailTitle">
           <i class="bi bi-truck text-white me-2"></i> Detalle de Guía de Remisión
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="hideBootstrapModal('guiaDetailModal')" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4" id="guiaDetailBody">
         <!-- Dynamic content filled by viewGuiaDetail -->
       </div>
       <div class="modal-footer bg-body-tertiary">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" onclick="hideBootstrapModal('guiaDetailModal')">Cerrar</button>
         <button type="button" class="btn btn-success btn-sm" id="btnPrintGuiaModal">
           <i class="bi bi-printer me-1"></i> Imprimir Guía
         </button>

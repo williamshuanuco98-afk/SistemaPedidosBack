@@ -354,5 +354,16 @@ export async function saveClientFromModal() {
   if (window.app) window.app.clients = [...currentClients];
 
   if (modal) modal.hide();
+
+  // Reset modal fields for next client registration
+  const idElem = document.getElementById('modalClienteId');
+  const nroElem = document.getElementById('modalClienteNroDoc');
+  const razonElem = document.getElementById('modalClienteRazonSocial');
+  const dirElem = document.getElementById('modalClienteDireccion');
+  if (idElem) idElem.value = '';
+  if (nroElem) nroElem.value = '';
+  if (razonElem) razonElem.value = '';
+  if (dirElem) dirElem.value = '';
+
   filterClientes();
 }

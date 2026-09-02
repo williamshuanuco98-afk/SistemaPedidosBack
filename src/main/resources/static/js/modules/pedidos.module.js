@@ -280,14 +280,13 @@ export async function saveRegistrarEnvioFromTab(idPedido) {
   const payload = {
     id_pedido: idPedido,
     id_cliente: localOrder?.id_cliente || 0,
-    nro_guia: nroGuia,
-    fecha_guia: fechaGuia,
-    estado: 'EMITIDA',
+    nro_comprobante: nroGuia || 'Envío Interno',
+    fecha_envio: fechaGuia,
     cerrar_saldo: cerrarSaldoChecked,
     detalles: detallesEnvio
   };
 
-  const res = await api.addGuia(payload);
+  const res = await api.addEnvioPedido(payload);
   if (res) {
     try {
       const freshOrders = await api.getPedidos();
@@ -296,49 +295,16 @@ export async function saveRegistrarEnvioFromTab(idPedido) {
         if (window.app) window.app.orders = freshOrders;
       }
     } catch (e) {}
-
-    const targetOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
-
-    if (targetOrder) {
-      targetOrder.nro_guia = nroGuia;
-      targetOrder.fecha_entrega = fechaGuia;
-
-      if (!targetOrder.guias) targetOrder.guias = [];
-      const hasGuiaInList = targetOrder.guias.some(g => String(g.nro_guia) === String(nroGuia));
-      if (!hasGuiaInList) {
-        targetOrder.guias.push({
-          id_guia: res.id_guia || Date.now(),
-          nro_guia: nroGuia,
-          fecha_guia: fechaGuia,
-          detalles: detallesEnvio
-        });
-      }
-
-      let totalRequested = 0;
-      let totalDelivered = 0;
-
-      if (targetOrder.detalles) {
-        targetOrder.detalles.forEach(item => {
-          const matchEnvio = detallesEnvio.find(d => Number(d.id_producto) === Number(item.id_producto));
-          if (matchEnvio) {
-            item.cantidad_entregada = (Number(item.cantidad_entregada) || 0) + Number(matchEnvio.cantidad);
-          }
-          totalRequested += (Number(item.cantidad) || 0);
-          totalDelivered += (Number(item.cantidad_entregada) || 0);
-        });
-      }
-
-      let nuevoEstado = 'EN PROCESO';
-      if (totalDelivered >= totalRequested && totalRequested > 0) {
-        nuevoEstado = 'COMPLETADO';
-      } else if (cerrarSaldoChecked) {
-        nuevoEstado = 'FINALIZADO';
-      }
-
-      targetOrder.estado = nuevoEstado;
-      await api.updatePedidoStatus(idPedido, { estado: nuevoEstado, nro_guia: nroGuia, fecha_entrega: fechaGuia });
-    }
   }
+
+  // Reset shipment tab fields for next registration
+  const tabNroGuiaElem = document.getElementById('tabEnvioNroGuia');
+  const tabCheckElem = document.getElementById('tabEnvioCerrarSaldoCheck');
+  if (tabNroGuiaElem) tabNroGuiaElem.value = '';
+  if (tabCheckElem) tabCheckElem.checked = false;
+  document.querySelectorAll('.tab-input-envio-cantidad').forEach(input => {
+    input.value = '0';
+  });
 
   renderPedidosTable(currentOrders);
   viewOrderDetail(idPedido);
@@ -414,35 +380,35 @@ export function viewOrderDetail(idPedido) {
     const estabText = (estabRaw === 'COMAS' || estabRaw.includes('COMAS'))
       ? 'Planta Principal - Comas'
       : 'Sucursal - Carabayllo';
-    const guiasList = order.guias || [];
+    const enviosList = order.envios || [];
     const detalles = order.detalles || [];
 
-    // Build Guias Historial HTML
+    // Build Internal Order Shipments Historial HTML
     let guiasHtml = '';
-    if (guiasList.length > 0) {
+    if (enviosList.length > 0) {
       guiasHtml = `
-      <div class="card border-0 bg-body-tertiary mb-3">
-        <div class="card-header bg-transparent fw-bold text-success d-flex align-items-center justify-content-between">
-          <span><i class="bi bi-truck me-2"></i> Historial de Envíos / Entregas Parciales (${guiasList.length})</span>
+      <div class="card border-0 bg-body-tertiary mb-3 shadow-sm">
+        <div class="card-header bg-transparent fw-bold text-success d-flex align-items-center justify-content-between py-2">
+          <span><i class="bi bi-box-arrow-right me-2"></i> Historial de Despachos / Entregas Internas (${enviosList.length})</span>
         </div>
         <div class="card-body p-2">
           <div class="table-responsive">
-            <table class="table custom-table table-sm mb-0">
+            <table class="table custom-table table-sm mb-0 align-middle">
               <thead>
                 <tr>
-                  <th>N° Guía</th>
+                  <th>N° Comprobante / Ref.</th>
                   <th>Fecha de Envío</th>
-                  <th>Productos / Cantidades Entregadas</th>
+                  <th>Productos / Cantidades Despachadas</th>
                 </tr>
               </thead>
               <tbody>
-                ${guiasList.map(g => `
+                ${enviosList.map(e => `
                   <tr>
-                    <td class="fw-bold text-primary">${escapeHtml(g.nro_guia || '-')}</td>
-                    <td>${formatDate(g.fecha_guia)}</td>
+                    <td class="fw-bold text-primary">${escapeHtml(e.nro_comprobante || 'Envío Interno')}</td>
+                    <td class="fw-semibold text-muted">${formatDate(e.fecha_envio)}</td>
                     <td>
                       <ul class="mb-0 ps-3 small text-muted">
-                        ${(g.detalles || []).map(d => {
+                        ${(e.detalles || []).map(d => {
                           const pName = d.nombre_producto 
                             || (detalles && detalles.find(item => Number(item.id_producto) === Number(d.id_producto))?.nombre_producto)
                             || (window.app && window.app.products && window.app.products.find(p => Number(p.id_producto) === Number(d.id_producto))?.nombre_producto)
@@ -692,7 +658,8 @@ export function viewOrderDetail(idPedido) {
           consolidatedDetalles.map(item => {
             const sol = item.cantidad || 0;
             const ent = item.cantidad_entregada || 0;
-            const isDone = ent >= sol && sol > 0;
+            const isOrderCompleted = ['COMPLETADO', 'ENTREGADO'].includes((order.estado || '').trim().toUpperCase());
+            const isDone = (ent >= sol && sol > 0) || isOrderCompleted;
 
             let entregaBadge = '';
             if (isDone) {
@@ -748,8 +715,8 @@ export function viewOrderDetail(idPedido) {
           <form id="formTabRegistrarEnvio" onsubmit="event.preventDefault(); pedidosModule.saveRegistrarEnvioFromTab('${order.id_pedido || order.id || idPedido}');">
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label small fw-bold mb-1">N° Guía de Remisión *</label>
-                <input type="text" id="tabEnvioNroGuia" class="form-control form-control-sm" placeholder="Ej: GR001-000458" required>
+                <label class="form-label small fw-bold mb-1">N° Guía / Referencia Interna</label>
+                <input type="text" id="tabEnvioNroGuia" class="form-control form-control-sm" placeholder="Ej: Guía Externa #12, G-001, o dejar vacío">
               </div>
               <div class="col-md-6">
                 <label class="form-label small fw-bold mb-1">Fecha del Envío *</label>
