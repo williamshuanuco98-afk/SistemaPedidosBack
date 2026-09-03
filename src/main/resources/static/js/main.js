@@ -519,6 +519,13 @@ class ModularSpaApp {
   }
 
   async refreshData() {
+    // Limpiar cachés vacíos en localStorage si quedaron en [] por desconexión previa
+    ['inplabel_pedidos', 'inplabel_clientes', 'inplabel_productos', 'inplabel_guias'].forEach(k => {
+      try {
+        if (localStorage.getItem(k) === '[]') localStorage.removeItem(k);
+      } catch (e) {}
+    });
+
     // 1. Verificar estado del backend inmediatamente y actualizar indicador visual
     try {
       const statusData = await api.getStatus();
@@ -538,12 +545,7 @@ class ModularSpaApp {
       console.warn("Error consultando estado del backend:", err);
     }
 
-    // 2. Obtener conjuntos de datos en paralelo
-    let clients = [];
-    let products = [];
-    let orders = [];
-    let shipments = [];
-
+    // 2. Obtener conjuntos de datos en paralelo directamente desde MySQL API
     try {
       const results = await Promise.allSettled([
         api.getClientes(),
@@ -552,18 +554,13 @@ class ModularSpaApp {
         api.getGuias()
       ]);
 
-      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value)) clients = results[0].value;
-      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) products = results[1].value;
-      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) orders = results[2].value;
-      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value)) shipments = results[3].value;
+      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value) && results[0].value.length > 0) this.clients = results[0].value;
+      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value) && results[1].value.length > 0) this.products = results[1].value;
+      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value) && results[2].value.length > 0) this.orders = results[2].value;
+      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value) && results[3].value.length > 0) this.shipments = results[3].value;
     } catch (err) {
       console.warn("Backend Spring Boot offline o inalcanzable:", err);
     }
-
-    if (Array.isArray(clients) && clients.length > 0) this.clients = clients;
-    if (Array.isArray(products) && products.length > 0) this.products = products;
-    if (Array.isArray(orders) && orders.length > 0) this.orders = orders;
-    if (Array.isArray(shipments) && shipments.length > 0) this.shipments = shipments;
 
     this.updateBadges();
     this.renderCurrentView();

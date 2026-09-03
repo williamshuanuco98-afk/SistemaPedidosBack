@@ -93,7 +93,7 @@ export const api = {
       const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('clientes', data);
           return data;
         }
@@ -229,7 +229,7 @@ export const api = {
       const res = await fetchWithTimeout(`${BASE_URL}/productos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('productos', data);
           return data;
         }
@@ -294,7 +294,7 @@ export const api = {
       const res = await fetchWithTimeout(`${BASE_URL}/pedidos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('pedidos', data);
           return data;
         }
