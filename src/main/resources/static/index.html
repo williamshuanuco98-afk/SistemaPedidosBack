@@ -104,32 +104,21 @@
       }
 
       function runConnectivityCheck() {
-        var targets = [baseUrl + '/status', 'http://localhost:8080/api/status', 'http://127.0.0.1:8080/api/status'];
-        var tried = 0;
-        function tryNext() {
-          if (tried >= targets.length) {
+        fetch(baseUrl + '/status', { cache: 'no-store' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.connected) {
+              updateStatusBadge(true);
+            } else {
+              updateStatusBadge(false);
+            }
+          })
+          .catch(function () {
             updateStatusBadge(false);
-            return;
-          }
-          var url = targets[tried++];
-          fetch(url, { cache: 'no-store' })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-              if (data && data.connected) {
-                updateStatusBadge(true);
-              } else {
-                tryNext();
-              }
-            })
-            .catch(function () {
-              tryNext();
-            });
-        }
-        tryNext();
+          });
       }
 
       runConnectivityCheck();
-      setTimeout(runConnectivityCheck, 1500);
       setInterval(runConnectivityCheck, 10000);
     })();
   </script>
