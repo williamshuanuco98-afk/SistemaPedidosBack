@@ -169,19 +169,12 @@ export function setupDefaultDateFilters() {
   const dateFromElem = document.getElementById('filterDateFrom');
   const dateToElem = document.getElementById('filterDateTo');
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  const firstDay = `${year}-${month}-01`;
-  const today = `${year}-${month}-${day}`;
-
+  // Leave empty by default so all historical orders load cleanly without being hidden by date range
   if (dateFromElem && !dateFromElem.value) {
-    dateFromElem.value = firstDay;
+    dateFromElem.value = '';
   }
   if (dateToElem && !dateToElem.value) {
-    dateToElem.value = today;
+    dateToElem.value = '';
   }
 }
 
