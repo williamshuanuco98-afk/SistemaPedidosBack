@@ -1965,6 +1965,7 @@ const EMBEDDED_VIEWS = {
     </div>
   </div>
 </div>
+`,
 usuarios: `
 <div class="content-card">
   <div class="card-header d-flex justify-content-between align-items-center">
