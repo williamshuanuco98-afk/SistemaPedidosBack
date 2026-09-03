@@ -67,6 +67,7 @@ public class AuthController {
         userData.put("username", user.getUsername());
         userData.put("nombreCompleto", user.getNombreCompleto());
         userData.put("rol", user.getRol());
+        userData.put("permisos", user.getPermisos());
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -88,6 +89,7 @@ public class AuthController {
         userData.put("username", user.getUsername());
         userData.put("nombreCompleto", user.getNombreCompleto());
         userData.put("rol", user.getRol());
+        userData.put("permisos", user.getPermisos());
         return ResponseEntity.ok(userData);
     }
 }

@@ -292,17 +292,19 @@ class ModularSpaApp {
       if (nameEl) nameEl.textContent = user.nombreCompleto || user.username;
       if (roleEl) {
         roleEl.textContent = user.rol || 'OPERACIONES';
-        roleEl.className = user.rol === 'ADMIN' ? 'badge bg-primary fs-9 py-0 px-1' : 'badge bg-warning text-dark fs-9 py-0 px-1';
+        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+        roleEl.className = isAdminUser ? 'badge bg-primary fs-9 py-0 px-1' : 'badge bg-warning text-dark fs-9 py-0 px-1';
       }
       if (avatarEl) {
-        const initials = user.rol === 'ADMIN' ? 'AD' : 'OP';
+        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+        const initials = isAdminUser ? 'AD' : 'OP';
         avatarEl.textContent = initials;
-        avatarEl.style.background = user.rol === 'ADMIN' ? '#0d6efd' : '#f59e0b';
+        avatarEl.style.background = isAdminUser ? '#0d6efd' : '#f59e0b';
       }
 
       // Dynamic permission UI enforcement
       const perms = new Set(user.permisos || []);
-      const isAdmin = user.rol === 'ADMIN';
+      const isAdmin = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
 
       const navUsuarios = document.getElementById('navItemUsuarios');
       if (navUsuarios) {

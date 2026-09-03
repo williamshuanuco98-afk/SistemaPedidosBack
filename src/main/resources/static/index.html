@@ -71,8 +71,8 @@
         document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
         document.querySelectorAll('.modal').forEach(function (m) {
           if (!m.classList.contains('show')) {
-            m.style.setProperty('display', 'none', 'important');
-            m.style.setProperty('pointer-events', 'none', 'important');
+            m.style.removeProperty('display');
+            m.style.removeProperty('pointer-events');
           }
         });
       }
