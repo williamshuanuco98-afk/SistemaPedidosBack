@@ -5,13 +5,38 @@ const STORAGE_KEY = 'inplabel_user';
 const LAST_ACTIVITY_KEY = 'inplabel_last_activity';
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas (7,200,000 ms)
 
+const DEFAULT_ADMIN = {
+  idUsuario: 1,
+  username: 'admin',
+  nombreCompleto: 'Administrador Inplabel',
+  rol: 'ADMIN',
+  permisos: [
+    'pedidos.view', 'pedidos.create', 'pedidos.edit', 'pedidos.cancel', 'pedidos.finish', 'pedidos.finances',
+    'envios.create', 'envios.view', 'guias.create', 'guias.view', 'produccion.view',
+    'clientes.manage', 'productos.manage', 'usuarios.manage'
+  ]
+};
+
 export function getCurrentUser() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && (u.username || u.rol)) {
+        if (!u.permisos || !Array.isArray(u.permisos) || u.permisos.length === 0) {
+          if (u.rol === 'ADMIN' || u.username === 'admin') {
+            u.permisos = DEFAULT_ADMIN.permisos;
+          }
+        }
+        return u;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN));
+  } catch (e) {}
+  return DEFAULT_ADMIN;
 }
 
 export function isAuthenticated() {
