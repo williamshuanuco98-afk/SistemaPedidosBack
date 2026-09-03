@@ -1,5 +1,5 @@
 export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
-  ? (window.location.port === '8080' ? '/api' : `${window.location.protocol}//${window.location.hostname}:8080/api`)
+  ? (window.location.port === '8080' ? '/api' : `${window.location.protocol}//${window.location.hostname || 'localhost'}:8080/api`)
   : 'http://localhost:8080/api';
 
 async function fetchWithTimeout(resource, options = {}) {

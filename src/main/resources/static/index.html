@@ -84,7 +84,7 @@
         setTimeout(forceUnlock, 50);
       }
 
-      var host = (window.location && window.location.hostname) ? window.location.hostname : 'localhost';
+      var host = (window.location && window.location.hostname && window.location.hostname.trim() !== '') ? window.location.hostname : 'localhost';
       var port = (window.location && window.location.port) ? window.location.port : '8080';
       var is8080 = (window.location.protocol.indexOf('http') === 0 && port === '8080');
       var baseUrl = is8080 ? '/api' : ('http://' + host + ':8080/api');
