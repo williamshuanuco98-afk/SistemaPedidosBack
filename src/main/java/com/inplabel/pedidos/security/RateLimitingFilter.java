@@ -38,7 +38,7 @@ public class RateLimitingFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Agregar cabeceras de seguridad y control de caché (Prevenir almacenamiento en caché obsoleto)
+        // Agregar cabeceras de seguridad y control de caché (Prevenir almacenamiento en caché obsoleto en el navegador)
         httpResponse.setHeader("X-Content-Type-Options", "nosniff");
         httpResponse.setHeader("X-Frame-Options", "SAMEORIGIN");
         httpResponse.setHeader("X-XSS-Protection", "1; mode=block");
