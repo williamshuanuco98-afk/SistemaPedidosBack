@@ -1,0 +1,222 @@
+﻿<div class="content-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0"><i class="bi bi-shield-lock-fill text-primary me-1"></i> Administración de Usuarios y Matriz de Permisos</h3>
+    <button class="btn btn-primary btn-sm px-3 fw-bold" onclick="usuariosModule.openNewUserModal()">
+      <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
+    </button>
+  </div>
+
+  <div class="p-3 bg-body-tertiary border-bottom">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" id="searchUsuariosInput" class="form-control"
+        placeholder="Buscar usuario por nombre, username o rol..."
+        oninput="usuariosModule.filterUsuarios(this.value)">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table custom-table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Usuario (Username)</th>
+          <th>Nombre Completo</th>
+          <th>Rol Principal</th>
+          <th>Permisos Concedidos</th>
+          <th class="text-center">Estado</th>
+          <th style="width: 140px;" class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usuariosTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear / Editar Usuario con Matriz Granular de Permisos -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow">
+      <div class="modal-header bg-primary text-white py-2.5">
+        <h5 class="modal-title fs-6 fw-bold" id="modalUsuarioTitle">
+          <i class="bi bi-person-gear me-1"></i> Registrar Nuevo Usuario
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formUsuario" onsubmit="event.preventDefault(); usuariosModule.saveUsuario();">
+        <div class="modal-body p-3">
+          <input type="hidden" id="usuarioIdInput" value="">
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Nombre de Usuario (Login) *</label>
+              <input type="text" id="usuarioUsernameInput" class="form-control form-control-sm" placeholder="Ej: jsmith, vendedor1" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Contraseña <span id="usuarioPasswordHint" class="text-muted fw-normal small">(Requerida para nuevos)</span> *</label>
+              <input type="password" id="usuarioPasswordInput" class="form-control form-control-sm" placeholder="••••••••">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Nombre Completo *</label>
+              <input type="text" id="usuarioNombreInput" class="form-control form-control-sm" placeholder="Ej: Juan Pérez Morales" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Rol de Referencia *</label>
+              <select id="usuarioRolSelect" class="form-select form-select-sm" required onchange="usuariosModule.onRolPresetChange(this.value)">
+                <option value="OPERADOR">OPERADOR (Personalizado)</option>
+                <option value="ADMIN">ADMINISTRADOR (Acceso Total)</option>
+                <option value="VENTAS">VENTAS (Pedidos y Clientes)</option>
+                <option value="PRODUCCION">PRODUCCIÓN (Control y Productos)</option>
+                <option value="ALMACEN">ALMACÉN / DESPACHO (Envíos y Guías)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="border rounded p-3 bg-body-tertiary mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="fw-bold mb-0 text-primary fs-7">
+                <i class="bi bi-ui-checks me-1"></i> Matriz Granular de Permisos (Checkboxes)
+              </h6>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fs-8" onclick="usuariosModule.selectAllPerms(true)">Marcar Todos</button>
+                <span class="text-muted">|</span>
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fs-8 text-muted" onclick="usuariosModule.selectAllPerms(false)">Desmarcar Todos</button>
+              </div>
+            </div>
+            <p class="small text-muted mb-3 fs-8">Seleccione las acciones exactas que este usuario tiene permitido realizar en el sistema:</p>
+
+            <div class="row g-3">
+              <!-- MÓDULO PEDIDOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-primary-subtle fw-bold fs-8 text-primary">
+                    <i class="bi bi-cart-fill me-1"></i> Módulo de Pedidos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_view" value="pedidos.view" checked>
+                      <label class="form-check-label" for="perm_pedidos_view">Ver Lista y Ficha de Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_create" value="pedidos.create">
+                      <label class="form-check-label" for="perm_pedidos_create">Crear Nuevos Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_edit" value="pedidos.edit">
+                      <label class="form-check-label" for="perm_pedidos_edit">Editar Pedidos Existentes</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_cancel" value="pedidos.cancel">
+                      <label class="form-check-label" for="perm_pedidos_cancel">Anular / Cancelar Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_finish" value="pedidos.finish">
+                      <label class="form-check-label" for="perm_pedidos_finish">Finalizar Orden / Cambiar Estado</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_finances" value="pedidos.finances">
+                      <label class="form-check-label text-success fw-semibold" for="perm_pedidos_finances">Ver Adelantos y Dinero (Soles)</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO ENVÍOS Y DESPACHOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-warning-subtle fw-bold fs-8 text-warning-emphasis">
+                    <i class="bi bi-truck me-1"></i> Despachos y Envíos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_envios_create" value="envios.create">
+                      <label class="form-check-label" for="perm_envios_create">Registrar Despacho / Envío Físico</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_envios_view" value="envios.view">
+                      <label class="form-check-label" for="perm_envios_view">Ver Historial de Despachos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO GUÍAS DE REMISIÓN -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-info-subtle fw-bold fs-8 text-info-emphasis">
+                    <i class="bi bi-file-earmark-text me-1"></i> Guías de Remisión
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_guias_create" value="guias.create">
+                      <label class="form-check-label" for="perm_guias_create">Emitir Guías Oficiales (GR001 / GR002)</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_guias_view" value="guias.view">
+                      <label class="form-check-label" for="perm_guias_view">Ver e Imprimir PDF de Guías</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO PRODUCCIÓN -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-success-subtle fw-bold fs-8 text-success">
+                    <i class="bi bi-gear-wide-connected me-1"></i> Control de Producción
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_produccion_view" value="produccion.view">
+                      <label class="form-check-label" for="perm_produccion_view">Ver Órdenes de Producción Pendientes</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CLIENTES & PRODUCTOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-secondary-subtle fw-bold fs-8 text-secondary">
+                    <i class="bi bi-boxes me-1"></i> Clientes y Productos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_clientes_manage" value="clientes.manage">
+                      <label class="form-check-label" for="perm_clientes_manage">Crear / Editar Clientes</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_productos_manage" value="productos.manage">
+                      <label class="form-check-label" for="perm_productos_manage">Crear / Editar Productos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GESTIÓN DE USUARIOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-danger-subtle fw-bold fs-8 text-danger">
+                    <i class="bi bi-shield-lock me-1"></i> Administración del Sistema
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_usuarios_manage" value="usuarios.manage">
+                      <label class="form-check-label text-danger fw-bold" for="perm_usuarios_manage">Administrar Usuarios y Permisos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+            <i class="bi bi-check-circle-fill me-1"></i> Guardar Usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -2039,6 +2039,7 @@ export class Router {
       clientes: '<i class="bi bi-people text-primary"></i> Clientes',
       productos: '<i class="bi bi-box-seam text-primary"></i> Productos',
       produccion: '<i class="bi bi-gear-wide-connected text-primary"></i> Control de Producción',
+      usuarios: '<i class="bi bi-shield-lock-fill text-primary"></i> Administración de Usuarios y Matriz de Permisos',
       config: '<i class="bi bi-gear-fill text-primary"></i> Configuración del Sistema',
       bd: '<i class="bi bi-database-check text-primary"></i> Estado Base de Datos',
       login: '<i class="bi bi-box-arrow-in-right text-primary"></i> Iniciar Sesión'

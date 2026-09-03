@@ -636,7 +636,59 @@ export const api = {
     }
 
     return { success: false, message: 'Usuario o contraseña incorrectos.' };
-  }
+  },
 
+  async getUsers() {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios`, { timeout: 8000 });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn("Error fetching users from API:", e);
+    }
+    return [];
+  },
+
+  async createUser(payload) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error creating user:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  },
+
+  async updateUser(id, payload) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error updating user:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  },
+
+  async toggleUserActive(id) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios/${id}/toggle-active`, {
+        method: 'PUT',
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error toggling user active state:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  }
 };
 

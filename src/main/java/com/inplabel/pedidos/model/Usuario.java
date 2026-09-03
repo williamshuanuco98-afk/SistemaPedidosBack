@@ -1,6 +1,7 @@
 package com.inplabel.pedidos.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class Usuario {
     private Integer idUsuario;
@@ -10,11 +11,12 @@ public class Usuario {
     private String nombreCompleto;
     private String rol;
     private Boolean activo;
+    private List<String> permisos;
     private LocalDateTime createdAt;
 
     public Usuario() {}
 
-    public Usuario(Integer idUsuario, String username, String password, String salt, String nombreCompleto, String rol, Boolean activo, LocalDateTime createdAt) {
+    public Usuario(Integer idUsuario, String username, String password, String salt, String nombreCompleto, String rol, Boolean activo, List<String> permisos, LocalDateTime createdAt) {
         this.idUsuario = idUsuario;
         this.username = username;
         this.password = password;
@@ -22,6 +24,7 @@ public class Usuario {
         this.nombreCompleto = nombreCompleto;
         this.rol = rol;
         this.activo = activo;
+        this.permisos = permisos;
         this.createdAt = createdAt;
     }
 
@@ -45,6 +48,9 @@ public class Usuario {
 
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+
+    public List<String> getPermisos() { return permisos; }
+    public void setPermisos(List<String> permisos) { this.permisos = permisos; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

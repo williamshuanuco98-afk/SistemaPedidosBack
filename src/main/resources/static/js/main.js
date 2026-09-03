@@ -82,6 +82,7 @@ import {
 } from './modules/productos.module.js';
 import { renderConfigView, saveStorageConfig } from './modules/config.module.js';
 import { renderProduccionTable, changePage as changeProduccionPage, onCategoryFilterChange, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
+import * as usuariosModule from './modules/usuarios.module.js';
 import * as letrasModule from './modules/letras.module.js';
 import * as dashboardModule from './modules/dashboard.module.js';
 import * as authModule from './modules/auth.module.js';
@@ -96,6 +97,7 @@ window.app = {
 window.authModule = authModule;
 window.letrasModule = letrasModule;
 window.dashboardModule = dashboardModule;
+window.usuariosModule = usuariosModule;
 
 
 // Attach modules globally for inline HTML event handlers
@@ -269,7 +271,7 @@ class ModularSpaApp {
     }
 
     const hash = window.location.hash.replace('#', '');
-    const validRoutes = ['dashboard', 'pedidos', 'nuevo-pedido', 'envios', 'nueva-guia', 'letras', 'clientes', 'productos', 'produccion', 'config', 'bd'];
+    const validRoutes = ['dashboard', 'pedidos', 'nuevo-pedido', 'envios', 'nueva-guia', 'letras', 'clientes', 'productos', 'produccion', 'usuarios', 'config', 'bd'];
     const initialRoute = (hash && validRoutes.includes(hash)) ? hash : 'dashboard';
 
     // Navigate to initial route immediately
@@ -296,6 +298,15 @@ class ModularSpaApp {
         const initials = user.rol === 'ADMIN' ? 'AD' : 'OP';
         avatarEl.textContent = initials;
         avatarEl.style.background = user.rol === 'ADMIN' ? '#0d6efd' : '#f59e0b';
+      }
+
+      // Dynamic permission UI enforcement
+      const perms = new Set(user.permisos || []);
+      const isAdmin = user.rol === 'ADMIN';
+
+      const navUsuarios = document.getElementById('navItemUsuarios');
+      if (navUsuarios) {
+        navUsuarios.classList.toggle('d-none', !isAdmin && !perms.has('usuarios.manage'));
       }
     }
   }
@@ -595,6 +606,8 @@ class ModularSpaApp {
         renderProductosTable(this.products, this.searchQuery);
       } else if (route === 'produccion') {
         renderProduccionTable(this.orders, this.products, this.searchQuery);
+      } else if (route === 'usuarios') {
+        usuariosModule.initUsuariosView();
       } else if (route === 'config' || route === 'bd') {
         renderConfigView(this.clients.length, this.products.length);
       }
