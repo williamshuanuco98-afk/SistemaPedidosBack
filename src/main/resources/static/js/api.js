@@ -7,15 +7,17 @@ async function fetchWithTimeout(resource, options = {}) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
-  // Inyectar cabeceras de rol de usuario automáticamente
+  // Inyectar cabeceras de rol de usuario automáticamente (sanitizadas para cabeceras HTTP)
   let authHeaders = { ...headers };
   try {
     const rawUser = localStorage.getItem('inplabel_user');
     if (rawUser) {
       const u = JSON.parse(rawUser);
       if (u && u.rol) {
-        authHeaders['X-User-Role'] = u.rol;
-        authHeaders['X-Username'] = u.username;
+        authHeaders['X-User-Role'] = encodeURIComponent(String(u.rol || ''));
+      }
+      if (u && u.username) {
+        authHeaders['X-Username'] = encodeURIComponent(String(u.username || ''));
       }
     }
   } catch (e) {}
