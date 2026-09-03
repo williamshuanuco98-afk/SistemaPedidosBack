@@ -172,38 +172,26 @@ export function showBootstrapModal(modalElemOrId) {
   const elem = typeof modalElemOrId === 'string' ? document.getElementById(modalElemOrId) : modalElemOrId;
   if (!elem) return;
 
-  elem.style.setProperty('display', 'block', 'important');
-  elem.style.setProperty('pointer-events', 'auto', 'important');
-  elem.classList.add('show');
-  elem.removeAttribute('aria-hidden');
-  elem.setAttribute('aria-modal', 'true');
-
-  document.body.classList.add('modal-open');
-
-  // Ensure backdrop element exists and is shown
-  let backdrop = document.querySelector('.modal-backdrop');
-  if (!backdrop) {
-    backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    document.body.appendChild(backdrop);
-  } else {
-    backdrop.classList.add('show');
-    backdrop.style.removeProperty('display');
-  }
-
-  backdrop.onclick = () => hideBootstrapModal(elem);
-
   try {
     const bsModal = window.bootstrap && window.bootstrap.Modal;
     if (bsModal) {
-      let modalInstance = bsModal.getInstance(elem);
-      if (!modalInstance) {
-        modalInstance = new bsModal(elem, { backdrop: false, keyboard: true });
+      const inst = bsModal.getOrCreateInstance(elem);
+      if (inst) {
+        inst.show();
+        return;
       }
     }
   } catch (err) {
     console.warn("Bootstrap JS modal show error:", err);
   }
+
+  // Fallback if bootstrap JS object is not present
+  elem.classList.add('show');
+  elem.style.display = 'block';
+  elem.style.pointerEvents = 'auto';
+  elem.removeAttribute('aria-hidden');
+  elem.setAttribute('aria-modal', 'true');
+  document.body.classList.add('modal-open');
 }
 
 export function hideBootstrapModal(modalElemOrId) {
@@ -212,16 +200,16 @@ export function hideBootstrapModal(modalElemOrId) {
     try {
       const bsModal = window.bootstrap && window.bootstrap.Modal;
       if (bsModal) {
-        const modalInstance = bsModal.getInstance(elem);
-        if (modalInstance) {
-          modalInstance.hide();
+        const inst = bsModal.getInstance(elem) || bsModal.getOrCreateInstance(elem);
+        if (inst) {
+          inst.hide();
         }
       }
     } catch (e) {}
 
     elem.classList.remove('show');
-    elem.style.setProperty('display', 'none', 'important');
-    elem.style.setProperty('pointer-events', 'none', 'important');
+    elem.style.removeProperty('display');
+    elem.style.removeProperty('pointer-events');
     elem.setAttribute('aria-hidden', 'true');
     elem.removeAttribute('aria-modal');
   }

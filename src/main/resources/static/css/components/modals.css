@@ -1,13 +1,4 @@
-/* Custom Modal Overrides & Strict Click-Through Rules */
-.modal {
-  display: none !important;
-  pointer-events: none !important;
-}
-
-.modal.show {
-  display: block !important;
-  pointer-events: auto !important;
-}
+/* Custom Modal Overrides & Glassmorphism Backdrop */
 
 /* Glassmorphism Backdrop with Blur & Dimming */
 .modal-backdrop {
@@ -30,16 +21,6 @@
   opacity: 0.82 !important;
   backdrop-filter: blur(12px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
-}
-
-.modal-backdrop:not(.show) {
-  display: none !important;
-  pointer-events: none !important;
-}
-
-body:not(.modal-open) .modal-backdrop {
-  display: none !important;
-  pointer-events: none !important;
 }
 
 /* ============================================================= */
