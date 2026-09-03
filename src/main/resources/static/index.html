@@ -104,31 +104,33 @@
       }
 
       function runConnectivityCheck() {
-        fetch(baseUrl + '/status')
-          .then(function (res) { return res.json(); })
-          .then(function (data) {
-            if (data && data.connected) {
-              updateStatusBadge(true);
-            } else {
-              updateStatusBadge(false);
-            }
-          })
-          .catch(function () {
-            if (baseUrl !== 'http://localhost:8080/api') {
-              fetch('http://localhost:8080/api/status')
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                  if (data && data.connected) updateStatusBadge(true);
-                })
-                .catch(function () { updateStatusBadge(false); });
-            } else {
-              updateStatusBadge(false);
-            }
-          });
+        var targets = [baseUrl + '/status', 'http://localhost:8080/api/status', 'http://127.0.0.1:8080/api/status'];
+        var tried = 0;
+        function tryNext() {
+          if (tried >= targets.length) {
+            updateStatusBadge(false);
+            return;
+          }
+          var url = targets[tried++];
+          fetch(url, { cache: 'no-store' })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              if (data && data.connected) {
+                updateStatusBadge(true);
+              } else {
+                tryNext();
+              }
+            })
+            .catch(function () {
+              tryNext();
+            });
+        }
+        tryNext();
       }
 
       runConnectivityCheck();
-      setInterval(runConnectivityCheck, 15000);
+      setTimeout(runConnectivityCheck, 1500);
+      setInterval(runConnectivityCheck, 10000);
     })();
   </script>
 
