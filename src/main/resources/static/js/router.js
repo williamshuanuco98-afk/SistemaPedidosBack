@@ -405,7 +405,7 @@ const EMBEDDED_VIEWS = {
 </div>
 
 <!-- Modal Registrar Pago para Pedido Existente -->
-<div class="modal fade" id="modalAgregarPagoPedido" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalAgregarPagoPedido" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-success text-white py-3">

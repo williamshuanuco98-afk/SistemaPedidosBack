@@ -1,5 +1,11 @@
 /* Custom Modal Overrides & Glassmorphism Backdrop */
 
+/* Stacked Sub-Modals Elevation (Highest Priority over Order Details Modal) */
+#modalAgregarPagoPedido,
+#globalConfirmModal {
+  z-index: 1070 !important;
+}
+
 /* Glassmorphism Backdrop with Blur & Dimming */
 .modal-backdrop {
   will-change: opacity;

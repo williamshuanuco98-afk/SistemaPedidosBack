@@ -178,6 +178,13 @@ export function showBootstrapModal(modalElemOrId) {
       const inst = bsModal.getOrCreateInstance(elem);
       if (inst) {
         inst.show();
+        setTimeout(() => {
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          if (backdrops.length > 1 && (elem.id === 'modalAgregarPagoPedido' || elem.id === 'globalConfirmModal')) {
+            const lastBackdrop = backdrops[backdrops.length - 1];
+            if (lastBackdrop) lastBackdrop.style.zIndex = '1065';
+          }
+        }, 20);
         return;
       }
     }
