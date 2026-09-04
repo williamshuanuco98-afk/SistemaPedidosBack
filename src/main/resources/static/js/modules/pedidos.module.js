@@ -234,7 +234,12 @@ export function toggleTabFinalizarFields(status) {
   }
 }
 
+let isSavingEnvio = false;
+
 export async function saveRegistrarEnvioFromTab(idPedido) {
+  if (isSavingEnvio) return;
+
+  const submitBtn = document.querySelector('#formTabRegistrarEnvio button[type="submit"]');
   const nroGuia = document.getElementById('tabEnvioNroGuia')?.value.trim();
   const fechaGuia = document.getElementById('tabEnvioFechaGuia')?.value;
 
@@ -268,7 +273,7 @@ export async function saveRegistrarEnvioFromTab(idPedido) {
     return;
   }
 
-  const cerrarSaldoChecked = document.getElementById('tabEnvioCerrarSaldoCheck')?.checked;
+  const cerrarSaldoChecked = Boolean(document.getElementById('tabEnvioCerrarSaldoCheck')?.checked);
 
   const payload = {
     id_pedido: idPedido,
@@ -279,28 +284,42 @@ export async function saveRegistrarEnvioFromTab(idPedido) {
     detalles: detallesEnvio
   };
 
-  const res = await api.addEnvioPedido(payload);
-  if (res) {
-    try {
-      const freshOrders = await api.getPedidos();
-      if (Array.isArray(freshOrders) && freshOrders.length > 0) {
-        currentOrders = freshOrders;
-        if (window.app) window.app.orders = freshOrders;
-      }
-    } catch (e) {}
+  isSavingEnvio = true;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Guardando...';
   }
 
-  // Reset shipment tab fields for next registration
-  const tabNroGuiaElem = document.getElementById('tabEnvioNroGuia');
-  const tabCheckElem = document.getElementById('tabEnvioCerrarSaldoCheck');
-  if (tabNroGuiaElem) tabNroGuiaElem.value = '';
-  if (tabCheckElem) tabCheckElem.checked = false;
-  document.querySelectorAll('.tab-input-envio-cantidad').forEach(input => {
-    input.value = '0';
-  });
+  try {
+    const res = await api.addEnvioPedido(payload);
+    if (res) {
+      try {
+        const freshOrders = await api.getPedidos();
+        if (Array.isArray(freshOrders) && freshOrders.length > 0) {
+          currentOrders = freshOrders;
+          if (window.app) window.app.orders = freshOrders;
+        }
+      } catch (e) {}
+    }
 
-  renderPedidosTable(currentOrders);
-  viewOrderDetail(idPedido);
+    // Reset shipment tab fields for next registration
+    const tabNroGuiaElem = document.getElementById('tabEnvioNroGuia');
+    const tabCheckElem = document.getElementById('tabEnvioCerrarSaldoCheck');
+    if (tabNroGuiaElem) tabNroGuiaElem.value = '';
+    if (tabCheckElem) tabCheckElem.checked = false;
+    document.querySelectorAll('.tab-input-envio-cantidad').forEach(input => {
+      input.value = '0';
+    });
+
+    renderPedidosTable(currentOrders);
+    viewOrderDetail(idPedido);
+  } finally {
+    isSavingEnvio = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Confirmar y Guardar Envío';
+    }
+  }
 }
 
 export async function saveFinalizarOrdenFromTab(idPedido) {

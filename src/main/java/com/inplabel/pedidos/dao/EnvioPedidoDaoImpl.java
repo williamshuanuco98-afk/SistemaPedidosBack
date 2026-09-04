@@ -76,6 +76,19 @@ public class EnvioPedidoDaoImpl implements EnvioPedidoDao {
         final Integer finalIdCliente = idCliente;
         final Boolean finalCerrarSaldo = cerrarSaldo;
 
+        // Duplicate submission prevention: check if identical shipment was created in last 5 seconds
+        try {
+            Integer duplicateId = jdbcTemplate.queryForObject(
+                "SELECT id_envio FROM envios_pedido WHERE id_pedido = ? AND nro_comprobante = ? AND fecha_envio = ? AND TIMESTAMPDIFF(SECOND, fecha_registro, NOW()) < 5 ORDER BY id_envio DESC LIMIT 1",
+                Integer.class, finalIdPedido, finalNroComp, finalFecha
+            );
+            if (duplicateId != null && duplicateId > 0) {
+                body.put("id_envio", duplicateId);
+                body.put("duplicate_prevented", true);
+                return body;
+            }
+        } catch (Exception ignored) {}
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
