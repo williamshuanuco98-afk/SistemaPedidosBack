@@ -45,6 +45,16 @@ function renderUsuariosTable() {
       ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-8">ACTIVO</span>`
       : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-8">INACTIVO</span>`;
 
+    const rolUpper = (u.rol || 'OPERADOR').toUpperCase();
+    let rolBadge = `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 fs-8">${escapeHtml(rolUpper)}</span>`;
+    if (rolUpper.includes('ADMIN')) {
+      rolBadge = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fs-8"><i class="bi bi-shield-lock-fill me-1"></i> ${escapeHtml(rolUpper)}</span>`;
+    } else if (rolUpper.includes('OPERAC') || rolUpper.includes('OPERAD')) {
+      rolBadge = `<span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 fs-8"><i class="bi bi-gear-fill me-1"></i> ${escapeHtml(rolUpper)}</span>`;
+    } else if (rolUpper.includes('VENTA')) {
+      rolBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-8"><i class="bi bi-bag-check-fill me-1"></i> ${escapeHtml(rolUpper)}</span>`;
+    }
+
     const perms = u.permisos || [];
     const permsSummary = perms.length === 14 
       ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-8">Acceso Total (14/14)</span>`
@@ -60,7 +70,7 @@ function renderUsuariosTable() {
       <tr>
         <td class="fw-bold text-primary fs-7"><i class="bi bi-person-circle me-1"></i> ${escapeHtml(u.username)}</td>
         <td class="fw-semibold text-body fs-7">${escapeHtml(u.nombreCompleto || u.username)}</td>
-        <td><span class="badge bg-dark-subtle text-dark border px-2 fs-8">${escapeHtml(u.rol || 'OPERADOR')}</span></td>
+        <td>${rolBadge}</td>
         <td>${permsSummary}</td>
         <td class="text-center">${badgeStatus}</td>
         <td class="text-center">

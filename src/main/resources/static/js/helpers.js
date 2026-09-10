@@ -320,10 +320,33 @@ export function showConfirmModal({
 window.showConfirmDialog = showConfirmModal;
 
 export function initFlatpickrOnAllInputs() {
+  // Prevent Microsoft Edge & Chrome "Información guardada" autofill bubbles across all search/filter inputs
+  document.querySelectorAll('input').forEach(inp => {
+    const id = (inp.id || '').toLowerCase();
+    const name = (inp.name || '').toLowerCase();
+    const type = (inp.type || '').toLowerCase();
+    const placeholder = (inp.placeholder || '').toLowerCase();
+
+    const isSearchOrFilter = type === 'search' || type === 'date' || 
+      id.includes('search') || id.includes('fecha') || id.includes('date') || id.includes('filter') || id.includes('pago') || id.includes('envio') || id.includes('guia') || id.includes('letra') ||
+      name.includes('search') || placeholder.includes('buscar');
+
+    if (isSearchOrFilter) {
+      inp.setAttribute('autocomplete', 'one-time-code');
+      inp.setAttribute('autocorrect', 'off');
+      inp.setAttribute('spellcheck', 'false');
+      inp.setAttribute('data-lpignore', 'true');
+      inp.setAttribute('data-form-type', 'other');
+      inp.setAttribute('role', 'searchbox');
+    }
+  });
+
   if (typeof window.flatpickr === 'undefined') return;
 
   const inputs = document.querySelectorAll('input[type="date"], input.flatpickr-input');
   inputs.forEach(input => {
+    input.setAttribute('autocomplete', 'one-time-code');
+    input.setAttribute('data-lpignore', 'true');
     if (input.dataset.fpBound === 'true') return;
     input.dataset.fpBound = 'true';
 
@@ -342,6 +365,13 @@ export function initFlatpickrOnAllInputs() {
       }
 
       const fp = window.flatpickr(input, fpConfig);
+      if (fp && fp.altInput) {
+        fp.altInput.setAttribute('autocomplete', 'one-time-code');
+        fp.altInput.setAttribute('autocorrect', 'off');
+        fp.altInput.setAttribute('data-lpignore', 'true');
+        fp.altInput.setAttribute('data-form-type', 'other');
+        fp.altInput.setAttribute('role', 'searchbox');
+      }
 
       input.addEventListener('dblclick', () => {
         if (fp) fp.open();
@@ -353,6 +383,21 @@ export function initFlatpickrOnAllInputs() {
       console.warn("Flatpickr init error on input:", input, e);
     }
   });
+}
+
+// Global event listener to suppress Microsoft Edge & Chrome Autofill bubbles on all input focus events
+if (typeof document !== 'undefined') {
+  document.addEventListener('focusin', (e) => {
+    const inp = e.target;
+    if (inp && inp.tagName === 'INPUT') {
+      const id = (inp.id || '').toLowerCase();
+      if (id.includes('search') || id.includes('fecha') || id.includes('pago') || id.includes('envio') || id.includes('guia')) {
+        inp.setAttribute('autocomplete', 'one-time-code');
+        inp.setAttribute('data-lpignore', 'true');
+        inp.setAttribute('data-form-type', 'other');
+      }
+    }
+  }, true);
 }
 window.initFlatpickrOnAllInputs = initFlatpickrOnAllInputs;
 

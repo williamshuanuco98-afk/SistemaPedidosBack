@@ -191,7 +191,7 @@ const EMBEDDED_VIEWS = {
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" id="searchClientNameInput" class="form-control"
-              placeholder="Buscar (Enter)...">
+              placeholder="Buscar (Enter)..." autocomplete="one-time-code" data-lpignore="true" data-form-type="other" role="searchbox" spellcheck="false">
           </div>
         </div>
 
@@ -867,17 +867,10 @@ const EMBEDDED_VIEWS = {
   'nueva-guia': `
 <div class="content-card">
   <!-- Cabecera de la Vista -->
-  <div class="card-header flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-2">
-      <h3 class="card-title mb-0">
-        <i class="bi bi-file-earmark-plus text-primary me-1"></i> Generar Nueva Guía de Remisión
-      </h3>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="app.navigateTo('envios')">
-        <i class="bi bi-arrow-left me-1"></i> Volver a Listado de Guías
-      </button>
-    </div>
+  <div class="card-header d-flex justify-content-end align-items-center gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="app.navigateTo('envios')">
+      <i class="bi bi-arrow-left me-1"></i> Volver a Listado de Guías
+    </button>
   </div>
 
   <div class="card-body p-4">

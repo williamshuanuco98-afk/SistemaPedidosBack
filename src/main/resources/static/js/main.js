@@ -242,14 +242,7 @@ class ModularSpaApp {
           localStorage.setItem('inplabel_pedidos', JSON.stringify(filtered));
         }
       }
-      const rawL = localStorage.getItem('inplabel_letras');
-      if (rawL) {
-        const arr = JSON.parse(rawL);
-        if (Array.isArray(arr)) {
-          const filtered = arr.filter(l => l.nro_letra !== '261-2025' && l.nro_letra !== '262-2025');
-          localStorage.setItem('inplabel_letras', JSON.stringify(filtered));
-        }
-      }
+      localStorage.setItem('inplabel_letras', '[]');
       const rawC = localStorage.getItem('inplabel_clientes');
       if (rawC) {
         const arr = JSON.parse(rawC);

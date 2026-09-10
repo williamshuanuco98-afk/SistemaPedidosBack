@@ -866,6 +866,9 @@ export function viewOrderDetail(idPedido) {
   }
 
   showBootstrapModal('orderDetailModal');
+  setTimeout(() => {
+    initFlatpickrOnAllInputs();
+  }, 50);
 }
 
 export function openAgregarPagoModal(idPedido) {

@@ -150,7 +150,7 @@ export function numeroALetras(monto) {
 // =========================================================================
 export async function initLetrasView() {
   try {
-    // Establecer como fecha Desde el inicio del mes actual y Hasta el día de hoy
+    // Establecer por defecto las fechas del mes actual para la vista inicial
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
