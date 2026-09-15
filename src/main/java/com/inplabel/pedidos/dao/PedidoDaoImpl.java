@@ -253,6 +253,13 @@ public class PedidoDaoImpl implements PedidoDao {
             }
         }
 
+        if (body.containsKey("nro_guia")) {
+            String nroGuia = (String) body.get("nro_guia");
+            if (nroGuia != null && !nroGuia.trim().isEmpty()) {
+                jdbcTemplate.update("UPDATE pedido SET nro_guia = ? WHERE id_pedido = ?", nroGuia.trim(), id);
+            }
+        }
+
         if (fecha != null && estado != null) {
             if (fechaEntrega != null && !fechaEntrega.isEmpty()) {
                 jdbcTemplate.update(
@@ -267,7 +274,94 @@ public class PedidoDaoImpl implements PedidoDao {
             jdbcTemplate.update("UPDATE pedido SET estado = ? WHERE id_pedido = ?", estado, id);
         }
 
+        if (estado != null && ("COMPLETADO".equalsIgnoreCase(estado.trim()) || "ENTREGADO".equalsIgnoreCase(estado.trim()))) {
+            try {
+                autoCompleteEnviosForPedido(id, (String) body.get("nro_guia"), fechaEntrega);
+            } catch (Exception e) {
+                System.err.println("Error auto-completing envios for pedido " + id + ": " + e.getMessage());
+            }
+        }
+
         body.put("id_pedido", id);
         return body;
+    }
+
+    private void autoCompleteEnviosForPedido(int idPedido, String nroGuiaInput, String fechaEntregaInput) {
+        List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
+                "SELECT dp.*, p.nombre_producto FROM detalle_pedido dp LEFT JOIN producto p ON dp.id_producto = p.id_producto WHERE dp.id_pedido = ?",
+                idPedido);
+        if (detalles == null || detalles.isEmpty()) return;
+
+        Map<String, Object> orderRow = null;
+        try {
+            orderRow = jdbcTemplate.queryForMap("SELECT id_cliente, nro_guia, fecha_entrega FROM pedido WHERE id_pedido = ?", idPedido);
+        } catch (Exception ignored) {}
+
+        Integer idCliente = orderRow != null ? (Integer) orderRow.get("id_cliente") : null;
+        String existingGuia = orderRow != null ? (String) orderRow.get("nro_guia") : null;
+        String nroGuiaFinal = (nroGuiaInput != null && !nroGuiaInput.trim().isEmpty()) ? nroGuiaInput.trim() : existingGuia;
+        if (nroGuiaFinal == null || nroGuiaFinal.trim().isEmpty()) {
+            nroGuiaFinal = "DESPACHO-AUTO";
+        }
+
+        String fechaEnvioFinal = (fechaEntregaInput != null && !fechaEntregaInput.trim().isEmpty())
+                ? fechaEntregaInput
+                : (orderRow != null && orderRow.get("fecha_entrega") != null ? orderRow.get("fecha_entrega").toString() : java.time.LocalDate.now().toString());
+
+        List<Map<String, Object>> itemsToDeliver = new java.util.ArrayList<>();
+        for (Map<String, Object> item : detalles) {
+            Number idProdNum = (Number) item.get("id_producto");
+            Number cantNum = (Number) item.get("cantidad");
+            if (idProdNum == null) continue;
+            int idProd = idProdNum.intValue();
+            int cantSol = cantNum != null ? cantNum.intValue() : 0;
+
+            Integer deliveredSoFar = 0;
+            try {
+                deliveredSoFar = jdbcTemplate.queryForObject(
+                        "SELECT COALESCE(SUM(de.cantidad), 0) FROM detalle_envios_pedido de INNER JOIN envios_pedido e ON de.id_envio = e.id_envio WHERE e.id_pedido = ? AND de.id_producto = ?",
+                        Integer.class, idPedido, idProd);
+            } catch (Exception ignored) {}
+
+            int pending = Math.max(0, cantSol - (deliveredSoFar != null ? deliveredSoFar : 0));
+            if (pending > 0) {
+                Map<String, Object> toDel = new java.util.HashMap<>();
+                toDel.put("id_producto", idProd);
+                toDel.put("cantidad", pending);
+                itemsToDeliver.add(toDel);
+            }
+        }
+
+        if (!itemsToDeliver.isEmpty()) {
+            final Integer finalIdCliente = idCliente;
+            final String finalNroGuia = nroGuiaFinal;
+            final String finalFechaEnvio = fechaEnvioFinal;
+
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(
+                        "INSERT INTO envios_pedido (id_pedido, id_cliente, nro_comprobante, fecha_envio, cerrar_saldo, observaciones) VALUES (?, ?, ?, ?, ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS);
+                ps.setInt(1, idPedido);
+                if (finalIdCliente != null) ps.setInt(2, finalIdCliente); else ps.setNull(2, java.sql.Types.INTEGER);
+                ps.setString(3, finalNroGuia);
+                ps.setString(4, finalFechaEnvio);
+                ps.setBoolean(5, true);
+                ps.setString(6, "Despacho automático por Cierre de Orden a COMPLETADO");
+                return ps;
+            }, keyHolder);
+
+            Number newEnvioIdNum = keyHolder.getKey();
+            if (newEnvioIdNum != null) {
+                int newEnvioId = newEnvioIdNum.intValue();
+                for (Map<String, Object> item : itemsToDeliver) {
+                    int pId = (Integer) item.get("id_producto");
+                    int cant = (Integer) item.get("cantidad");
+                    jdbcTemplate.update(
+                            "INSERT INTO detalle_envios_pedido (id_envio, id_producto, cantidad) VALUES (?, ?, ?)",
+                            newEnvioId, pId, cant);
+                }
+            }
+        }
     }
 }

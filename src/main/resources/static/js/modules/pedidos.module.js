@@ -225,12 +225,24 @@ export function switchDetailTab(tabName) {
 export function toggleTabFinalizarFields(status) {
   const motivoContainer = document.getElementById('tabFinalizarMotivoContainer');
   const guiaFields = document.getElementById('tabFinalizarGuiaFields');
+  const nroGuiaInput = document.getElementById('tabFinalizarNroGuia');
+  const nroGuiaLabel = document.getElementById('tabFinalizarNroGuiaLabel');
 
   if (motivoContainer) {
     motivoContainer.style.display = (status === 'FINALIZADO' || status === 'CANCELADO') ? 'block' : 'none';
   }
   if (guiaFields) {
     guiaFields.style.display = (status === 'CANCELADO') ? 'none' : 'flex';
+  }
+  if (nroGuiaLabel) {
+    nroGuiaLabel.innerHTML = (status === 'COMPLETADO') ? 'N° Guía Final *' : 'N° Guía Final (Opcional)';
+  }
+  if (nroGuiaInput) {
+    if (status === 'COMPLETADO') {
+      nroGuiaInput.setAttribute('required', 'required');
+    } else {
+      nroGuiaInput.removeAttribute('required');
+    }
   }
 }
 
@@ -336,6 +348,12 @@ export async function saveFinalizarOrdenFromTab(idPedido) {
   const fechaEntrega = document.getElementById('tabFinalizarFechaEntrega')?.value;
   const motivo = document.getElementById('tabFinalizarMotivoInput')?.value.trim();
 
+  if (nuevoEstado === 'COMPLETADO' && !nroGuia) {
+    alert('Por favor ingrese el N° de Guía para dar por completada la orden.');
+    document.getElementById('tabFinalizarNroGuia')?.focus();
+    return;
+  }
+
   if ((nuevoEstado === 'FINALIZADO' || nuevoEstado === 'CANCELADO') && !motivo) {
     alert('Por favor especifique la razón o motivo de la resolución.');
     return;
@@ -350,12 +368,25 @@ export async function saveFinalizarOrdenFromTab(idPedido) {
 
   const res = await api.updatePedidoStatus(idPedido, payload);
   if (res) {
-    const localOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
-    if (localOrder) {
-      localOrder.estado = nuevoEstado;
-      localOrder.nro_guia = nroGuia;
-      localOrder.fecha_entrega = fechaEntrega;
-      localOrder.motivo_cancelacion = motivo;
+    try {
+      const freshOrders = await api.getPedidos();
+      if (Array.isArray(freshOrders) && freshOrders.length > 0) {
+        currentOrders = freshOrders;
+        if (window.app) window.app.orders = freshOrders;
+      }
+    } catch (e) {
+      const localOrder = currentOrders.find(o => String(o.id_pedido) === String(idPedido) || String(o.id) === String(idPedido) || String(o.nro_pedido) === String(idPedido));
+      if (localOrder) {
+        localOrder.estado = nuevoEstado;
+        localOrder.nro_guia = nroGuia;
+        localOrder.fecha_entrega = fechaEntrega;
+        localOrder.motivo_cancelacion = motivo;
+        if (nuevoEstado === 'COMPLETADO' && Array.isArray(localOrder.detalles)) {
+          localOrder.detalles.forEach(d => {
+            d.cantidad_entregada = Number(d.cantidad || 0);
+          });
+        }
+      }
     }
   }
 
@@ -834,8 +865,8 @@ export function viewOrderDetail(idPedido) {
 
             <div id="tabFinalizarGuiaFields" class="row g-2 mb-3" style="display: ${estadoClass === 'CANCELADO' ? 'none' : 'flex'};">
               <div class="col-md-6">
-                <label class="form-label small fw-bold mb-1">N° Guía Final (Opcional)</label>
-                <input type="text" id="tabFinalizarNroGuia" class="form-control form-control-sm" value="${order.nro_guia || ''}" placeholder="Ej: GR001-000458">
+                <label class="form-label small fw-bold mb-1" id="tabFinalizarNroGuiaLabel">N° Guía Final ${estadoClass === 'COMPLETADO' ? '*' : '(Opcional)'}</label>
+                <input type="text" id="tabFinalizarNroGuia" class="form-control form-control-sm" value="${order.nro_guia || ''}" placeholder="Ej: GR001-000458" ${estadoClass === 'COMPLETADO' ? 'required' : ''}>
               </div>
               <div class="col-md-6">
                 <label class="form-label small fw-bold mb-1">Fecha Entrega Final</label>
