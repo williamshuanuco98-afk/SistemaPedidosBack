@@ -917,8 +917,8 @@ const EMBEDDED_VIEWS = {
             </button>
           </div>
 
-          <div class="table-responsive border rounded mb-3">
-            <table class="table custom-table table-sm align-middle mb-0">
+          <div class="border rounded mb-3" style="overflow: visible;">
+            <table class="table custom-table table-sm align-middle mb-0" style="overflow: visible;">
               <thead class="bg-body-tertiary">
                 <tr>
                   <th>Producto</th>
