@@ -707,9 +707,11 @@ export function addEditGuiaRow(itemData = null) {
   tr.id = `edit-row-${rowId}`;
 
   tr.innerHTML = `
-    <td class="position-relative">
-      <input type="text" class="form-control form-control-sm edit-item-prod-input" placeholder="Escriba o busque el producto..." value="${escapeHtml(prodName)}" autocomplete="off" required>
-      <ul class="list-group position-absolute w-100 shadow edit-item-prod-list d-none" style="z-index: 1080; max-height: 220px; overflow-y: auto; top: 100%; left: 0;"></ul>
+    <td>
+      <div class="position-relative">
+        <input type="text" class="form-control form-control-sm edit-item-prod-input" placeholder="Escriba o busque el producto..." value="${escapeHtml(prodName)}" autocomplete="off" required>
+        <ul class="list-group position-absolute w-100 shadow edit-item-prod-list d-none" style="z-index: 1090; max-height: 200px; overflow-y: auto; top: 100%; left: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.6);"></ul>
+      </div>
     </td>
     <td class="text-center">
       <input type="number" class="form-control form-control-sm text-center edit-item-cant-input" min="1" value="${cant}" required>
