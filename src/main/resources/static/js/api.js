@@ -436,16 +436,39 @@ export const api = {
     return null;
   },
 
+  async getShipments() {
+    return this.getGuias();
+  },
+
   async updateGuia(id, fields) {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/guias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res.ok) {
+        const data = await res.json();
+        const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+        const idx = list.findIndex(g => String(g.id_guia) === String(id));
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], ...fields, ...data };
+          setLocalData('guias', list);
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn("Error actualizando guía en backend:", e);
+    }
+
+    const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+    const idx = list.findIndex(g => String(g.id_guia) === String(id));
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...fields };
+      setLocalData('guias', list);
+      return list[idx];
+    }
     return null;
   },
 

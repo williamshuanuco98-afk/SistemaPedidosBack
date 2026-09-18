@@ -1,5 +1,5 @@
 import { api, BASE_URL } from '../api.js';
-import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI, filterAndRankItems } from '../helpers.js';
 
 let currentShipments = [];
 let currentSearchQuery = '';
@@ -104,7 +104,7 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
   });
 
   if (p.items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No se encontraron guías de remisión registradas para los filtros aplicados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">No se encontraron guías de remisión registradas para los filtros aplicados.</td></tr>`;
     return;
   }
 
@@ -144,7 +144,15 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
             <i class="bi bi-printer-fill"></i>
           </button>
         </td>
-        <!-- 4. Columna ANULAR -->
+        <!-- 4. Columna EDITAR -->
+        <td class="text-center">
+          ${!isAnulada ? `
+            <button class="btn-action-solid btn-edit" title="Editar Guía" onclick="enviosModule.openEditarGuiaModal('${s.id_guia}')">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+          ` : `<span class="text-muted small">-</span>`}
+        </td>
+        <!-- 5. Columna ANULAR -->
         <td class="text-center">
           ${!isAnulada ? `
             <button class="btn-action-solid btn-cancel" title="Anular Guía" onclick="enviosModule.openAnularModal('${s.id_guia}', '${escapeHtml(s.nro_guia || '')}')">
@@ -601,5 +609,335 @@ export function printGuiaPDF(guia) {
     return;
   }
   printGuiaDirectWithoutNewTab(guia);
+}
+
+export async function openEditarGuiaModal(idGuia) {
+  let guia = currentShipments.find(s => String(s.id_guia) === String(idGuia));
+  if (!guia) {
+    try {
+      guia = await api.getGuiaById(idGuia);
+    } catch (e) {}
+  }
+  if (!guia) {
+    alert("No se encontró la información de la guía seleccionada.");
+    return;
+  }
+
+  document.getElementById('editGuiaId').value = guia.id_guia || idGuia;
+  document.getElementById('editGuiaNroGuia').value = guia.nro_guia || '';
+  document.getElementById('editGuiaFecha').value = (guia.fecha_guia || guia.fecha_emision || new Date().toISOString().split('T')[0]).split('T')[0];
+  document.getElementById('editGuiaDocRef').value = guia.doc_referencia || '';
+  document.getElementById('editGuiaPuntoPartida').value = guia.punto_partida || '';
+  document.getElementById('editGuiaPuntoLlegada').value = guia.punto_llegada || '';
+  document.getElementById('editGuiaObservaciones').value = guia.observaciones || '';
+
+  // Pre-load products list into window.app.products for quick autocomplete ranking
+  if (!window.app?.products || window.app.products.length === 0) {
+    try {
+      const productsList = await api.getProductos();
+      if (productsList && Array.isArray(productsList)) {
+        if (!window.app) window.app = {};
+        window.app.products = productsList;
+      }
+    } catch (e) {
+      console.warn("Error cargando productos para edición de guía:", e);
+    }
+  }
+
+  const selectClient = document.getElementById('editGuiaClienteSelect');
+  if (selectClient) {
+    selectClient.innerHTML = '<option value="">Cargando clientes...</option>';
+    try {
+      const clients = await api.getClientes();
+      if (!window.app) window.app = {};
+      window.app.clients = clients;
+
+      // Find the matching client using multiple strategies
+      const guiaIdCliente = guia.id_cliente;
+      const guiaNombreCliente = (guia.nombre_cliente || '').trim().toLowerCase();
+      const guiaNroDoc = (guia.nro_documento || '').trim();
+
+      selectClient.innerHTML = (clients || []).map(c => {
+        const clientName = c.nombre_cliente || c.razon_social || c.nombre || '';
+        const cId = c.id_cliente;
+        const cDoc = (c.nro_documento || '').trim();
+        const cName = clientName.trim().toLowerCase();
+
+        // Match by id_cliente first, then by nro_documento, then by nombre
+        const isSelected = (guiaIdCliente && String(cId) === String(guiaIdCliente))
+          || (!guiaIdCliente && guiaNroDoc && cDoc === guiaNroDoc)
+          || (!guiaIdCliente && !guiaNroDoc && guiaNombreCliente && cName === guiaNombreCliente);
+
+        return `
+          <option value="${cId}" ${isSelected ? 'selected' : ''}>
+            ${escapeHtml(clientName)} (${cDoc})
+          </option>
+        `;
+      }).join('');
+    } catch (e) {
+      console.warn("Error cargando clientes para edición de guía:", e);
+    }
+  }
+
+  const tbody = document.getElementById('editGuiaItemsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    const detalles = guia.detalles || [];
+    if (detalles.length === 0) {
+      addEditGuiaRow();
+    } else {
+      detalles.forEach(item => {
+        addEditGuiaRow(item);
+      });
+    }
+  }
+
+  showBootstrapModal('modalEditarGuia');
+}
+
+export function addEditGuiaRow(itemData = null) {
+  const tbody = document.getElementById('editGuiaItemsTableBody');
+  if (!tbody) return;
+
+  const rowId = Date.now() + Math.floor(Math.random() * 1000);
+  const prodName = itemData ? (itemData.nombre_producto || '') : '';
+  const cant = itemData ? (itemData.cantidad || 1) : 1;
+
+  const tr = document.createElement('tr');
+  tr.id = `edit-row-${rowId}`;
+
+  tr.innerHTML = `
+    <td class="position-relative">
+      <input type="text" class="form-control form-control-sm edit-item-prod-input" placeholder="Escriba o busque el producto..." value="${escapeHtml(prodName)}" autocomplete="off" required>
+      <ul class="list-group position-absolute w-100 shadow edit-item-prod-list d-none" style="z-index: 1080; max-height: 220px; overflow-y: auto; top: 100%; left: 0;"></ul>
+    </td>
+    <td class="text-center">
+      <input type="number" class="form-control form-control-sm text-center edit-item-cant-input" min="1" value="${cant}" required>
+    </td>
+    <td class="text-center">
+      <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2" onclick="enviosModule.removeEditGuiaRow(this)">
+        <i class="bi bi-trash-fill"></i>
+      </button>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+  setupEditGuiaItemSearch(tr);
+}
+
+export function setupEditGuiaItemSearch(tr) {
+  const input = tr.querySelector('.edit-item-prod-input');
+  const list = tr.querySelector('.edit-item-prod-list');
+  if (!input || !list) return;
+
+  let activeIndex = -1;
+
+  const renderDropdown = (query) => {
+    const val = (query || '').trim();
+    activeIndex = -1;
+
+    if (!val) {
+      list.classList.add('d-none');
+      list.innerHTML = '';
+      return;
+    }
+
+    const products = (window.app?.products && window.app.products.length > 0)
+      ? window.app.products
+      : [];
+
+    const matches = filterAndRankItems(
+      products,
+      val,
+      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''}`
+    ).slice(0, 25);
+
+    if (matches.length === 0) {
+      list.innerHTML = `<li class="list-group-item text-muted py-2 fs-7">No se encontraron productos que coincidan con "${escapeHtml(val)}"</li>`;
+      list.classList.remove('d-none');
+      return;
+    }
+
+    list.innerHTML = matches.map((p, idx) => `
+      <li class="list-group-item list-group-item-action py-1.5 px-3 prod-opt-item d-flex align-items-center gap-2 fs-7" style="cursor: pointer;" data-index="${idx}">
+        <span class="fw-bold text-primary">#${escapeHtml(p.codigo_producto || p.id_producto)}</span>
+        <span class="fw-semibold text-body">- ${escapeHtml(p.nombre_producto)}</span>
+      </li>
+    `).join('');
+    list.classList.remove('d-none');
+
+    list.querySelectorAll('.prod-opt-item').forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        input.value = matches[idx].nombre_producto;
+        list.classList.add('d-none');
+      });
+    });
+  };
+
+  input.addEventListener('input', (e) => {
+    renderDropdown(e.target.value);
+  });
+
+  input.addEventListener('focus', (e) => {
+    if (e.target.value.trim()) {
+      renderDropdown(e.target.value);
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = list.querySelectorAll('.prod-opt-item');
+    if (items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      updateActiveRowItem(items, activeIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      updateActiveRowItem(items, activeIndex);
+    } else if (e.key === 'Enter') {
+      if (!list.classList.contains('d-none')) {
+        e.preventDefault();
+        if (activeIndex >= 0 && items[activeIndex]) {
+          items[activeIndex].click();
+        } else if (items.length > 0) {
+          items[0].click();
+        }
+      }
+    } else if (e.key === 'Escape') {
+      list.classList.add('d-none');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!tr.contains(e.target)) {
+      list.classList.add('d-none');
+    }
+  });
+}
+
+function updateActiveRowItem(items, activeIndex) {
+  items.forEach((item, idx) => {
+    if (idx === activeIndex) {
+      item.classList.add('active', 'bg-primary', 'text-white');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('active', 'bg-primary', 'text-white');
+    }
+  });
+}
+
+export function removeEditGuiaRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr) {
+    const tbody = tr.parentElement;
+    tr.remove();
+    if (tbody && tbody.children.length === 0) {
+      addEditGuiaRow();
+    }
+  }
+}
+
+export async function saveEditarGuia() {
+  const idGuia = document.getElementById('editGuiaId')?.value;
+  if (!idGuia) return;
+
+  const nroGuia = document.getElementById('editGuiaNroGuia')?.value.trim();
+  const fechaGuia = document.getElementById('editGuiaFecha')?.value;
+  const idCliente = document.getElementById('editGuiaClienteSelect')?.value;
+  const docRef = document.getElementById('editGuiaDocRef')?.value.trim();
+  const puntoPartida = document.getElementById('editGuiaPuntoPartida')?.value.trim();
+  const puntoLlegada = document.getElementById('editGuiaPuntoLlegada')?.value.trim();
+  const observaciones = document.getElementById('editGuiaObservaciones')?.value.trim();
+
+  if (!nroGuia || !fechaGuia || !idCliente) {
+    alert("Por favor complete los campos obligatorios: N° Guía, Fecha y Cliente.");
+    return;
+  }
+
+  const itemRows = document.querySelectorAll('#editGuiaItemsTableBody tr');
+  const detalles = [];
+  itemRows.forEach(tr => {
+    const inputElem = tr.querySelector('.edit-item-prod-input');
+    const pName = inputElem ? inputElem.value.trim() : '';
+    const cant = parseInt(tr.querySelector('.edit-item-cant-input')?.value || 0);
+
+    if (pName && cant > 0) {
+      let pId = 0;
+      if (window.app && window.app.products) {
+        const match = window.app.products.find(p => (p.nombre_producto || '').trim().toLowerCase() === pName.toLowerCase());
+        if (match) pId = match.id_producto;
+      }
+      detalles.push({
+        id_producto: pId,
+        cantidad: cant,
+        nombre_producto: pName
+      });
+    }
+  });
+
+  if (detalles.length === 0) {
+    alert("Debe incluir al menos un producto válido con cantidad mayor a 0.");
+    return;
+  }
+
+  const payload = {
+    id_guia: parseInt(idGuia),
+    nro_guia: nroGuia,
+    fecha_guia: fechaGuia,
+    id_cliente: parseInt(idCliente),
+    doc_referencia: docRef,
+    punto_partida: puntoPartida,
+    punto_llegada: puntoLlegada,
+    observaciones: observaciones,
+    establecimiento: nroGuia.toUpperCase().startsWith('GR002') ? 'COMAS' : 'CARABAYLLO',
+    detalles: detalles
+  };
+
+  const saveBtn = document.querySelector('#formEditarGuia button[type="submit"]');
+  const originalText = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+  }
+
+  try {
+    const res = await api.updateGuia(idGuia, payload);
+    if (res) {
+      hideBootstrapModal('modalEditarGuia');
+
+      // Refresh shipments list
+      try {
+        const freshGuias = await api.getGuias();
+        if (Array.isArray(freshGuias) && freshGuias.length > 0) {
+          currentShipments = freshGuias;
+        } else {
+          const idx = currentShipments.findIndex(s => String(s.id_guia) === String(idGuia));
+          if (idx !== -1) {
+            currentShipments[idx] = { ...currentShipments[idx], ...payload, ...(res.id_guia ? res : {}) };
+          }
+        }
+      } catch (e) {
+        const idx = currentShipments.findIndex(s => String(s.id_guia) === String(idGuia));
+        if (idx !== -1) {
+          currentShipments[idx] = { ...currentShipments[idx], ...payload, ...(res.id_guia ? res : {}) };
+        }
+      }
+
+      renderEnviosTable(currentShipments, currentSearchQuery);
+      alert("¡Guía de Remisión actualizada exitosamente!");
+    } else {
+      alert("No se pudo actualizar la guía de remisión en el servidor. Verifique la conexión.");
+    }
+  } catch (err) {
+    console.error("Error al guardar edición de guía:", err);
+    alert("Error al actualizar la guía de remisión: " + (err.message || "Error del servidor"));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
+  }
 }
 

@@ -71,7 +71,18 @@ public class GuiaServiceImpl implements GuiaService {
     @Override
     @Transactional
     public Map<String, Object> updateGuia(int id, Map<String, Object> body) {
-        return guiaDao.update(id, body);
+        Map<String, Object> res = guiaDao.update(id, body);
+        try {
+            Map<String, Object> fullGuia = guiaDao.findById(id);
+            if (fullGuia != null) {
+                String storageDir = (String) body.getOrDefault("storage_path", "C:\\Inplabel\\Guias");
+                boolean useSub = Boolean.parseBoolean(String.valueOf(body.getOrDefault("use_subfolders", "true")));
+                pdfGenerator.savePdfToDisk(fullGuia, storageDir, useSub);
+            }
+        } catch (Exception e) {
+            System.err.println("Error regenerando PDF post-actualizacion de guia: " + e.getMessage());
+        }
+        return res;
     }
 
     @Override

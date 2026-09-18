@@ -796,6 +796,7 @@ const EMBEDDED_VIEWS = {
           <th class="text-center" style="width: 80px;">DETALLES</th>
           <th class="text-center" style="width: 70px;">PDF</th>
           <th class="text-center" style="width: 70px;">PRINT</th>
+          <th class="text-center" style="width: 70px;">EDITAR</th>
           <th class="text-center" style="width: 70px;">ANULAR</th>
         </tr>
       </thead>
@@ -858,6 +859,85 @@ const EMBEDDED_VIEWS = {
         <button type="button" class="btn btn-danger btn-sm" onclick="enviosModule.confirmAnularGuia()">
           <i class="bi bi-check-circle me-1"></i> Confirmar Anulación
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Guía de Remisión -->
+<div class="modal fade" id="modalEditarGuia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold" id="modalEditarGuiaTitle">
+          <i class="bi bi-pencil-square me-2"></i> Editar Guía de Remisión
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="formEditarGuia" onsubmit="event.preventDefault(); enviosModule.saveEditarGuia();">
+          <input type="hidden" id="editGuiaId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">N° Guía de Remisión *</label>
+              <input type="text" id="editGuiaNroGuia" class="form-control form-control-sm font-monospace fw-bold" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Fecha Emisión *</label>
+              <input type="date" id="editGuiaFecha" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Cliente / Razón Social *</label>
+              <select id="editGuiaClienteSelect" class="form-select form-select-sm" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Doc. Referencia / Factura / OC</label>
+              <input type="text" id="editGuiaDocRef" class="form-control form-control-sm" placeholder="Ej: FF01-1234 o PED-0001">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Punto de Partida</label>
+              <input type="text" id="editGuiaPuntoPartida" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Punto de Llegada</label>
+              <input type="text" id="editGuiaPuntoLlegada" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Observaciones</label>
+              <input type="text" id="editGuiaObservaciones" class="form-control form-control-sm" placeholder="Ej: RECOGIO CLIENTE">
+            </div>
+          </div>
+
+          <datalist id="editGuiaProductsDatalist"></datalist>
+
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-secondary mb-0"><i class="bi bi-boxes me-1"></i> Productos / Ítems de la Guía</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2 fs-8 fw-bold" onclick="enviosModule.addEditGuiaRow()">
+              <i class="bi bi-plus-lg me-1"></i> Agregar Producto
+            </button>
+          </div>
+
+          <div class="table-responsive border rounded mb-3">
+            <table class="table custom-table table-sm align-middle mb-0">
+              <thead class="bg-body-tertiary">
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center" style="width: 140px;">Cantidad</th>
+                  <th class="text-center" style="width: 60px;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="editGuiaItemsTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">
+              <i class="bi bi-check-circle-fill me-1"></i> Guardar Cambios en Guía
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

@@ -50,7 +50,11 @@ import {
   viewGuiaDetail,
   anularGuia,
   openAnularModal,
-  confirmAnularGuia
+  confirmAnularGuia,
+  openEditarGuiaModal,
+  addEditGuiaRow,
+  removeEditGuiaRow,
+  saveEditarGuia
 } from './modules/envios.module.js';
 import { 
   initNuevaGuiaView, 
@@ -130,7 +134,11 @@ window.enviosModule = {
   viewGuiaDetail,
   anularGuia,
   openAnularModal,
-  confirmAnularGuia
+  confirmAnularGuia,
+  openEditarGuiaModal,
+  addEditGuiaRow,
+  removeEditGuiaRow,
+  saveEditarGuia
 };
 
 window.clientesModule = {
