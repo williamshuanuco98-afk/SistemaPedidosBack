@@ -109,13 +109,14 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
   }
 
   tbody.innerHTML = p.items.map(s => {
+    const targetId = s.id_guia || s.id;
     const isAnulada = (s.estado === 'ANULADA');
     const badgeClass = isAnulada ? 'CANCELADO' : 'COMPLETADO';
     const statusText = isAnulada ? 'ANULADA' : (s.estado || 'EMITIDA');
 
     return `
       <tr>
-        <td class="fw-bold font-monospace text-primary">${escapeHtml(s.nro_guia || ('GR001-' + String(s.id_guia).padStart(4, '0')))}</td>
+        <td class="fw-bold font-monospace text-primary">${escapeHtml(s.nro_guia || ('GR001-' + String(targetId).padStart(4, '0')))}</td>
         <td>${formatDate(s.fecha_guia || s.fecha_emision)}</td>
         <td>
           <div class="fw-bold text-body">${escapeHtml(s.nombre_cliente || 'Cliente General')}</div>
@@ -128,26 +129,26 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
         </td>
         <!-- 1. Columna DETALLES -->
         <td class="text-center">
-          <button class="btn-action-solid btn-view" title="Ver Detalles" onclick="enviosModule.viewGuiaDetail('${s.id_guia}')">
+          <button class="btn-action-solid btn-view" title="Ver Detalles" onclick="enviosModule.viewGuiaDetail('${targetId}')">
             <i class="bi bi-eye-fill"></i>
           </button>
         </td>
         <!-- 2. Columna PDF -->
         <td class="text-center">
-          <button class="btn-action-solid btn-pdf" title="Ver PDF" onclick="enviosModule.openPDF('${s.id_guia}')">
+          <button class="btn-action-solid btn-pdf" title="Ver PDF" onclick="enviosModule.openPDF('${targetId}')">
             <i class="bi bi-file-earmark-pdf-fill"></i>
           </button>
         </td>
         <!-- 3. Columna PRINT -->
         <td class="text-center">
-          <button class="btn-action-solid btn-print" title="Imprimir" onclick="enviosModule.printPDF('${s.id_guia}')">
+          <button class="btn-action-solid btn-print" title="Imprimir" onclick="enviosModule.printPDF('${targetId}')">
             <i class="bi bi-printer-fill"></i>
           </button>
         </td>
         <!-- 4. Columna EDITAR -->
         <td class="text-center">
           ${!isAnulada ? `
-            <button class="btn-action-solid btn-edit" title="Editar Guía" onclick="enviosModule.openEditarGuiaModal('${s.id_guia}')">
+            <button class="btn-action-solid btn-edit" title="Editar Guía" onclick="enviosModule.openEditarGuiaModal('${targetId}')">
               <i class="bi bi-pencil-fill"></i>
             </button>
           ` : `<span class="text-muted small">-</span>`}
@@ -155,7 +156,7 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
         <!-- 5. Columna ANULAR -->
         <td class="text-center">
           ${!isAnulada ? `
-            <button class="btn-action-solid btn-cancel" title="Anular Guía" onclick="enviosModule.openAnularModal('${s.id_guia}', '${escapeHtml(s.nro_guia || '')}')">
+            <button class="btn-action-solid btn-cancel" title="Anular Guía" onclick="enviosModule.openAnularModal('${targetId}', '${escapeHtml(s.nro_guia || '')}')">
               <i class="bi bi-x-circle-fill"></i>
             </button>
           ` : `<span class="text-muted small">-</span>`}
@@ -288,17 +289,35 @@ export function viewGuiaDetail(idGuia) {
 }
 
 export function openPDF(idGuia) {
+  if (!idGuia || idGuia === 'undefined' || idGuia === 'null') {
+    alert('No se pudo determinar el código de la guía para abrir el PDF.');
+    return;
+  }
+  const numId = Number(idGuia);
+  if (isNaN(numId) || numId <= 0 || numId > 2147483647) {
+    alert('El identificador de la guía (' + idGuia + ') no es válido en el servidor.');
+    return;
+  }
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${numId}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
   window.open(pdfUrl, '_blank');
 }
 
 export async function printPDF(idGuia) {
-  let guia = currentShipments.find(s => String(s.id_guia) === String(idGuia));
+  if (!idGuia || idGuia === 'undefined' || idGuia === 'null') {
+    alert('No se pudo determinar el código de la guía para imprimir.');
+    return;
+  }
+  const numId = Number(idGuia);
+  if (isNaN(numId) || numId <= 0 || numId > 2147483647) {
+    alert('El identificador de la guía (' + idGuia + ') no es válido.');
+    return;
+  }
+  let guia = currentShipments.find(s => String(s.id_guia || s.id) === String(numId));
   if (!guia) {
     try {
-      guia = await api.getGuiaById(idGuia);
+      guia = await api.getGuiaById(numId);
     } catch (e) {
       console.warn("No se pudo obtener la guía por API:", e);
     }
@@ -312,7 +331,7 @@ export async function printPDF(idGuia) {
   // Fallback: If not in memory, print PDF stream directly via invisible iframe
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${numId}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
 
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';

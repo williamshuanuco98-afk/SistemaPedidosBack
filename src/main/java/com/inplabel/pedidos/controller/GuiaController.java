@@ -24,8 +24,15 @@ public class GuiaController {
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getGuiaById(@PathVariable("id") int id) {
-        return guiaService.getGuiaById(id);
+    public ResponseEntity<?> getGuiaById(@PathVariable("id") String idStr) {
+        try {
+            int id = Integer.parseInt(idStr);
+            Map<String, Object> guia = guiaService.getGuiaById(id);
+            if (guia != null) return ResponseEntity.ok(guia);
+            return ResponseEntity.notFound().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "ID de guía inválido: " + idStr));
+        }
     }
 
     @GetMapping("/next-number")
@@ -49,11 +56,20 @@ public class GuiaController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> getGuiaPdf(
-            @PathVariable("id") int id,
+    public ResponseEntity<?> getGuiaPdf(
+            @PathVariable("id") String idStr,
             @RequestParam(name = "storageDir", required = false) String storageDir,
             @RequestParam(name = "useSubfolders", required = false) Boolean useSubfolders) {
+        int id;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("ID de guía no válido: " + idStr);
+        }
         byte[] pdfBytes = guiaService.generatePdf(id, storageDir, useSubfolders);
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
         Map<String, Object> guia = guiaService.getGuiaById(id);
         String nroGuia = guia != null ? (String) guia.getOrDefault("nro_guia", "GR001-0001") : "GR001-0001";
         String filename = "GUIA_" + nroGuia + ".pdf";

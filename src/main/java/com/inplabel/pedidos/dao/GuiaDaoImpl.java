@@ -204,36 +204,57 @@ public class GuiaDaoImpl implements GuiaDao {
             return ps;
         }, keyHolder);
 
-        Number newIdNum = keyHolder.getKey();
+        Number newIdNum = null;
+        try {
+            newIdNum = keyHolder.getKey();
+        } catch (Exception e) {
+            if (keyHolder.getKeys() != null && !keyHolder.getKeys().isEmpty()) {
+                Object val = keyHolder.getKeys().get("GENERATED_KEY");
+                if (val == null) val = keyHolder.getKeys().values().iterator().next();
+                if (val instanceof Number) newIdNum = (Number) val;
+            }
+        }
         int newId = newIdNum != null ? newIdNum.intValue() : 0;
+        if (newId == 0) {
+            try {
+                Integer queryId = jdbcTemplate.queryForObject(
+                    "SELECT id_guia FROM guias WHERE nro_guia = ? ORDER BY id_guia DESC LIMIT 1",
+                    Integer.class, finalNroGuia
+                );
+                if (queryId != null) newId = queryId;
+            } catch (Exception ignored) {}
+        }
 
-        if (detalles != null) {
+        if (detalles != null && !detalles.isEmpty()) {
+            java.util.List<Object[]> prodBatch = new java.util.ArrayList<>();
+            java.util.List<Object[]> detalleBatch = new java.util.ArrayList<>();
+
             for (Map<String, Object> item : detalles) {
                 Number pIdNum = (Number) item.get("id_producto");
                 Number cantNum = (Number) item.get("cantidad");
                 String prodName = (String) item.get("nombre_producto");
                 if (pIdNum != null) {
                     int pId = pIdNum.intValue();
-                    // Ensure product exists in MySQL `producto` table to prevent Foreign Key constraint failure
-                    try {
-                        Integer exists = jdbcTemplate.queryForObject(
-                            "SELECT COUNT(*) FROM producto WHERE id_producto = ?",
-                            Integer.class, pId
-                        );
-                        if (exists == null || exists == 0) {
-                            if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
-                            jdbcTemplate.update(
-                                "INSERT INTO producto (id_producto, nombre_producto, tipo_producto) VALUES (?, ?, ?)",
-                                pId, prodName, "MERCADERIA"
-                            );
-                        }
-                    } catch (Exception ignored) {}
-
-                    jdbcTemplate.update(
-                        "INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)",
-                        newId, pId, cantNum != null ? cantNum.intValue() : 1
-                    );
+                    if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
+                    prodBatch.add(new Object[]{pId, prodName, "MERCADERIA"});
+                    detalleBatch.add(new Object[]{newId, pId, cantNum != null ? cantNum.intValue() : 1});
                 }
+            }
+
+            if (!prodBatch.isEmpty()) {
+                try {
+                    jdbcTemplate.batchUpdate(
+                        "INSERT IGNORE INTO producto (id_producto, nombre_producto, tipo_producto) VALUES (?, ?, ?)",
+                        prodBatch
+                    );
+                } catch (Exception ignored) {}
+            }
+
+            if (!detalleBatch.isEmpty()) {
+                jdbcTemplate.batchUpdate(
+                    "INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)",
+                    detalleBatch
+                );
             }
         }
 

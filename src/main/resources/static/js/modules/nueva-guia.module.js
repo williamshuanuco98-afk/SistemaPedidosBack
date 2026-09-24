@@ -378,11 +378,15 @@ export async function submitNuevaGuia() {
 
   try {
     const newGuia = await api.createGuia(payload);
+    if (!newGuia || (!newGuia.id_guia && !newGuia.id)) {
+      throw new Error('El servidor no devolvió una respuesta válida con el número de la guía.');
+    }
 
     // Add to in-memory window.app.shipments
     if (window.app) {
       if (!Array.isArray(window.app.shipments)) window.app.shipments = [];
-      const exists = window.app.shipments.some(g => String(g.id_guia) === String(newGuia.id_guia));
+      const guiaId = newGuia.id_guia || newGuia.id;
+      const exists = window.app.shipments.some(g => String(g.id_guia || g.id) === String(guiaId));
       if (!exists) {
         window.app.shipments.unshift(newGuia);
       }
@@ -393,7 +397,7 @@ export async function submitNuevaGuia() {
 
   } catch (err) {
     console.error("Error al emitir la guía:", err);
-    alert('Ocurrió un error al guardar la guía de remisión. Se guardará de forma local.');
+    alert('Ocurrió un error al emitir la guía de remisión: ' + (err.message || 'Error de conexión'));
   } finally {
     if (btnGuardar) {
       btnGuardar.disabled = false;
@@ -475,20 +479,29 @@ function showGuiaSuccessModal(guia) {
     document.body.appendChild(modalEl);
   }
 
+  const targetId = guia?.id_guia || guia?.id;
   const nroLabel = modalEl.querySelector('#successModalNroGuia');
-  if (nroLabel) nroLabel.textContent = guia.nro_guia || 'Guía Emitida';
+  if (nroLabel) nroLabel.textContent = guia?.nro_guia || 'Guía Emitida';
 
   const btnPrint = modalEl.querySelector('#btnSuccessPrintGuia');
   if (btnPrint) {
     btnPrint.onclick = () => {
-      printGuiaPDF(guia);
+      if (targetId && !isNaN(Number(targetId))) {
+        printGuiaPDF(guia);
+      } else {
+        alert('No se pudo identificar la guía de remisión para imprimir.');
+      }
     };
   }
 
   const btnPdf = modalEl.querySelector('#btnSuccessPdfGuia');
   if (btnPdf) {
     btnPdf.onclick = () => {
-      openPDF(guia.id_guia);
+      if (targetId && !isNaN(Number(targetId))) {
+        openPDF(targetId);
+      } else {
+        alert('No se pudo identificar el código de la guía para visualizar el PDF.');
+      }
     };
   }
 

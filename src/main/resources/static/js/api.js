@@ -309,7 +309,7 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedidoData),
-        timeout: 2500
+        timeout: 20000
       });
       if (res.ok) {
         const created = await res.json();
@@ -403,20 +403,27 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(guiaData),
-        timeout: 2000
+        timeout: 25000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('guias', FALLBACK_SHIPMENTS);
-    const newGuia = {
-      id_guia: Date.now(),
-      estado: 'EMITIDA',
-      fecha_guia: guiaData.fecha_guia || new Date().toISOString().split('T')[0],
-      ...guiaData
-    };
-    list.unshift(newGuia);
-    setLocalData('guias', list);
-    return newGuia;
+      if (res.ok) {
+        const saved = await res.json();
+        const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+        const idx = list.findIndex(g => String(g.id_guia) === String(saved.id_guia));
+        if (idx >= 0) {
+          list[idx] = saved;
+        } else {
+          list.unshift(saved);
+        }
+        setLocalData('guias', list);
+        return saved;
+      } else {
+        const errText = await res.text();
+        throw new Error(errText || `Error del servidor HTTP ${res.status}`);
+      }
+    } catch (e) {
+      console.error("Error al emitir guía en addGuia:", e);
+      throw e;
+    }
   },
 
   async createGuia(guiaData) {
