@@ -220,6 +220,7 @@ export function hideBootstrapModal(modalElemOrId) {
     elem.setAttribute('aria-hidden', 'true');
     elem.removeAttribute('aria-modal');
   }
+}
 
 export function closeAllOpenModals() {
   document.querySelectorAll('.modal').forEach(elem => {
