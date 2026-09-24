@@ -29,6 +29,12 @@ public class UsuarioDaoImpl implements UsuarioDao {
         u.setSalt(rs.getString("salt"));
         u.setNombreCompleto(rs.getString("nombre_completo"));
         u.setRol(rs.getString("rol"));
+        try {
+            String estab = rs.getString("establecimiento");
+            u.setEstablecimiento(estab != null && !estab.trim().isEmpty() ? estab : "CARABAYLLO");
+        } catch (Exception e) {
+            u.setEstablecimiento("CARABAYLLO");
+        }
         u.setActivo(rs.getBoolean("activo"));
         
         String permsStr = rs.getString("permisos");
@@ -78,11 +84,16 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
     @Override
     public Usuario create(String username, String rawPassword, String nombreCompleto, String rol) {
-        return createWithPermissions(username, rawPassword, nombreCompleto, rol, null);
+        return createWithPermissions(username, rawPassword, nombreCompleto, rol, "CARABAYLLO", null);
     }
 
     @Override
     public Usuario createWithPermissions(String username, String rawPassword, String nombreCompleto, String rol, List<String> permisos) {
+        return createWithPermissions(username, rawPassword, nombreCompleto, rol, "CARABAYLLO", permisos);
+    }
+
+    @Override
+    public Usuario createWithPermissions(String username, String rawPassword, String nombreCompleto, String rol, String establecimiento, List<String> permisos) {
         String salt = PasswordUtil.generateSalt();
         String hash = PasswordUtil.hashPassword(rawPassword, salt);
         String permsJson = "[]";
@@ -91,14 +102,18 @@ public class UsuarioDaoImpl implements UsuarioDao {
                 permsJson = objectMapper.writeValueAsString(permisos);
             } catch (Exception ignored) {}
         }
+        if (establecimiento == null || establecimiento.trim().isEmpty()) {
+            establecimiento = "CARABAYLLO";
+        }
 
         jdbcTemplate.update(
-                "INSERT INTO usuarios (username, password, salt, nombre_completo, rol, activo, permisos) VALUES (?, ?, ?, ?, ?, TRUE, ?)",
+                "INSERT INTO usuarios (username, password, salt, nombre_completo, rol, establecimiento, activo, permisos) VALUES (?, ?, ?, ?, ?, ?, TRUE, ?)",
                 username.trim().toLowerCase(),
                 hash,
                 salt,
                 nombreCompleto.trim(),
                 rol.trim().toUpperCase(),
+                establecimiento.trim().toUpperCase(),
                 permsJson);
 
         return findByUsername(username).orElse(null);
@@ -106,24 +121,32 @@ public class UsuarioDaoImpl implements UsuarioDao {
 
     @Override
     public boolean updateUser(int idUsuario, String username, String nombreCompleto, String rol, Boolean activo, List<String> permisos, String newPassword) {
+        return updateUser(idUsuario, username, nombreCompleto, rol, "CARABAYLLO", activo, permisos, newPassword);
+    }
+
+    @Override
+    public boolean updateUser(int idUsuario, String username, String nombreCompleto, String rol, String establecimiento, Boolean activo, List<String> permisos, String newPassword) {
         String permsJson = "[]";
         if (permisos != null) {
             try {
                 permsJson = objectMapper.writeValueAsString(permisos);
             } catch (Exception ignored) {}
         }
+        if (establecimiento == null || establecimiento.trim().isEmpty()) {
+            establecimiento = "CARABAYLLO";
+        }
 
         if (newPassword != null && !newPassword.trim().isEmpty()) {
             String salt = PasswordUtil.generateSalt();
             String hash = PasswordUtil.hashPassword(newPassword, salt);
             int rows = jdbcTemplate.update(
-                    "UPDATE usuarios SET username = ?, password = ?, salt = ?, nombre_completo = ?, rol = ?, activo = ?, permisos = ? WHERE id_usuario = ?",
-                    username.trim().toLowerCase(), hash, salt, nombreCompleto.trim(), rol.trim().toUpperCase(), activo, permsJson, idUsuario);
+                    "UPDATE usuarios SET username = ?, password = ?, salt = ?, nombre_completo = ?, rol = ?, establecimiento = ?, activo = ?, permisos = ? WHERE id_usuario = ?",
+                    username.trim().toLowerCase(), hash, salt, nombreCompleto.trim(), rol.trim().toUpperCase(), establecimiento.trim().toUpperCase(), activo, permsJson, idUsuario);
             return rows > 0;
         } else {
             int rows = jdbcTemplate.update(
-                    "UPDATE usuarios SET username = ?, nombre_completo = ?, rol = ?, activo = ?, permisos = ? WHERE id_usuario = ?",
-                    username.trim().toLowerCase(), nombreCompleto.trim(), rol.trim().toUpperCase(), activo, permsJson, idUsuario);
+                    "UPDATE usuarios SET username = ?, nombre_completo = ?, rol = ?, establecimiento = ?, activo = ?, permisos = ? WHERE id_usuario = ?",
+                    username.trim().toLowerCase(), nombreCompleto.trim(), rol.trim().toUpperCase(), establecimiento.trim().toUpperCase(), activo, permsJson, idUsuario);
             return rows > 0;
         }
     }

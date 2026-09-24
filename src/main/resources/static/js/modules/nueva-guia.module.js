@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { escapeHtml, filterAndRankItems } from '../helpers.js';
 import { openPDF, printGuiaPDF } from './envios.module.js';
+import { getCurrentUser } from './auth.module.js';
 
 const DIRECCION_CARABAYLLO = "C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - Carabayllo - Lima - Lima";
 const DIRECCION_COMAS = "Av. Maria Parado de Belllido Lt. 5 Lotizacion Chacra Cerro - Comas - Lima - Lima";
@@ -15,7 +16,10 @@ const state = {
 };
 
 export async function initNuevaGuiaView() {
-  state.selectedLocal = 'CARABAYLLO';
+  const currentUser = getCurrentUser();
+  const defaultLocal = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+
+  state.selectedLocal = defaultLocal;
   state.selectedClient = null;
   state.guiaItems = [];
   state.activeClientIndex = -1;
@@ -29,8 +33,8 @@ export async function initNuevaGuiaView() {
 
   // Setup local & address
   const localSelect = document.getElementById('selectLocalGuia');
-  if (localSelect) localSelect.value = 'CARABAYLLO';
-  await updateLocalAndCorrelative('CARABAYLLO');
+  if (localSelect) localSelect.value = defaultLocal;
+  await updateLocalAndCorrelative(defaultLocal);
 
   setupClientSearch();
   setupProductSearch();
@@ -421,7 +425,13 @@ export async function resetNuevaGuiaForm() {
   const dateInput = document.getElementById('fechaEmisionGuiaInput');
   if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 
-  await updateLocalAndCorrelative(state.selectedLocal || 'CARABAYLLO');
+  const currentUser = getCurrentUser();
+  const defaultLocal = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+  state.selectedLocal = defaultLocal;
+  const localSelect = document.getElementById('selectLocalGuia');
+  if (localSelect) localSelect.value = defaultLocal;
+
+  await updateLocalAndCorrelative(defaultLocal);
   renderGuiaProductsTable();
 }
 

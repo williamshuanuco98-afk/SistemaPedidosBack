@@ -35,7 +35,7 @@ function renderUsuariosTable() {
   if (!tbody) return;
 
   if (state.filteredUsuarios.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron usuarios registrados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No se encontraron usuarios registrados.</td></tr>`;
     return;
   }
 
@@ -55,6 +55,11 @@ function renderUsuariosTable() {
       rolBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-8"><i class="bi bi-bag-check-fill me-1"></i> ${escapeHtml(rolUpper)}</span>`;
     }
 
+    const estabUpper = (u.establecimiento || 'CARABAYLLO').toUpperCase();
+    const estabBadge = estabUpper === 'COMAS'
+      ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fs-8"><i class="bi bi-geo-alt-fill me-1"></i>COMAS</span>`
+      : `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 fs-8"><i class="bi bi-geo-alt-fill me-1"></i>CARABAYLLO</span>`;
+
     const perms = u.permisos || [];
     const permsSummary = perms.length === 14 
       ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-8">Acceso Total (14/14)</span>`
@@ -71,6 +76,7 @@ function renderUsuariosTable() {
         <td class="fw-bold text-primary fs-7"><i class="bi bi-person-circle me-1"></i> ${escapeHtml(u.username)}</td>
         <td class="fw-semibold text-body fs-7">${escapeHtml(u.nombreCompleto || u.username)}</td>
         <td>${rolBadge}</td>
+        <td>${estabBadge}</td>
         <td>${permsSummary}</td>
         <td class="text-center">${badgeStatus}</td>
         <td class="text-center">
@@ -97,6 +103,8 @@ export function openNewUserModal() {
   document.getElementById('usuarioPasswordHint').innerText = '(Requerida para nuevos)';
   document.getElementById('usuarioNombreInput').value = '';
   document.getElementById('usuarioRolSelect').value = 'OPERADOR';
+  const estabSelect = document.getElementById('usuarioEstablecimientoSelect');
+  if (estabSelect) estabSelect.value = 'CARABAYLLO';
   document.getElementById('modalUsuarioTitle').innerHTML = `<i class="bi bi-person-plus-fill me-1"></i> Registrar Nuevo Usuario`;
 
   selectAllPerms(false);
@@ -119,6 +127,8 @@ export function editUsuario(id) {
   document.getElementById('usuarioPasswordHint').innerText = '(Dejar en blanco para mantener la actual)';
   document.getElementById('usuarioNombreInput').value = u.nombreCompleto || '';
   document.getElementById('usuarioRolSelect').value = u.rol || 'OPERADOR';
+  const estabSelect = document.getElementById('usuarioEstablecimientoSelect');
+  if (estabSelect) estabSelect.value = (u.establecimiento || 'CARABAYLLO').toUpperCase();
   document.getElementById('modalUsuarioTitle').innerHTML = `<i class="bi bi-person-gear me-1"></i> Editar Usuario: <b>${escapeHtml(u.username)}</b>`;
 
   // Set checkboxes from u.permisos
@@ -162,6 +172,7 @@ export async function saveUsuario() {
   const password = document.getElementById('usuarioPasswordInput').value;
   const nombreCompleto = document.getElementById('usuarioNombreInput').value.trim();
   const rol = document.getElementById('usuarioRolSelect').value;
+  const establecimiento = document.getElementById('usuarioEstablecimientoSelect')?.value || 'CARABAYLLO';
 
   if (!username || (!idStr && !password) || !nombreCompleto) {
     alert('Por favor complete los campos requeridos (*).');
@@ -179,6 +190,7 @@ export async function saveUsuario() {
     password: password || null,
     nombreCompleto,
     rol,
+    establecimiento,
     activo: true,
     permisos
   };

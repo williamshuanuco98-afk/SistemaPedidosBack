@@ -57,8 +57,12 @@ public class UsuarioController {
             }
 
             if (rol == null || rol.trim().isEmpty()) rol = "OPERADOR";
+            String establecimiento = (String) body.get("establecimiento");
+            if (establecimiento == null || establecimiento.trim().isEmpty()) {
+                establecimiento = "CARABAYLLO";
+            }
 
-            Usuario created = usuarioDao.createWithPermissions(username, password, nombreCompleto, rol, permisos);
+            Usuario created = usuarioDao.createWithPermissions(username, password, nombreCompleto, rol, establecimiento, permisos);
             if (created != null) {
                 created.setPassword(null);
                 created.setSalt(null);
@@ -80,6 +84,7 @@ public class UsuarioController {
             String password = (String) body.get("password");
             String nombreCompleto = (String) body.get("nombreCompleto");
             String rol = (String) body.get("rol");
+            String establecimiento = (String) body.get("establecimiento");
             Boolean activo = (Boolean) body.get("activo");
             List<String> permisos = (List<String>) body.get("permisos");
 
@@ -88,9 +93,12 @@ public class UsuarioController {
             }
 
             if (rol == null || rol.trim().isEmpty()) rol = "OPERADOR";
+            if (establecimiento == null || establecimiento.trim().isEmpty()) {
+                establecimiento = "CARABAYLLO";
+            }
             if (activo == null) activo = true;
 
-            boolean updated = usuarioDao.updateUser(id, username, nombreCompleto, rol, activo, permisos, password);
+            boolean updated = usuarioDao.updateUser(id, username, nombreCompleto, rol, establecimiento, activo, permisos, password);
             if (updated) {
                 return ResponseEntity.ok(Map.of("message", "Usuario actualizado correctamente."));
             } else {

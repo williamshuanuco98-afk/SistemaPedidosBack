@@ -12,17 +12,19 @@ public class Usuario {
     private String rol;
     private Boolean activo;
     private List<String> permisos;
+    private String establecimiento;
     private LocalDateTime createdAt;
 
     public Usuario() {}
 
-    public Usuario(Integer idUsuario, String username, String password, String salt, String nombreCompleto, String rol, Boolean activo, List<String> permisos, LocalDateTime createdAt) {
+    public Usuario(Integer idUsuario, String username, String password, String salt, String nombreCompleto, String rol, String establecimiento, Boolean activo, List<String> permisos, LocalDateTime createdAt) {
         this.idUsuario = idUsuario;
         this.username = username;
         this.password = password;
         this.salt = salt;
         this.nombreCompleto = nombreCompleto;
         this.rol = rol;
+        this.establecimiento = establecimiento;
         this.activo = activo;
         this.permisos = permisos;
         this.createdAt = createdAt;
@@ -51,6 +53,9 @@ public class Usuario {
 
     public List<String> getPermisos() { return permisos; }
     public void setPermisos(List<String> permisos) { this.permisos = permisos; }
+
+    public String getEstablecimiento() { return establecimiento; }
+    public void setEstablecimiento(String establecimiento) { this.establecimiento = establecimiento; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

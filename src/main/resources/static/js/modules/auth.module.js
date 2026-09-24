@@ -10,6 +10,7 @@ const DEFAULT_ADMIN = {
   username: 'admin',
   nombreCompleto: 'Administrador Inplabel',
   rol: 'ADMIN',
+  establecimiento: 'CARABAYLLO',
   permisos: [
     'pedidos.view', 'pedidos.create', 'pedidos.edit', 'pedidos.cancel', 'pedidos.finish', 'pedidos.finances',
     'envios.create', 'envios.view', 'guias.create', 'guias.view', 'produccion.view',
@@ -27,6 +28,9 @@ export function getCurrentUser() {
           if (u.rol === 'ADMIN' || u.username === 'admin') {
             u.permisos = DEFAULT_ADMIN.permisos;
           }
+        }
+        if (!u.establecimiento) {
+          u.establecimiento = 'CARABAYLLO';
         }
         return u;
       }

@@ -1,5 +1,6 @@
 import { escapeHtml, filterAndRankItems, formatDate } from '../helpers.js';
 import { api } from '../api.js';
+import { getCurrentUser } from './auth.module.js';
 
 let state = {
   clients: [],
@@ -32,6 +33,14 @@ export function renderNuevoPedidoPage(clients = [], products = []) {
 
   const fechaEntregaElem = document.getElementById('fechaEntregaInput');
   if (fechaEntregaElem) fechaEntregaElem.value = todayStr;
+
+  // Set default establecimiento from current user profile
+  const currentUser = getCurrentUser();
+  const defaultEstab = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+  const estabSelect = document.getElementById('establecimientoSelect');
+  if (estabSelect) {
+    estabSelect.value = defaultEstab;
+  }
 
   // Render initial empty tables & file lists
   renderAdelantosTable();
@@ -574,6 +583,13 @@ export function resetNuevoPedidoForm() {
 
   const condicionPagoSelect = document.getElementById('condicionPagoSelect');
   if (condicionPagoSelect) condicionPagoSelect.value = 'CONTADO';
+
+  const currentUser = getCurrentUser();
+  const defaultEstab = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+  const estabSelect = document.getElementById('establecimientoSelect');
+  if (estabSelect) {
+    estabSelect.value = defaultEstab;
+  }
 
   onCondicionPagoChange('CONTADO');
   renderAdelantosTable();

@@ -2064,6 +2064,7 @@ usuarios: `
           <th>Usuario (Username)</th>
           <th>Nombre Completo</th>
           <th>Rol Principal</th>
+          <th>Establecimiento</th>
           <th>Permisos Concedidos</th>
           <th class="text-center">Estado</th>
           <th style="width: 140px;" class="text-center">Acciones</th>
@@ -2097,7 +2098,7 @@ usuarios: `
               <label class="form-label small fw-bold mb-1">Contraseña <span id="usuarioPasswordHint" class="text-muted fw-normal small">(Requerida para nuevos)</span> *</label>
               <input type="password" id="usuarioPasswordInput" class="form-control form-control-sm" placeholder="••••••••">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
               <label class="form-label small fw-bold mb-1">Nombre Completo *</label>
               <input type="text" id="usuarioNombreInput" class="form-control form-control-sm" placeholder="Ej: Juan Pérez Morales" required>
             </div>
@@ -2109,6 +2110,13 @@ usuarios: `
                 <option value="VENTAS">VENTAS (Pedidos y Clientes)</option>
                 <option value="PRODUCCION">PRODUCCIÓN (Control y Productos)</option>
                 <option value="ALMACEN">ALMACÉN / DESPACHO (Envíos y Guías)</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Establecimiento por Defecto *</label>
+              <select id="usuarioEstablecimientoSelect" class="form-select form-select-sm" required>
+                <option value="CARABAYLLO">Carabayllo (Sucursal - GR001)</option>
+                <option value="COMAS">Comas (Planta Principal - GR002)</option>
               </select>
             </div>
           </div>
