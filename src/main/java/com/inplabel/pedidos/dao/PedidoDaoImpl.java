@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +34,52 @@ public class PedidoDaoImpl implements PedidoDao {
                 "SELECT p.*, c.razon_social AS nombre_cliente, c.nro_documento " +
                         "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente ORDER BY p.fecha_pedido DESC, p.id_pedido DESC");
 
+        if (pedidos.isEmpty()) {
+            return pedidos;
+        }
+
+        // Batch 1: Traer todos los detalles_pedido
+        List<Map<String, Object>> todosDetallesPedido = jdbcTemplate.queryForList(
+            "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto ORDER BY d.id_pedido DESC, d.id_detalle ASC"
+        );
+        Map<Integer, List<Map<String, Object>>> detallesPorPedido = new HashMap<>();
+        for (Map<String, Object> det : todosDetallesPedido) {
+            Integer idPed = (Integer) det.get("id_pedido");
+            if (idPed != null) {
+                detallesPorPedido.computeIfAbsent(idPed, k -> new ArrayList<>()).add(det);
+            }
+        }
+
+        // Batch 2: Traer todos los envios_pedido
+        List<Map<String, Object>> todosEnvios = jdbcTemplate.queryForList(
+            "SELECT e.* FROM envios_pedido e ORDER BY e.id_pedido DESC, e.id_envio ASC"
+        );
+
+        // Batch 3: Traer todos los detalle_envios_pedido
+        List<Map<String, Object>> todosDetallesEnvio = jdbcTemplate.queryForList(
+            "SELECT de.*, pr.nombre_producto FROM detalle_envios_pedido de " +
+            "LEFT JOIN producto pr ON de.id_producto = pr.id_producto ORDER BY de.id_envio ASC"
+        );
+        Map<Integer, List<Map<String, Object>>> detallesPorEnvio = new HashMap<>();
+        for (Map<String, Object> de : todosDetallesEnvio) {
+            Integer idEnv = (Integer) de.get("id_envio");
+            if (idEnv != null) {
+                detallesPorEnvio.computeIfAbsent(idEnv, k -> new ArrayList<>()).add(de);
+            }
+        }
+
+        // Asociar detalles a cada envio y agrupar envios por pedido
+        Map<Integer, List<Map<String, Object>>> enviosPorPedido = new HashMap<>();
+        for (Map<String, Object> envio : todosEnvios) {
+            Integer idEnv = (Integer) envio.get("id_envio");
+            Integer idPed = (Integer) envio.get("id_pedido");
+            envio.put("detalles", detallesPorEnvio.getOrDefault(idEnv, new ArrayList<>()));
+            if (idPed != null) {
+                enviosPorPedido.computeIfAbsent(idPed, k -> new ArrayList<>()).add(envio);
+            }
+        }
+
         for (Map<String, Object> order : pedidos) {
             Integer idPedido = (Integer) order.get("id_pedido");
             String nroPedido = (String) order.get("nro_pedido");
@@ -40,25 +88,8 @@ public class PedidoDaoImpl implements PedidoDao {
                 order.put("nro_pedido", nroPedido);
             }
 
-            // Fetch order items
-            List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-                    "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
-                            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_pedido = ?",
-                    idPedido);
-
-            // Fetch linked internal order shipments for partial delivery tracking
-            List<Map<String, Object>> envios = jdbcTemplate.queryForList(
-                    "SELECT e.* FROM envios_pedido e WHERE e.id_pedido = ? ORDER BY e.id_envio ASC",
-                    idPedido);
-
-            for (Map<String, Object> envio : envios) {
-                Integer idEnvio = (Integer) envio.get("id_envio");
-                List<Map<String, Object>> detEnvio = jdbcTemplate.queryForList(
-                        "SELECT de.*, pr.nombre_producto FROM detalle_envios_pedido de " +
-                                "LEFT JOIN producto pr ON de.id_producto = pr.id_producto WHERE de.id_envio = ?",
-                        idEnvio);
-                envio.put("detalles", detEnvio);
-            }
+            List<Map<String, Object>> detalles = detallesPorPedido.getOrDefault(idPedido, new ArrayList<>());
+            List<Map<String, Object>> envios = enviosPorPedido.getOrDefault(idPedido, new ArrayList<>());
 
             // Calculate accumulated delivered quantity for each item from envios_pedido ONLY
             String dbEstado = (String) order.get("estado");

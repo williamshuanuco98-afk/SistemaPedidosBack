@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +27,30 @@ public class GuiaDaoImpl implements GuiaDao {
             "FROM guias g LEFT JOIN cliente c ON g.id_cliente = c.id_cliente LEFT JOIN pedido p ON g.id_pedido = p.id_pedido ORDER BY g.id_guia DESC"
         );
 
+        if (guias.isEmpty()) {
+            return guias;
+        }
+
+        // Optimización Nube: Traer todos los detalles de guías en 1 sola consulta batch
+        List<Map<String, Object>> todosDetalles = jdbcTemplate.queryForList(
+            "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto " +
+            "FROM detalle_guias d " +
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto " +
+            "ORDER BY d.id_guia DESC, d.id_detalle ASC"
+        );
+
+        // Agrupar en memoria por id_guia
+        Map<Integer, List<Map<String, Object>>> detallesPorGuia = new HashMap<>();
+        for (Map<String, Object> det : todosDetalles) {
+            Integer idG = (Integer) det.get("id_guia");
+            if (idG != null) {
+                detallesPorGuia.computeIfAbsent(idG, k -> new ArrayList<>()).add(det);
+            }
+        }
+
         for (Map<String, Object> guia : guias) {
             Integer idGuia = (Integer) guia.get("id_guia");
-            List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-                "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
-                "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
-                idGuia
-            );
+            List<Map<String, Object>> detalles = detallesPorGuia.getOrDefault(idGuia, new ArrayList<>());
             guia.put("detalles", detalles);
         }
 
