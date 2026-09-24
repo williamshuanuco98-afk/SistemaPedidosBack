@@ -76,6 +76,11 @@ export function checkSessionTimeout() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LAST_ACTIVITY_KEY);
 
+    // Cerrar y destruir cualquier modal o ventana emergente abierta (guía emitida, letras, detalles, etc.)
+    if (typeof window.closeAllOpenModals === 'function') {
+      window.closeAllOpenModals();
+    }
+
     if (window.app && typeof window.app.navigateTo === 'function') {
       window.app.updateUserUI();
       window.app.navigateTo('login');
@@ -190,6 +195,9 @@ export async function confirmLogout() {
 export function logout() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LAST_ACTIVITY_KEY);
+  if (typeof window.closeAllOpenModals === 'function') {
+    window.closeAllOpenModals();
+  }
   if (window.app && typeof window.app.navigateTo === 'function') {
     window.app.updateUserUI();
     window.app.navigateTo('login');

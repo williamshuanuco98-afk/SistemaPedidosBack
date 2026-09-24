@@ -2272,12 +2272,23 @@ export class Router {
   }
 
   async navigateTo(route) {
-    // Remove any leftover Bootstrap modal backdrops and restore body state
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-    document.body.style.removeProperty('pointer-events');
+    // Cerrar cualquier modal que haya quedado abierto y limpiar backdrops
+    if (typeof window.closeAllOpenModals === 'function') {
+      window.closeAllOpenModals();
+    } else {
+      document.querySelectorAll('.modal').forEach(el => {
+        el.classList.remove('show');
+        el.style.removeProperty('display');
+        el.style.removeProperty('pointer-events');
+        el.setAttribute('aria-hidden', 'true');
+        el.removeAttribute('aria-modal');
+      });
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+      document.body.style.removeProperty('pointer-events');
+    }
 
     // Verificar si el usuario está autenticado
     const isAuth = window.authModule && typeof window.authModule.isAuthenticated === 'function' 

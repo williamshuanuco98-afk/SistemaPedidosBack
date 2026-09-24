@@ -221,16 +221,28 @@ export function hideBootstrapModal(modalElemOrId) {
     elem.removeAttribute('aria-modal');
   }
 
-  // Only remove backdrop and body lock if NO open modals remain
-  const remainingOpen = document.querySelectorAll('.modal.show');
-  if (remainingOpen.length === 0) {
-    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-    document.body.style.removeProperty('pointer-events');
-  }
+export function closeAllOpenModals() {
+  document.querySelectorAll('.modal').forEach(elem => {
+    try {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        const inst = window.bootstrap.Modal.getInstance(elem);
+        if (inst) inst.hide();
+      }
+    } catch (e) {}
+    elem.classList.remove('show');
+    elem.style.removeProperty('display');
+    elem.style.removeProperty('pointer-events');
+    elem.setAttribute('aria-hidden', 'true');
+    elem.removeAttribute('aria-modal');
+  });
+
+  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('padding-right');
+  document.body.style.removeProperty('pointer-events');
 }
+window.closeAllOpenModals = closeAllOpenModals;
 window.hideBootstrapModal = hideBootstrapModal;
 window.showBootstrapModal = showBootstrapModal;
 
