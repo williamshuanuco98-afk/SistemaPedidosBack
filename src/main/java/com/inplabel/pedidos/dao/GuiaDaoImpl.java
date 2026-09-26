@@ -68,7 +68,7 @@ public class GuiaDaoImpl implements GuiaDao {
         Map<String, Object> guia = guias.get(0);
         List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
             "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
-            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ? ORDER BY d.id_detalle ASC",
             id
         );
         guia.put("detalles", detalles);
