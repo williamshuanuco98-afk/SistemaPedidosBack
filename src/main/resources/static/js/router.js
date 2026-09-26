@@ -460,20 +460,6 @@ const EMBEDDED_VIEWS = {
 
   'nuevo-pedido': `
 <div class="content-card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-outline-secondary btn-sm" onclick="app.confirmLeaveNuevoPedido()">
-        <i class="bi bi-arrow-left"></i> Volver a Pedidos
-      </button>
-      <h3 class="card-title mb-0">
-        <i class="bi bi-cart-plus text-primary"></i> Registrar Nuevo Pedido
-      </h3>
-    </div>
-    <div>
-      <span class="badge bg-primary fs-7">Operaciones Inplabel</span>
-    </div>
-  </div>
-
   <div class="p-4">
     <form id="formNuevoPedido" onsubmit="event.preventDefault();">
       <div class="row g-4">
