@@ -21,11 +21,14 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public List<Map<String, Object>> findAll() {
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
-            "SELECT id_producto, nombre_producto, tipo_producto FROM producto ORDER BY id_producto ASC"
+            "SELECT id_producto, nombre_producto, tipo_producto, COALESCE(NULLIF(TRIM(unidad_medida), ''), 'UNID') AS unidad_medida FROM producto ORDER BY id_producto ASC"
         );
         for (Map<String, Object> map : list) {
             String tipo = (String) map.get("tipo_producto");
             map.put("categoria", tipo != null && !tipo.isEmpty() ? tipo : "General");
+            if (map.get("unidad_medida") == null) {
+                map.put("unidad_medida", "UNID");
+            }
         }
         return list;
     }
@@ -33,7 +36,7 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public Map<String, Object> findById(Integer id) {
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
-            "SELECT id_producto, nombre_producto, tipo_producto FROM producto WHERE id_producto = ?",
+            "SELECT id_producto, nombre_producto, tipo_producto, COALESCE(NULLIF(TRIM(unidad_medida), ''), 'UNID') AS unidad_medida FROM producto WHERE id_producto = ?",
             id
         );
         if (list.isEmpty()) {
@@ -42,20 +45,30 @@ public class ProductoDaoImpl implements ProductoDao {
         Map<String, Object> res = list.get(0);
         String tipo = (String) res.get("tipo_producto");
         res.put("categoria", tipo != null && !tipo.isEmpty() ? tipo : "General");
+        if (res.get("unidad_medida") == null) {
+            res.put("unidad_medida", "UNID");
+        }
         return res;
     }
 
     @Override
     public Map<String, Object> save(String nombreProducto, String tipoProducto) {
+        return save(nombreProducto, tipoProducto, "UNID");
+    }
+
+    @Override
+    public Map<String, Object> save(String nombreProducto, String tipoProducto, String unidadMedida) {
+        String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO producto (nombre_producto, tipo_producto) VALUES (?, ?)",
+                "INSERT INTO producto (nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS
             );
             ps.setString(1, nombreProducto);
             ps.setString(2, tipoProducto);
+            ps.setString(3, finalUM);
             return ps;
         }, keyHolder);
 
@@ -67,14 +80,21 @@ public class ProductoDaoImpl implements ProductoDao {
         res.put("nombre_producto", nombreProducto);
         res.put("tipo_producto", tipoProducto);
         res.put("categoria", tipoProducto);
+        res.put("unidad_medida", finalUM);
         return res;
     }
 
     @Override
     public Map<String, Object> update(Integer id, String nombreProducto, String tipoProducto) {
+        return update(id, nombreProducto, tipoProducto, "UNID");
+    }
+
+    @Override
+    public Map<String, Object> update(Integer id, String nombreProducto, String tipoProducto, String unidadMedida) {
+        String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
         jdbcTemplate.update(
-            "UPDATE producto SET nombre_producto = ?, tipo_producto = ? WHERE id_producto = ?",
-            nombreProducto, tipoProducto, id
+            "UPDATE producto SET nombre_producto = ?, tipo_producto = ?, unidad_medida = ? WHERE id_producto = ?",
+            nombreProducto, tipoProducto, finalUM, id
         );
 
         Map<String, Object> res = new HashMap<>();
@@ -82,6 +102,7 @@ public class ProductoDaoImpl implements ProductoDao {
         res.put("nombre_producto", nombreProducto);
         res.put("tipo_producto", tipoProducto);
         res.put("categoria", tipoProducto);
+        res.put("unidad_medida", finalUM);
         return res;
     }
 

@@ -33,7 +33,9 @@ public class GuiaDaoImpl implements GuiaDao {
 
         // Optimización Nube: Traer todos los detalles de guías en 1 sola consulta batch
         List<Map<String, Object>> todosDetalles = jdbcTemplate.queryForList(
-            "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto " +
+            "SELECT d.*, pr.nombre_producto, " +
+            "COALESCE(NULLIF(TRIM(d.unidad_medida), ''), NULLIF(TRIM(pr.unidad_medida), ''), 'UNID') AS unidad_medida, " +
+            "CONCAT('PROD-', d.id_producto) AS codigo_producto " +
             "FROM detalle_guias d " +
             "LEFT JOIN producto pr ON d.id_producto = pr.id_producto " +
             "ORDER BY d.id_guia DESC, d.id_detalle ASC"
@@ -67,7 +69,9 @@ public class GuiaDaoImpl implements GuiaDao {
         if (guias.isEmpty()) return null;
         Map<String, Object> guia = guias.get(0);
         List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-            "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
+            "SELECT d.*, pr.nombre_producto, " +
+            "COALESCE(NULLIF(TRIM(d.unidad_medida), ''), NULLIF(TRIM(pr.unidad_medida), ''), 'UNID') AS unidad_medida, " +
+            "CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
             "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ? ORDER BY d.id_detalle ASC",
             id
         );
@@ -233,18 +237,22 @@ public class GuiaDaoImpl implements GuiaDao {
                 Number pIdNum = (Number) item.get("id_producto");
                 Number cantNum = (Number) item.get("cantidad");
                 String prodName = (String) item.get("nombre_producto");
+                String um = (String) item.get("unidad_medida");
+                if (um == null || um.trim().isEmpty()) um = "UNID";
+                um = um.trim().toUpperCase();
+
                 if (pIdNum != null) {
                     int pId = pIdNum.intValue();
                     if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
-                    prodBatch.add(new Object[]{pId, prodName, "MERCADERIA"});
-                    detalleBatch.add(new Object[]{newId, pId, cantNum != null ? cantNum.intValue() : 1});
+                    prodBatch.add(new Object[]{pId, prodName, "MERCADERIA", um});
+                    detalleBatch.add(new Object[]{newId, pId, cantNum != null ? cantNum.intValue() : 1, um});
                 }
             }
 
             if (!prodBatch.isEmpty()) {
                 try {
                     jdbcTemplate.batchUpdate(
-                        "INSERT IGNORE INTO producto (id_producto, nombre_producto, tipo_producto) VALUES (?, ?, ?)",
+                        "INSERT IGNORE INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)",
                         prodBatch
                     );
                 } catch (Exception ignored) {}
@@ -252,7 +260,7 @@ public class GuiaDaoImpl implements GuiaDao {
 
             if (!detalleBatch.isEmpty()) {
                 jdbcTemplate.batchUpdate(
-                    "INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)",
+                    "INSERT INTO detalle_guias (id_guia, id_producto, cantidad, unidad_medida) VALUES (?, ?, ?, ?)",
                     detalleBatch
                 );
             }
@@ -362,6 +370,9 @@ public class GuiaDaoImpl implements GuiaDao {
                 Number pIdNum = (Number) item.get("id_producto");
                 Number cantNum = (Number) item.get("cantidad");
                 String prodName = (String) item.get("nombre_producto");
+                String um = (String) item.get("unidad_medida");
+                if (um == null || um.trim().isEmpty()) um = "UNID";
+                um = um.trim().toUpperCase();
                 int pId = pIdNum != null ? pIdNum.intValue() : 0;
 
                 if (pId == 0 && prodName != null && !prodName.trim().isEmpty()) {
@@ -376,13 +387,15 @@ public class GuiaDaoImpl implements GuiaDao {
                         } else {
                             KeyHolder pKey = new GeneratedKeyHolder();
                             final String finalPName = trimmedName;
+                            final String finalUM = um;
                             jdbcTemplate.update(conn -> {
                                 PreparedStatement ps = conn.prepareStatement(
-                                    "INSERT INTO producto (nombre_producto, tipo_producto) VALUES (?, ?)",
+                                    "INSERT INTO producto (nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?)",
                                     Statement.RETURN_GENERATED_KEYS
                                 );
                                 ps.setString(1, finalPName);
                                 ps.setString(2, "MERCADERIA");
+                                ps.setString(3, finalUM);
                                 return ps;
                             }, pKey);
                             if (pKey.getKey() != null) pId = pKey.getKey().intValue();
@@ -395,11 +408,11 @@ public class GuiaDaoImpl implements GuiaDao {
                         Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM producto WHERE id_producto = ?", Integer.class, pId);
                         if (exists == null || exists == 0) {
                             if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
-                            jdbcTemplate.update("INSERT INTO producto (id_producto, nombre_producto, tipo_producto) VALUES (?, ?, ?)", pId, prodName, "MERCADERIA");
+                            jdbcTemplate.update("INSERT INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)", pId, prodName, "MERCADERIA", um);
                         }
                     } catch (Exception ignored) {}
 
-                    jdbcTemplate.update("INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)", id, pId, cantNum != null ? cantNum.intValue() : 1);
+                    jdbcTemplate.update("INSERT INTO detalle_guias (id_guia, id_producto, cantidad, unidad_medida) VALUES (?, ?, ?, ?)", id, pId, cantNum != null ? cantNum.intValue() : 1, um);
                 }
             }
         }

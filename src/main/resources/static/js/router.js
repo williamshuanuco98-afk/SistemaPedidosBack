@@ -922,6 +922,7 @@ const EMBEDDED_VIEWS = {
               <thead class="bg-body-tertiary">
                 <tr>
                   <th>Producto</th>
+                  <th class="text-center" style="width: 100px;">U.M.</th>
                   <th class="text-center" style="width: 140px;">Cantidad</th>
                   <th class="text-center" style="width: 60px;">Acción</th>
                 </tr>
@@ -946,13 +947,6 @@ const EMBEDDED_VIEWS = {
 
   'nueva-guia': `
 <div class="content-card">
-  <!-- Cabecera de la Vista -->
-  <div class="card-header d-flex justify-content-end align-items-center gap-2">
-    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="app.navigateTo('envios')">
-      <i class="bi bi-arrow-left me-1"></i> Volver a Listado de Guías
-    </button>
-  </div>
-
   <div class="card-body p-4">
     <form id="formNuevaGuia" onsubmit="event.preventDefault(); nuevaGuiaModule.submitNuevaGuia();">
       
@@ -1041,13 +1035,14 @@ const EMBEDDED_VIEWS = {
               <tr>
                 <th style="width: 120px;">Código</th>
                 <th>Descripción del Producto</th>
+                <th style="width: 110px;" class="text-center">U.M.</th>
                 <th style="width: 150px;" class="text-center">Cantidad Enviada</th>
                 <th style="width: 80px;" class="text-center">Acción</th>
               </tr>
             </thead>
             <tbody id="tableProductosGuiaBody">
               <tr>
-                <td colspan="4" class="text-center text-muted py-4">No se han agregado productos a la guía.</td>
+                <td colspan="5" class="text-center text-muted py-4">No se han agregado productos a la guía.</td>
               </tr>
             </tbody>
           </table>
@@ -1187,6 +1182,7 @@ const EMBEDDED_VIEWS = {
           <th style="width: 90px;">ID</th>
           <th>Nombre del Producto / Insumo</th>
           <th>Tipo de Producto</th>
+          <th style="width: 85px;" class="text-center">U.M.</th>
           <th style="width: 100px;">Estado</th>
           <th style="width: 75px;" class="text-center">EDITAR</th>
           <th style="width: 75px;" class="text-center">ELIMINAR</th>
@@ -1222,6 +1218,13 @@ const EMBEDDED_VIEWS = {
               <option value="TAPAS">TAPAS</option>
               <option value="ASAS">ASAS</option>
               <option value="PRODUCTOS COMPLEMENTARIOS">PRODUCTOS COMPLEMENTARIOS</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Unidad de Medida (U.M.) *</label>
+            <select id="modalProductoUnidadMedida" class="form-select" required>
+              <option value="UNID" selected>UNID</option>
+              <option value="KG">KG</option>
             </select>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">

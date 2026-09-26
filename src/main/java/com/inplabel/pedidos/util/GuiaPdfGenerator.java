@@ -339,9 +339,12 @@ public class GuiaPdfGenerator {
                 Object cantObj = d.getOrDefault("cantidad", 1);
                 String cant = String.valueOf(cantObj);
 
+                Object umObj = d.get("unidad_medida");
+                String um = (umObj != null && !umObj.toString().trim().isEmpty()) ? umObj.toString().trim().toUpperCase() : "UNID";
+
                 prodTable.addCell(createTdCell(String.valueOf(idx++), Element.ALIGN_CENTER, false));
                 prodTable.addCell(createTdCell(nombre, Element.ALIGN_LEFT, false));
-                prodTable.addCell(createTdCell("UND", Element.ALIGN_CENTER, false));
+                prodTable.addCell(createTdCell(um, Element.ALIGN_CENTER, false));
                 prodTable.addCell(createTdCell(cant, Element.ALIGN_CENTER, true));
             }
         } else {

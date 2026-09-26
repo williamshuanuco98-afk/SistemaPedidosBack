@@ -29,7 +29,8 @@ public class ProductoServiceImpl implements ProductoService {
     public Map<String, Object> addProducto(Map<String, Object> body) {
         String nombre = (String) body.getOrDefault("nombre_producto", "");
         String tipo = (String) body.getOrDefault("tipo_producto", (String) body.getOrDefault("categoria", "General"));
-        return productoDao.save(nombre, tipo);
+        String um = (String) body.getOrDefault("unidad_medida", "UNID");
+        return productoDao.save(nombre, tipo, um);
     }
 
     @Override
@@ -37,7 +38,8 @@ public class ProductoServiceImpl implements ProductoService {
     public Map<String, Object> updateProducto(Integer id, Map<String, Object> body) {
         String nombre = (String) body.getOrDefault("nombre_producto", "");
         String tipo = (String) body.getOrDefault("tipo_producto", (String) body.getOrDefault("categoria", "General"));
-        return productoDao.update(id, nombre, tipo);
+        String um = (String) body.getOrDefault("unidad_medida", "UNID");
+        return productoDao.update(id, nombre, tipo, um);
     }
 
     @Override

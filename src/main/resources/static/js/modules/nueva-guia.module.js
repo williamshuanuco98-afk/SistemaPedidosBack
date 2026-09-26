@@ -263,11 +263,13 @@ function addProductToGuia(product) {
   if (input) input.value = '';
   if (list) list.classList.add('d-none');
 
-  // Always append a new independent row for selected products
+  // Always append a new independent row for selected products with default product's UM or UNID
+  const defaultUM = (product.unidad_medida || 'UNID').toUpperCase();
   state.guiaItems.push({
     id_producto: product.id_producto,
     nombre_producto: product.nombre_producto,
     codigo_producto: product.codigo_producto || '',
+    unidad_medida: defaultUM,
     cantidad: 1
   });
 
@@ -284,6 +286,12 @@ export function updateItemQty(index, qty) {
   renderGuiaProductsTable();
 }
 
+export function updateItemUM(index, um) {
+  if (state.guiaItems[index]) {
+    state.guiaItems[index].unidad_medida = (um || 'UNID').toUpperCase();
+  }
+}
+
 export function removeItemRow(index) {
   state.guiaItems.splice(index, 1);
   renderGuiaProductsTable();
@@ -295,17 +303,21 @@ function renderGuiaProductsTable() {
   tbody.innerHTML = '';
 
   if (state.guiaItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No se han agregado productos a la guía.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No se han agregado productos a la guía.</td></tr>`;
     return;
   }
 
   state.guiaItems.forEach((item, idx) => {
+    const curUM = (item.unidad_medida || 'UNID').toUpperCase();
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="fw-bold">${escapeHtml(item.codigo_producto || '#' + item.id_producto)}</td>
       <td class="fw-semibold">${escapeHtml(item.nombre_producto)}</td>
+      <td class="text-center">
+        <span class="badge bg-secondary-subtle text-secondary-emphasis border px-2.5 py-1 fw-bold fs-7">${escapeHtml(curUM)}</span>
+      </td>
       <td>
-        <input type="number" class="form-control form-control-sm py-0 px-2 fs-7 text-center mx-auto" value="${item.cantidad}" min="1" onchange="nuevaGuiaModule.updateItemQty(${idx}, this.value)" style="width: 100px; height: 28px;">
+        <input type="text" inputmode="numeric" class="form-control form-control-sm py-0 px-2 fs-7 text-center mx-auto" value="${item.cantidad}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onchange="nuevaGuiaModule.updateItemQty(${idx}, this.value)" style="width: 100px; height: 28px;">
       </td>
       <td class="text-center">
         <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-1" onclick="nuevaGuiaModule.removeItemRow(${idx})">
@@ -372,6 +384,7 @@ export async function submitNuevaGuia() {
       id_producto: item.id_producto,
       nombre_producto: item.nombre_producto,
       codigo_producto: item.codigo_producto || '',
+      unidad_medida: item.unidad_medida || 'UNID',
       cantidad: item.cantidad
     }))
   };

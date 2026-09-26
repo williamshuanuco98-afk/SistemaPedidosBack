@@ -256,6 +256,7 @@ export function viewGuiaDetail(idGuia) {
               <th style="width: 50px;">#</th>
               <th style="width: 120px;">Código</th>
               <th>Descripción del Producto</th>
+              <th class="text-center" style="width: 90px;">U.M.</th>
               <th class="text-center" style="width: 120px;">Cantidad</th>
             </tr>
           </thead>
@@ -265,7 +266,8 @@ export function viewGuiaDetail(idGuia) {
                 <td>${idx + 1}</td>
                 <td class="font-monospace text-secondary fw-semibold">${escapeHtml(d.codigo_producto || '#' + d.id_producto)}</td>
                 <td class="fw-bold">${escapeHtml(d.nombre_producto || 'Producto')}</td>
-                <td class="text-center fw-bold text-success fs-6">${Number(d.cantidad || 0).toLocaleString()} UND</td>
+                <td class="text-center fw-bold text-secondary">${escapeHtml(d.unidad_medida || 'UNID')}</td>
+                <td class="text-center fw-bold text-success fs-6">${Number(d.cantidad || 0).toLocaleString()}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -395,7 +397,7 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
       <td style="border: 1px solid #444; padding: 5px 4px; font-weight: 500;">
         ${escapeHtml(item.nombre_producto || 'Producto')}
       </td>
-      <td style="text-align: center; border: 1px solid #444; padding: 5px 3px;">UND</td>
+      <td style="text-align: center; border: 1px solid #444; padding: 5px 3px;">${escapeHtml(item.unidad_medida || 'UNID')}</td>
       <td style="text-align: center; font-weight: bold; border: 1px solid #444; padding: 5px 3px;">${item.cantidad || 1}</td>
     </tr>
   `).join('');
@@ -721,6 +723,7 @@ export function addEditGuiaRow(itemData = null) {
   const rowId = Date.now() + Math.floor(Math.random() * 1000);
   const prodName = itemData ? (itemData.nombre_producto || '') : '';
   const cant = itemData ? (itemData.cantidad || 1) : 1;
+  const um = itemData ? (itemData.unidad_medida || 'UNID').toUpperCase() : 'UNID';
 
   const tr = document.createElement('tr');
   tr.id = `edit-row-${rowId}`;
@@ -733,7 +736,11 @@ export function addEditGuiaRow(itemData = null) {
       </div>
     </td>
     <td class="text-center">
-      <input type="number" class="form-control form-control-sm text-center edit-item-cant-input" min="1" value="${cant}" required>
+      <span class="badge bg-secondary-subtle text-secondary-emphasis border px-2.5 py-1 fw-bold fs-7 edit-item-um-badge">${escapeHtml(um)}</span>
+      <input type="hidden" class="edit-item-um-val" value="${escapeHtml(um)}">
+    </td>
+    <td class="text-center">
+      <input type="text" inputmode="numeric" class="form-control form-control-sm text-center edit-item-cant-input" value="${cant}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
     </td>
     <td class="text-center">
       <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2" onclick="enviosModule.removeEditGuiaRow(this)">
@@ -770,7 +777,7 @@ export function setupEditGuiaItemSearch(tr) {
     const matches = filterAndRankItems(
       products,
       val,
-      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''}`
+      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''} ${p.unidad_medida || ''}`
     ).slice(0, 25);
 
     if (matches.length === 0) {
@@ -790,6 +797,11 @@ export function setupEditGuiaItemSearch(tr) {
     list.querySelectorAll('.prod-opt-item').forEach((item, idx) => {
       item.addEventListener('click', () => {
         input.value = matches[idx].nombre_producto;
+        const umBadge = tr.querySelector('.edit-item-um-badge');
+        const umVal = tr.querySelector('.edit-item-um-val');
+        const newUM = (matches[idx].unidad_medida || 'UNID').toUpperCase();
+        if (umBadge) umBadge.textContent = newUM;
+        if (umVal) umVal.value = newUM;
         list.classList.add('d-none');
       });
     });
@@ -883,6 +895,8 @@ export async function saveEditarGuia() {
     const inputElem = tr.querySelector('.edit-item-prod-input');
     const pName = inputElem ? inputElem.value.trim() : '';
     const cant = parseInt(tr.querySelector('.edit-item-cant-input')?.value || 0);
+    const umVal = tr.querySelector('.edit-item-um-val');
+    const um = umVal ? (umVal.value || 'UNID').toUpperCase() : 'UNID';
 
     if (pName && cant > 0) {
       let pId = 0;
@@ -893,6 +907,7 @@ export async function saveEditarGuia() {
       detalles.push({
         id_producto: pId,
         cantidad: cant,
+        unidad_medida: um,
         nombre_producto: pName
       });
     }
