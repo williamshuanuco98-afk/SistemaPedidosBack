@@ -1,7 +1,7 @@
-﻿{
+{
     "download_url":  "https://github.com/williamshuanuco98-afk/SistemaPedidosBack/releases/latest/download/INPLABEL_SISTEMA.jar",
-    "changelog":  "Correccion de emision de guias y visualizacion de PDF",
-    "name":  "Sistema Inplabel v1.0.2",
-    "version":  "1.0.2",
-    "release_date":  "2026-09-24"
+    "changelog":  "Unidad de medida (UNID/KG) en productos y guías, mejoras de interfaz y filtro de pendientes",
+    "name":  "Sistema Inplabel v1.0.3",
+    "version":  "1.0.3",
+    "release_date":  "2026-09-26"
 }
