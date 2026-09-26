@@ -60,12 +60,15 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
   const isSearching = Boolean(clientQuery);
 
   const filtered = currentOrders.filter(o => {
+    const displayStatus = resolveOrderStatus(o, todayStr);
+
     const matchClient = !clientQuery ||
       (o.nombre_cliente && o.nombre_cliente.toLowerCase().includes(clientQuery)) ||
       (o.nro_pedido && o.nro_pedido.toLowerCase().includes(clientQuery)) ||
       (o.nro_orden && o.nro_orden.toLowerCase().includes(clientQuery)) ||
       (o.nro_guia && o.nro_guia.toLowerCase().includes(clientQuery)) ||
-      (o.nro_documento && o.nro_documento.toLowerCase().includes(clientQuery));
+      (o.nro_documento && o.nro_documento.toLowerCase().includes(clientQuery)) ||
+      (clientQuery === 'pendiente' && (displayStatus === 'PENDIENTE' || displayStatus === 'FUERA_DE_TIEMPO'));
 
     let matchDate = true;
     // Si se está buscando por texto, se ignora el filtro de fechas para buscar en todo el histórico
@@ -80,8 +83,6 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
       matchEstab = oEstab.includes(establishment);
     }
 
-    const displayStatus = resolveOrderStatus(o, todayStr);
-
     let matchStatus = true;
     if (orderStatus && orderStatus !== 'ALL') {
       if (orderStatus === 'FUERA_DE_TIEMPO' || orderStatus === 'FUERA_DE_PLAZO') {
@@ -89,7 +90,7 @@ export function renderPedidosTable(orders = [], searchQuery = '') {
       } else if (orderStatus === 'EN_PROCESO' || orderStatus === 'PROCESO') {
         matchStatus = (displayStatus === 'EN_PROCESO');
       } else if (orderStatus === 'PENDIENTE') {
-        matchStatus = (displayStatus === 'PENDIENTE');
+        matchStatus = (displayStatus === 'PENDIENTE' || displayStatus === 'FUERA_DE_TIEMPO');
       } else if (orderStatus === 'COMPLETADO') {
         matchStatus = (displayStatus === 'COMPLETADO');
       } else if (orderStatus === 'FINALIZADO') {
