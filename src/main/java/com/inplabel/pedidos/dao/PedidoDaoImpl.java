@@ -40,7 +40,7 @@ public class PedidoDaoImpl implements PedidoDao {
 
         // Batch 1: Traer todos los detalles_pedido
         List<Map<String, Object>> todosDetallesPedido = jdbcTemplate.queryForList(
-            "SELECT d.*, pr.nombre_producto FROM detalle_pedido d " +
+            "SELECT d.*, pr.nombre_producto, COALESCE(NULLIF(TRIM(pr.unidad_medida), ''), 'UNID') AS unidad_medida FROM detalle_pedido d " +
             "LEFT JOIN producto pr ON d.id_producto = pr.id_producto ORDER BY d.id_pedido DESC, d.id_detalle ASC"
         );
         Map<Integer, List<Map<String, Object>>> detallesPorPedido = new HashMap<>();

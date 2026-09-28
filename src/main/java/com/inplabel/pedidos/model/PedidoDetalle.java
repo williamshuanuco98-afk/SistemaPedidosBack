@@ -7,6 +7,7 @@ public class PedidoDetalle {
     private String nombreProducto;
     private Integer cantidad;
     private Integer cantidadEntregada;
+    private String unidadMedida;
 
     public PedidoDetalle() {}
 
@@ -27,4 +28,7 @@ public class PedidoDetalle {
 
     public Integer getCantidadEntregada() { return cantidadEntregada; }
     public void setCantidadEntregada(Integer cantidadEntregada) { this.cantidadEntregada = cantidadEntregada; }
+
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
 }

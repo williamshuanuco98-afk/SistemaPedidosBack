@@ -692,18 +692,25 @@ export function viewOrderDetail(idPedido) {
           <thead class="bg-body-tertiary">
             <tr>
               <th>Producto</th>
-              <th class="text-center">Solicitado</th>
-              <th class="text-center">Entregado</th>
-              <th class="text-center">Estado Entrega</th>
+              <th class="text-center" style="width: 90px;">U.M.</th>
+              <th class="text-center" style="width: 120px;">Solicitado</th>
+              <th class="text-center" style="width: 120px;">Entregado</th>
+              <th class="text-center" style="width: 120px;">Falta</th>
+              <th class="text-center" style="width: 150px;">Estado Entrega</th>
             </tr>
           </thead>
           <tbody>
-            ${consolidatedDetalles.length === 0 ? '<tr><td colspan="4" class="text-center text-muted py-3">Sin productos especificados.</td></tr>' :
+            ${consolidatedDetalles.length === 0 ? '<tr><td colspan="6" class="text-center text-muted py-3">Sin productos especificados.</td></tr>' :
           consolidatedDetalles.map(item => {
-            const sol = item.cantidad || 0;
-            const ent = item.cantidad_entregada || 0;
+            const sol = Number(item.cantidad) || 0;
+            const ent = Number(item.cantidad_entregada) || 0;
+            const falta = Math.max(0, sol - ent);
             const isOrderCompleted = ['COMPLETADO', 'ENTREGADO'].includes((order.estado || '').trim().toUpperCase());
             const isDone = (ent >= sol && sol > 0) || isOrderCompleted;
+
+            const um = (item.unidad_medida 
+              || (window.app?.products?.find(p => Number(p.id_producto) === Number(item.id_producto))?.unidad_medida) 
+              || 'UNID').trim().toUpperCase();
 
             let entregaBadge = '';
             if (isDone) {
@@ -716,14 +723,22 @@ export function viewOrderDetail(idPedido) {
               entregaBadge = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="bi bi-clock me-1"></i> Pendiente</span>';
             }
 
+            const faltaBadge = falta > 0 
+              ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold fs-7 px-2.5 py-1">${falta}</span>` 
+              : `<span class="text-success fw-bold"><i class="bi bi-check-lg me-1"></i>0</span>`;
+
             return `
                   <tr>
                     <td>
                       <div class="fw-semibold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
                       <span class="small text-muted">${item.codigo_producto || ''}</span>
                     </td>
-                    <td class="text-center fw-bold">${sol}</td>
-                    <td class="text-center text-success fw-bold">${ent}</td>
+                    <td class="text-center">
+                      <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-0.5">${escapeHtml(um)}</span>
+                    </td>
+                    <td class="text-center fw-bold fs-7">${sol}</td>
+                    <td class="text-center text-success fw-bold fs-7">${ent}</td>
+                    <td class="text-center">${faltaBadge}</td>
                     <td class="text-center">
                       ${entregaBadge}
                     </td>
@@ -732,6 +747,19 @@ export function viewOrderDetail(idPedido) {
           }).join('')
         }
           </tbody>
+          ${consolidatedDetalles.length > 0 ? `
+          <tfoot>
+            <tr class="table-light fw-bold">
+              <td colspan="2" class="text-end text-muted small text-uppercase pe-3">Totales:</td>
+              <td class="text-center">${consolidatedDetalles.reduce((acc, it) => acc + (Number(it.cantidad) || 0), 0)}</td>
+              <td class="text-center text-success">${consolidatedDetalles.reduce((acc, it) => acc + (Number(it.cantidad_entregada) || 0), 0)}</td>
+              <td class="text-center ${consolidatedDetalles.reduce((acc, it) => acc + Math.max(0, (Number(it.cantidad) || 0) - (Number(it.cantidad_entregada) || 0)), 0) > 0 ? 'text-danger' : 'text-success'}">
+                ${consolidatedDetalles.reduce((acc, it) => acc + Math.max(0, (Number(it.cantidad) || 0) - (Number(it.cantidad_entregada) || 0)), 0)}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+          ` : ''}
         </table>
       </div>
 
@@ -774,24 +802,33 @@ export function viewOrderDetail(idPedido) {
                 <thead class="bg-body-tertiary">
                   <tr>
                     <th>Producto</th>
-                    <th class="text-center">Solicitado</th>
-                    <th class="text-center">Entregado Previo</th>
-                    <th class="text-center" style="width: 130px;">Enviar Hoy</th>
+                    <th class="text-center" style="width: 90px;">U.M.</th>
+                    <th class="text-center" style="width: 120px;">Solicitado</th>
+                    <th class="text-center" style="width: 120px;">Entregado Previo</th>
+                    <th class="text-center" style="width: 120px;">Falta</th>
+                    <th class="text-center" style="width: 140px;">Enviar Hoy</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${consolidatedDetalles.map(item => {
-                    const sol = item.cantidad || 0;
-                    const ent = item.cantidad_entregada || 0;
+                    const sol = Number(item.cantidad) || 0;
+                    const ent = Number(item.cantidad_entregada) || 0;
                     const pend = Math.max(0, sol - ent);
+                    const um = (item.unidad_medida 
+                      || (window.app?.products?.find(p => Number(p.id_producto) === Number(item.id_producto))?.unidad_medida) 
+                      || 'UNID').trim().toUpperCase();
                     return `
                       <tr>
                         <td>
                           <div class="fw-semibold">${escapeHtml(item.nombre_producto || 'Producto')}</div>
                           <span class="small text-muted">${item.codigo_producto || ''}</span>
                         </td>
+                        <td class="text-center">
+                          <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-0.5">${escapeHtml(um)}</span>
+                        </td>
                         <td class="text-center fw-bold">${sol}</td>
                         <td class="text-center text-muted">${ent}</td>
+                        <td class="text-center fw-bold ${pend > 0 ? 'text-danger' : 'text-success'}">${pend}</td>
                         <td class="text-center">
                           <input type="number" class="form-control form-control-sm text-center tab-input-envio-cantidad" 
                             data-product-id="${item.id_producto}" 

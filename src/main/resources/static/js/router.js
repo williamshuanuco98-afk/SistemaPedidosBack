@@ -377,6 +377,7 @@ const EMBEDDED_VIEWS = {
                   <th>Código / Producto</th>
                   <th class="text-center">Cant. Solicitada</th>
                   <th class="text-center">Entregado Previo</th>
+                  <th class="text-center">Falta</th>
                   <th class="text-center" style="width: 150px;">Cant. a Enviar Ahora *</th>
                 </tr>
               </thead>
