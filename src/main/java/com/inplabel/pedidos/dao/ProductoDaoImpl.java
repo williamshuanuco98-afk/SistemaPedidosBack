@@ -59,21 +59,16 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public Map<String, Object> save(String nombreProducto, String tipoProducto, String unidadMedida) {
         String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        
+        Integer nextId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(id_producto), 0) + 1 FROM producto", Integer.class);
+        if (nextId == null || nextId < 1) nextId = 1;
+        int generatedId = nextId;
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO producto (nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
-            ps.setString(1, nombreProducto);
-            ps.setString(2, tipoProducto);
-            ps.setString(3, finalUM);
-            return ps;
-        }, keyHolder);
-
-        Number newId = keyHolder.getKey();
-        int generatedId = newId != null ? newId.intValue() : 0;
+        jdbcTemplate.update(
+            "INSERT INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)",
+            generatedId, nombreProducto, tipoProducto, finalUM
+        );
 
         Map<String, Object> res = new HashMap<>();
         res.put("id_producto", generatedId);

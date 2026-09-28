@@ -26,22 +26,17 @@ public class ClienteDaoImpl implements ClienteDao {
 
     @Override
     public Map<String, Object> save(String tipoDocumento, String nroDocumento, String razonSocial, String direccion) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        Integer nextId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(id_cliente), 0) + 1 FROM cliente", Integer.class);
+        if (nextId == null || nextId < 1) nextId = 1;
+        int generatedId = nextId;
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO cliente (tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, tipoDocumento);
-            ps.setString(2, nroDocumento);
-            ps.setString(3, razonSocial);
-            ps.setString(4, direccion);
-            return ps;
-        }, keyHolder);
+        jdbcTemplate.update(
+                "INSERT INTO cliente (id_cliente, tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?, ?)",
+                generatedId, tipoDocumento, nroDocumento, razonSocial, direccion);
 
-        Number newId = keyHolder.getKey();
         Map<String, Object> res = new HashMap<>();
-        res.put("id_cliente", newId != null ? newId.intValue() : 0);
+        res.put("id_cliente", generatedId);
         res.put("tipo_documento", tipoDocumento);
         res.put("nro_documento", nroDocumento);
         res.put("nombre_cliente", razonSocial);

@@ -210,36 +210,22 @@ public class PedidoDaoImpl implements PedidoDao {
         final String finalEstab = establecimiento;
         final String finalAdelantosJson = adelantosJson;
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO pedido (id_cliente, fecha_pedido, fecha_entrega, estado, nro_orden, adjuntos, observaciones, establecimiento, adelantos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, idCliente);
-            ps.setString(2, finalFecha);
-            ps.setString(3, finalFechaEntrega);
-            ps.setString(4, estado);
-            ps.setString(5, finalNroOrden);
-            ps.setString(6, "");
-            ps.setString(7, finalObs);
-            ps.setString(8, finalEstab);
-            ps.setString(9, finalAdelantosJson);
-            return ps;
-        }, keyHolder);
-
-        Number newIdNum = keyHolder.getKey();
-        int newId = newIdNum != null ? newIdNum.intValue() : 0;
+        Integer nextId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(id_pedido), 0) + 1 FROM pedido", Integer.class);
+        if (nextId == null || nextId < 1) nextId = 1;
+        final int newId = nextId;
         String nroPedido = String.format("PED-%04d", newId);
-
-        // Ensure no stale details exist for newId
-        jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido = ?", newId);
 
         // Save attached files and update JSON string
         String updatedAdjuntosJson = fileStorageUtil.saveAttachedFiles(adjuntosObj, storagePath, useSubfolders,
                 nroPedido);
-        jdbcTemplate.update("UPDATE pedido SET nro_pedido = ?, adjuntos = ? WHERE id_pedido = ?", nroPedido,
-                updatedAdjuntosJson, newId);
+
+        jdbcTemplate.update(
+                "INSERT INTO pedido (id_pedido, id_cliente, fecha_pedido, fecha_entrega, estado, nro_orden, nro_pedido, adjuntos, observaciones, establecimiento, adelantos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                newId, idCliente, finalFecha, finalFechaEntrega, estado, finalNroOrden, nroPedido, updatedAdjuntosJson, finalObs, finalEstab, finalAdelantosJson);
+
+        // Ensure no stale details exist for newId
+        jdbcTemplate.update("DELETE FROM detalle_pedido WHERE id_pedido = ?", newId);
 
         List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
         if (detalles != null) {
