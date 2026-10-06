@@ -29,13 +29,21 @@ public class ProductoController {
     }
 
     @PostMapping
-    public Map<String, Object> addProducto(@RequestBody Map<String, Object> body) {
-        return productoService.addProducto(body);
+    public ResponseEntity<?> addProducto(@RequestBody Map<String, Object> body) {
+        Map<String, Object> res = productoService.addProducto(body);
+        if (Boolean.FALSE.equals(res.get("success")) && res.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        return ResponseEntity.ok(res);
     }
 
     @PutMapping("/{id}")
-    public Map<String, Object> updateProducto(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
-        return productoService.updateProducto(id, body);
+    public ResponseEntity<?> updateProducto(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
+        Map<String, Object> res = productoService.updateProducto(id, body);
+        if (Boolean.FALSE.equals(res.get("success")) && res.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        return ResponseEntity.ok(res);
     }
 
     @DeleteMapping("/{id}")

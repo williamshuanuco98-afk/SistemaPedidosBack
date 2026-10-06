@@ -26,6 +26,18 @@ public class ClienteDaoImpl implements ClienteDao {
 
     @Override
     public Map<String, Object> save(String tipoDocumento, String nroDocumento, String razonSocial, String direccion) {
+        if (nroDocumento != null && !nroDocumento.trim().isEmpty() && !nroDocumento.trim().equals("-")) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM cliente WHERE nro_documento = ?",
+                    Integer.class, nroDocumento.trim());
+            if (count != null && count > 0) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Ya existe un cliente registrado con el N° de Documento: " + nroDocumento.trim());
+                return err;
+            }
+        }
+
         Integer nextId = jdbcTemplate.queryForObject(
                 "SELECT COALESCE(MAX(id_cliente), 0) + 1 FROM cliente", Integer.class);
         if (nextId == null || nextId < 1) nextId = 1;
@@ -41,11 +53,24 @@ public class ClienteDaoImpl implements ClienteDao {
         res.put("nro_documento", nroDocumento);
         res.put("nombre_cliente", razonSocial);
         res.put("direccion", direccion);
+        res.put("success", true);
         return res;
     }
 
     @Override
     public Map<String, Object> update(int id, String tipoDocumento, String nroDocumento, String razonSocial, String direccion) {
+        if (nroDocumento != null && !nroDocumento.trim().isEmpty() && !nroDocumento.trim().equals("-")) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM cliente WHERE nro_documento = ? AND id_cliente != ?",
+                    Integer.class, nroDocumento.trim(), id);
+            if (count != null && count > 0) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Ya existe otro cliente registrado con el N° de Documento: " + nroDocumento.trim());
+                return err;
+            }
+        }
+
         jdbcTemplate.update(
                 "UPDATE cliente SET tipo_documento = ?, nro_documento = ?, razon_social = ?, direccion = ? WHERE id_cliente = ?",
                 tipoDocumento, nroDocumento, razonSocial, direccion, id);
@@ -56,6 +81,7 @@ public class ClienteDaoImpl implements ClienteDao {
         res.put("nro_documento", nroDocumento);
         res.put("nombre_cliente", razonSocial);
         res.put("direccion", direccion);
+        res.put("success", true);
         return res;
     }
 

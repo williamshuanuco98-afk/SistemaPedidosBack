@@ -131,7 +131,11 @@ export function openEditProductModal(id) {
   modal.show();
 }
 
+let isSubmittingProducto = false;
+
 export async function saveProductFromModal() {
+  if (isSubmittingProducto) return;
+
   const idStr = document.getElementById('modalProductoId')?.value;
   const nombre = document.getElementById('modalProductoNombre')?.value.trim();
   const tipo = document.getElementById('modalProductoTipo')?.value.trim() || 'General';
@@ -142,6 +146,15 @@ export async function saveProductFromModal() {
     return;
   }
 
+  const btnSave = document.querySelector('#formProducto button[type="submit"]');
+  const originalBtnHtml = btnSave ? btnSave.innerHTML : '<i class="bi bi-save me-1"></i> Guardar Producto';
+
+  isSubmittingProducto = true;
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...';
+  }
+
   const payload = {
     nombre_producto: nombre,
     tipo_producto: tipo,
@@ -150,44 +163,47 @@ export async function saveProductFromModal() {
   };
 
   const modalElem = document.getElementById('modalProducto');
-  const modal = bootstrap.Modal.getInstance(modalElem);
+  const modal = modalElem ? bootstrap.Modal.getInstance(modalElem) : null;
 
-  if (idStr) {
-    // Edit existing product
-    const id = parseInt(idStr, 10);
-    const res = await api.updateProducto(id, payload);
-    if (res) {
-      const idx = currentProducts.findIndex(p => p.id_producto === id);
-      if (idx !== -1) {
-        currentProducts[idx].nombre_producto = nombre;
-        currentProducts[idx].tipo_producto = tipo;
-        currentProducts[idx].categoria = tipo;
-        currentProducts[idx].unidad_medida = um;
-      }
+  try {
+    let res;
+    if (idStr) {
+      // Edit existing product
+      const id = parseInt(idStr, 10);
+      res = await api.updateProducto(id, payload);
+    } else {
+      // Register new product
+      res = await api.addProducto(payload);
     }
-  } else {
-    // Register new product
-    const res = await api.addProducto(payload);
-    if (res) {
-      currentProducts.unshift({
-        id_producto: res.id_producto || (currentProducts.length + 1),
-        nombre_producto: nombre,
-        tipo_producto: tipo,
-        categoria: tipo,
-        unidad_medida: um
-      });
+
+    if (res && (res.success === false || res.error)) {
+      alert(res.error || res.message || 'No se pudo guardar el producto.');
+      return;
+    }
+
+    // Re-fetch fresh products directly from MySQL database
+    currentProducts = await api.getProductos();
+    if (window.app) window.app.products = [...currentProducts];
+
+    if (modal) modal.hide();
+
+    // Reset modal fields for next product registration
+    const idElem = document.getElementById('modalProductoId');
+    const nombreElem = document.getElementById('modalProductoNombre');
+    if (idElem) idElem.value = '';
+    if (nombreElem) nombreElem.value = '';
+
+    filterProductos();
+  } catch (err) {
+    console.error('Error al guardar producto:', err);
+    alert('Ocurrió un error inesperado al procesar el producto.');
+  } finally {
+    isSubmittingProducto = false;
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = originalBtnHtml;
     }
   }
-
-  if (modal) modal.hide();
-
-  // Reset modal fields for next product registration
-  const idElem = document.getElementById('modalProductoId');
-  const nombreElem = document.getElementById('modalProductoNombre');
-  if (idElem) idElem.value = '';
-  if (nombreElem) nombreElem.value = '';
-
-  filterProductos();
 }
 
 export async function deleteProduct(id) {
@@ -222,5 +238,6 @@ export async function deleteProduct(id) {
 
   await api.deleteProducto(id);
   currentProducts = currentProducts.filter(item => String(item.id_producto || item.id) !== String(id));
+  if (window.app) window.app.products = [...currentProducts];
   filterProductos();
 }

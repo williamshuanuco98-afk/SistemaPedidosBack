@@ -108,15 +108,17 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clienteData),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('clientes', FALLBACK_CLIENTS);
-    const newClient = { id: Date.now(), ...clienteData };
-    list.unshift(newClient);
-    setLocalData('clientes', list);
-    return newClient;
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error de conexión al agregar cliente:", e);
+    }
+    return { success: false, error: 'No se pudo conectar con el servidor para registrar el cliente.' };
   },
 
   async updateCliente(id, clienteData) {
@@ -125,13 +127,17 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clienteData),
-        timeout: 3000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
     } catch (e) {
       console.error('Error al actualizar cliente en MySQL:', e);
     }
-    return { success: false };
+    return { success: false, error: 'No se pudo actualizar el cliente.' };
   },
 
   async deleteCliente(id) {
@@ -246,13 +252,15 @@ export const api = {
         body: JSON.stringify(productoData),
         timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('productos', FALLBACK_PRODUCTS);
-    const newProd = { id: Date.now(), codigo_producto: 'PROD-' + Math.floor(100 + Math.random() * 900), ...productoData };
-    list.unshift(newProd);
-    setLocalData('productos', list);
-    return newProd;
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error al registrar producto:", e);
+    }
+    return { success: false, error: 'No se pudo conectar con el servidor para registrar el producto.' };
   },
 
   async updateProducto(id, productoData) {
@@ -263,16 +271,15 @@ export const api = {
         body: JSON.stringify(productoData),
         timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('productos', FALLBACK_PRODUCTS);
-    const idx = list.findIndex(p => String(p.id) === String(id));
-    if (idx !== -1) {
-      list[idx] = { ...list[idx], ...productoData };
-      setLocalData('productos', list);
-      return list[idx];
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error al actualizar producto:", e);
     }
-    return null;
+    return { success: false, error: 'No se pudo actualizar el producto.' };
   },
 
   async deleteProducto(id) {

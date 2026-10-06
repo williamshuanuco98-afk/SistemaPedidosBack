@@ -59,7 +59,21 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public Map<String, Object> save(String nombreProducto, String tipoProducto, String unidadMedida) {
         String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
-        
+        String finalTipo = (tipoProducto != null && !tipoProducto.trim().isEmpty()) ? tipoProducto.trim() : "General";
+        String finalNombre = (nombreProducto != null) ? nombreProducto.trim() : "";
+
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM producto WHERE LOWER(TRIM(nombre_producto)) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(tipo_producto, ''))) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(unidad_medida, 'UNID'))) = LOWER(TRIM(?))",
+            Integer.class,
+            finalNombre, finalTipo, finalUM
+        );
+        if (count != null && count > 0) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("error", "Ya existe un producto registrado con la misma descripción, tipo y unidad de medida.");
+            return err;
+        }
+
         Integer nextId = jdbcTemplate.queryForObject(
                 "SELECT COALESCE(MAX(id_producto), 0) + 1 FROM producto", Integer.class);
         if (nextId == null || nextId < 1) nextId = 1;
@@ -67,15 +81,16 @@ public class ProductoDaoImpl implements ProductoDao {
 
         jdbcTemplate.update(
             "INSERT INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)",
-            generatedId, nombreProducto, tipoProducto, finalUM
+            generatedId, finalNombre, finalTipo, finalUM
         );
 
         Map<String, Object> res = new HashMap<>();
         res.put("id_producto", generatedId);
-        res.put("nombre_producto", nombreProducto);
-        res.put("tipo_producto", tipoProducto);
-        res.put("categoria", tipoProducto);
+        res.put("nombre_producto", finalNombre);
+        res.put("tipo_producto", finalTipo);
+        res.put("categoria", finalTipo);
         res.put("unidad_medida", finalUM);
+        res.put("success", true);
         return res;
     }
 
@@ -87,17 +102,33 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public Map<String, Object> update(Integer id, String nombreProducto, String tipoProducto, String unidadMedida) {
         String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
+        String finalTipo = (tipoProducto != null && !tipoProducto.trim().isEmpty()) ? tipoProducto.trim() : "General";
+        String finalNombre = (nombreProducto != null) ? nombreProducto.trim() : "";
+
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM producto WHERE LOWER(TRIM(nombre_producto)) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(tipo_producto, ''))) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(unidad_medida, 'UNID'))) = LOWER(TRIM(?)) AND id_producto != ?",
+            Integer.class,
+            finalNombre, finalTipo, finalUM, id
+        );
+        if (count != null && count > 0) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("error", "Ya existe otro producto registrado con la misma descripción, tipo y unidad de medida.");
+            return err;
+        }
+
         jdbcTemplate.update(
             "UPDATE producto SET nombre_producto = ?, tipo_producto = ?, unidad_medida = ? WHERE id_producto = ?",
-            nombreProducto, tipoProducto, finalUM, id
+            finalNombre, finalTipo, finalUM, id
         );
 
         Map<String, Object> res = new HashMap<>();
         res.put("id_producto", id);
-        res.put("nombre_producto", nombreProducto);
-        res.put("tipo_producto", tipoProducto);
-        res.put("categoria", tipoProducto);
+        res.put("nombre_producto", finalNombre);
+        res.put("tipo_producto", finalTipo);
+        res.put("categoria", finalTipo);
         res.put("unidad_medida", finalUM);
+        res.put("success", true);
         return res;
     }
 

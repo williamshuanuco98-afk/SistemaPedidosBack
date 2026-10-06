@@ -34,13 +34,21 @@ public class ClienteController {
     }
 
     @PostMapping
-    public Map<String, Object> addCliente(@RequestBody Map<String, Object> body) {
-        return clienteService.addCliente(body);
+    public ResponseEntity<?> addCliente(@RequestBody Map<String, Object> body) {
+        Map<String, Object> res = clienteService.addCliente(body);
+        if (Boolean.FALSE.equals(res.get("success")) && res.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        return ResponseEntity.ok(res);
     }
 
     @PutMapping("/{id}")
-    public Map<String, Object> updateCliente(@PathVariable int id, @RequestBody Map<String, Object> body) {
-        return clienteService.updateCliente(id, body);
+    public ResponseEntity<?> updateCliente(@PathVariable int id, @RequestBody Map<String, Object> body) {
+        Map<String, Object> res = clienteService.updateCliente(id, body);
+        if (Boolean.FALSE.equals(res.get("success")) && res.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        return ResponseEntity.ok(res);
     }
 
     @DeleteMapping("/{id}")
