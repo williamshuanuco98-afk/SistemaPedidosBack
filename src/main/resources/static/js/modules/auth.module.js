@@ -8,7 +8,7 @@ const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas (7,200,000 ms)
 const DEFAULT_ADMIN = {
   idUsuario: 1,
   username: 'admin',
-  nombreCompleto: 'Administrador Inplabel',
+  nombreCompleto: 'Administrador Operix',
   rol: 'ADMIN',
   establecimiento: 'CARABAYLLO',
   permisos: [

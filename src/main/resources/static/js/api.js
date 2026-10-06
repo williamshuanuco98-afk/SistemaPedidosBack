@@ -657,7 +657,7 @@ export const api = {
       return {
         success: true,
         message: 'Inicio de sesión (Administrador)',
-        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Inplabel', rol: 'ADMIN' }
+        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Operix', rol: 'ADMIN' }
       };
     } else if (cleanUser === 'operaciones' && password === 'operaciones123') {
       return {

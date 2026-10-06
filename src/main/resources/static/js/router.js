@@ -1384,7 +1384,7 @@ const EMBEDDED_VIEWS = {
             <label for="guiasPdfFolderPathInput" class="form-label fw-semibold fs-7">Ruta de Guardado para Guías de Remisión (PDF) *</label>
             <div class="input-group input-group-sm">
               <span class="input-group-text"><i class="bi bi-truck"></i></span>
-              <input type="text" id="guiasPdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Inplabel\\Guias" required>
+              <input type="text" id="guiasPdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Operix\\Guias" required>
             </div>
             <div class="form-text fs-8">Directorio en el disco local de la PC donde se almacenarán las guías emitidas.</div>
           </div>
@@ -1393,7 +1393,7 @@ const EMBEDDED_VIEWS = {
             <label for="pdfFolderPathInput" class="form-label fw-semibold fs-7">Ruta de Guardado para Pedidos / Cotizaciones (PDF) *</label>
             <div class="input-group input-group-sm">
               <span class="input-group-text"><i class="bi bi-folder2-open"></i></span>
-              <input type="text" id="pdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Inplabel\\Pedidos" required>
+              <input type="text" id="pdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Operix\\Pedidos" required>
             </div>
             <div class="form-text fs-8">Directorio en el disco local para exportaciones de órdenes y cotizaciones.</div>
           </div>
@@ -1807,7 +1807,7 @@ const EMBEDDED_VIEWS = {
     <div class="d-flex align-items-center gap-3">
       <i class="bi bi-database-check text-primary fs-1"></i>
       <div>
-        <h2 class="h4 fw-bold mb-1">Backend Spring Boot 3.2.5: Base de Datos 'inplabel'</h2>
+        <h2 class="h4 fw-bold mb-1">Backend Spring Boot 3.2.5: Base de Datos Operix</h2>
         <p class="text-muted small mb-0">API REST disponible en http://localhost:8080/api</p>
       </div>
     </div>
@@ -1919,7 +1919,7 @@ const EMBEDDED_VIEWS = {
   <div class="card border-0 rounded-4 overflow-hidden shadow-lg" style="width: 100%; max-width: 900px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12) !important;">
     <div class="row g-0">
       
-      <!-- Columna Izquierda: Banner Corporativo Inplabel -->
+      <!-- Columna Izquierda: Banner Corporativo Operix -->
       <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 text-white" style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); position: relative; overflow: hidden;">
         
         <!-- Elemento de fondo decorativo -->
@@ -1929,10 +1929,10 @@ const EMBEDDED_VIEWS = {
         <!-- Top: Título y Presentación del Sistema -->
         <div style="position: relative; z-index: 2;">
           <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(0, 175, 80, 0.15); border: 1px solid rgba(0, 175, 80, 0.3); color: #4ade80; font-size: 0.8rem; font-weight: 700;">
-            <i class="bi bi-layers-fill"></i> Sistema Empresarial
+            <i class="bi bi-layers-fill"></i> Operix ERP
           </div>
-          <h4 class="fw-bold text-white mb-2" style="font-size: 1.45rem; letter-spacing: -0.3px; line-height: 1.25;">Plataforma de Gestión</h4>
-          <p class="text-white-50 small mb-0" style="font-size: 0.88rem; line-height: 1.4;">Sistema Operativo Central de Ventas y Planta Industrial</p>
+          <h4 class="fw-bold text-white mb-2" style="font-size: 1.45rem; letter-spacing: -0.3px; line-height: 1.25;">Plataforma Operix</h4>
+          <p class="text-white-50 small mb-0" style="font-size: 0.88rem; line-height: 1.4;">Sistema Operativo Central de Ventas y Gestión Operativa</p>
         </div>
 
         <!-- Middle: Módulos Activos -->
@@ -1966,9 +1966,9 @@ const EMBEDDED_VIEWS = {
       <!-- Columna Derecha: Formulario de Inicio de Sesión -->
       <div class="col-lg-7 p-4 p-md-5 d-flex flex-column justify-content-center" style="background: #ffffff;">
         
-        <!-- Logo de Inplabel en la cabecera del formulario -->
+        <!-- Logo de Operix en la cabecera del formulario -->
         <div class="text-center text-lg-start mb-4">
-          <img src="img/inplabel-logo.png" alt="Inplabel - Industrias plasticos belsa S.A.C" style="max-height: 82px; width: auto; object-fit: contain;" class="mb-3">
+          <img src="img/operix-logo.png" alt="Operix" style="max-height: 68px; width: auto; object-fit: contain;" class="mb-3">
           <h3 class="fw-bold mb-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: -0.4px;">Bienvenido</h3>
           <p class="small mb-0" style="color: #64748b; font-size: 0.88rem;">Ingresa tus credenciales para acceder al sistema.</p>
         </div>
@@ -1990,7 +1990,7 @@ const EMBEDDED_VIEWS = {
               <span class="input-group-text" style="border-radius: 10px 0 0 10px;">
                 <i class="bi bi-person-fill fs-6"></i>
               </span>
-              <input type="text" id="loginUsername" name="inplabel_user_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu usuario..." autocomplete="new-password" required autofocus style="border-radius: 0 10px 10px 0;">
+              <input type="text" id="loginUsername" name="login_user_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu usuario..." autocomplete="new-password" required autofocus style="border-radius: 0 10px 10px 0;">
             </div>
           </div>
 
@@ -2003,7 +2003,7 @@ const EMBEDDED_VIEWS = {
               <span class="input-group-text" style="border-radius: 10px 0 0 10px;">
                 <i class="bi bi-lock-fill fs-6"></i>
               </span>
-              <input type="password" id="loginPassword" name="inplabel_pass_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu contraseña..." autocomplete="new-password" required style="border-radius: 0;">
+              <input type="password" id="loginPassword" name="login_pass_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu contraseña..." autocomplete="new-password" required style="border-radius: 0;">
               <button type="button" class="btn btn-toggle-pass" onclick="authModule.togglePasswordVisibility()" title="Mostrar/Ocultar contraseña" style="border-radius: 0 10px 10px 0;">
                 <i id="togglePassIcon" class="bi bi-eye-fill"></i>
               </button>
@@ -2019,7 +2019,7 @@ const EMBEDDED_VIEWS = {
         <!-- Footer -->
         <div class="mt-4 pt-3 border-top text-center" style="border-color: #f1f5f9 !important;">
           <small class="d-block" style="font-size: 0.76rem; color: #94a3b8;">
-            © 2026 Inplabel S.A.C. • Todos los derechos reservados
+            © 2026 Operix • Todos los derechos reservados
           </small>
         </div>
 
@@ -2352,7 +2352,7 @@ export class Router {
     };
 
     const titleElem = document.getElementById('pageTitle');
-    if (titleElem) titleElem.innerHTML = titles[route] || 'INPLABEL Pedidos';
+    if (titleElem) titleElem.innerHTML = titles[route] || 'OPERIX Pedidos';
 
     const container = document.getElementById('viewContainer');
     if (!container) return;
