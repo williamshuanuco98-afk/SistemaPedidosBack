@@ -343,3 +343,58 @@
     transform: translateY(0);
   }
 }
+
+/* Global Confirm / Logout Modal Themes */
+#globalConfirmModal .modal-content {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+#globalConfirmTitle {
+  color: #0f172a !important;
+}
+
+#globalConfirmMessage {
+  color: #475569 !important;
+}
+
+#globalConfirmCancelBtn {
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+  background-color: transparent !important;
+}
+
+#globalConfirmCancelBtn:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] #globalConfirmModal .modal-content,
+[data-bs-theme="dark"] #globalConfirmModal .modal-content {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] #globalConfirmTitle,
+[data-bs-theme="dark"] #globalConfirmTitle {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] #globalConfirmMessage,
+[data-bs-theme="dark"] #globalConfirmMessage {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] #globalConfirmCancelBtn,
+[data-bs-theme="dark"] #globalConfirmCancelBtn {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #globalConfirmCancelBtn:hover,
+[data-bs-theme="dark"] #globalConfirmCancelBtn:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
