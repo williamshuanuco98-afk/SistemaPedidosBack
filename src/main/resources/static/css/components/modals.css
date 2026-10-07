@@ -398,3 +398,12 @@
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
+
+/* Modal Registrar/Editar Cliente - Spacious Sizing */
+#modalCliente .modal-dialog,
+.modal-cliente-dialog {
+  max-width: 660px !important;
+  width: 95% !important;
+  margin: 1.75rem auto;
+}
+

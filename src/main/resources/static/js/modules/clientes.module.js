@@ -203,23 +203,23 @@ export function onTipoDocChange(tipo) {
 
   if (tipo === 'DNI') {
     if (nroInput) {
-      nroInput.placeholder = 'Ingrese 8 dígitos de DNI';
+      nroInput.placeholder = 'Número de DNI (8 dígitos)';
       nroInput.maxLength = 8;
     }
     if (btn) btn.innerHTML = '<i class="bi bi-search me-1"></i> DNI';
     if (feedback) {
-      feedback.className = 'form-text mt-1 text-muted fs-8';
-      feedback.innerHTML = 'Escriba 8 dígitos para consultar RENIEC / DNI automáticamente.';
+      feedback.className = 'form-text mt-1 d-none';
+      feedback.innerHTML = '';
     }
   } else {
     if (nroInput) {
-      nroInput.placeholder = 'Ingrese 11 dígitos de RUC';
+      nroInput.placeholder = 'Número de RUC (11 dígitos)';
       nroInput.maxLength = 11;
     }
     if (btn) btn.innerHTML = '<i class="bi bi-search me-1"></i> SUNAT';
     if (feedback) {
-      feedback.className = 'form-text mt-1 text-muted fs-8';
-      feedback.innerHTML = 'Escriba 11 dígitos para consultar SUNAT automáticamente.';
+      feedback.className = 'form-text mt-1 d-none';
+      feedback.innerHTML = '';
     }
   }
 }
