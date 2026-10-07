@@ -361,8 +361,6 @@ function renderOrderStatusChart(orders) {
       statusCounts['CANCELADO']
     ];
 
-    const nonZeroCount = data.filter(v => v > 0).length;
-
     window.orderStatusChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -370,8 +368,8 @@ function renderOrderStatusChart(orders) {
         datasets: [{
           data: data,
           backgroundColor: ['#f59e0b', '#3b82f6', '#dc2626', '#10b981', '#8b5cf6', '#6b7280'],
-          borderWidth: nonZeroCount > 1 ? 2 : 0,
-          borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff'
+          borderWidth: 0,
+          borderColor: 'transparent'
         }]
       },
       options: {
@@ -466,12 +464,7 @@ function renderTopProductsChart(orders) {
 export function updateChartThemes() {
   const colors = getChartColors();
 
-  if (window.establecimientosChartInstance) {
-    window.establecimientosChartInstance.options.plugins.legend.labels.color = colors.legend;
-    window.establecimientosChartInstance.update('none');
-  }
-
-  if (window.monthlyOrdersChartInstance) {
+  if (window.monthlyOrdersChartInstance?.options?.scales?.x) {
     window.monthlyOrdersChartInstance.options.scales.x.ticks.color = colors.ticks;
     window.monthlyOrdersChartInstance.options.scales.x.grid.color = colors.grid;
     window.monthlyOrdersChartInstance.options.scales.y.ticks.color = colors.ticks;
@@ -479,17 +472,19 @@ export function updateChartThemes() {
     window.monthlyOrdersChartInstance.update('none');
   }
 
-  if (window.orderStatusChartInstance) {
+  if (window.orderStatusChartInstance?.options?.plugins?.legend) {
     window.orderStatusChartInstance.options.plugins.legend.labels.color = colors.legend;
+    if (window.orderStatusChartInstance.data?.datasets?.[0]) {
+      window.orderStatusChartInstance.data.datasets[0].borderWidth = 0;
+      window.orderStatusChartInstance.data.datasets[0].borderColor = 'transparent';
+    }
     window.orderStatusChartInstance.update('none');
   }
 
-  if (window.topProductsChartInstance) {
-    if (window.topProductsChartInstance.options.scales) {
-      window.topProductsChartInstance.options.scales.x.ticks.color = colors.ticks;
-      window.topProductsChartInstance.options.scales.x.grid.color = colors.grid;
-      window.topProductsChartInstance.options.scales.y.ticks.color = colors.ticks;
-    }
+  if (window.topProductsChartInstance?.options?.scales?.x) {
+    window.topProductsChartInstance.options.scales.x.ticks.color = colors.ticks;
+    window.topProductsChartInstance.options.scales.x.grid.color = colors.grid;
+    window.topProductsChartInstance.options.scales.y.ticks.color = colors.ticks;
     window.topProductsChartInstance.update('none');
   }
 }

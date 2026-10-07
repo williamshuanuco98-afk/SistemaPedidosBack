@@ -1,5 +1,5 @@
 import { api, BASE_URL } from '../api.js';
-import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI } from '../helpers.js';
+import { escapeHtml, formatDate, showBootstrapModal, hideBootstrapModal, paginateItems, renderPaginationUI, filterAndRankItems } from '../helpers.js';
 
 let currentShipments = [];
 let currentSearchQuery = '';
@@ -104,18 +104,19 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
   });
 
   if (p.items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No se encontraron guías de remisión registradas para los filtros aplicados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">No se encontraron guías de remisión registradas para los filtros aplicados.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = p.items.map(s => {
+    const targetId = s.id_guia || s.id;
     const isAnulada = (s.estado === 'ANULADA');
     const badgeClass = isAnulada ? 'CANCELADO' : 'COMPLETADO';
     const statusText = isAnulada ? 'ANULADA' : (s.estado || 'EMITIDA');
 
     return `
       <tr>
-        <td class="fw-bold font-monospace text-primary">${escapeHtml(s.nro_guia || ('GR001-' + String(s.id_guia).padStart(4, '0')))}</td>
+        <td class="fw-bold font-monospace text-primary">${escapeHtml(s.nro_guia || ('GR001-' + String(targetId).padStart(4, '0')))}</td>
         <td>${formatDate(s.fecha_guia || s.fecha_emision)}</td>
         <td>
           <div class="fw-bold text-body">${escapeHtml(s.nombre_cliente || 'Cliente General')}</div>
@@ -128,26 +129,34 @@ export function renderEnviosTable(shipments = [], searchQuery = '') {
         </td>
         <!-- 1. Columna DETALLES -->
         <td class="text-center">
-          <button class="btn-action-solid btn-view" title="Ver Detalles" onclick="enviosModule.viewGuiaDetail('${s.id_guia}')">
+          <button class="btn-action-solid btn-view" title="Ver Detalles" onclick="enviosModule.viewGuiaDetail('${targetId}')">
             <i class="bi bi-eye-fill"></i>
           </button>
         </td>
         <!-- 2. Columna PDF -->
         <td class="text-center">
-          <button class="btn-action-solid btn-pdf" title="Ver PDF" onclick="enviosModule.openPDF('${s.id_guia}')">
+          <button class="btn-action-solid btn-pdf" title="Ver PDF" onclick="enviosModule.openPDF('${targetId}')">
             <i class="bi bi-file-earmark-pdf-fill"></i>
           </button>
         </td>
         <!-- 3. Columna PRINT -->
         <td class="text-center">
-          <button class="btn-action-solid btn-print" title="Imprimir" onclick="enviosModule.printPDF('${s.id_guia}')">
+          <button class="btn-action-solid btn-print" title="Imprimir" onclick="enviosModule.printPDF('${targetId}')">
             <i class="bi bi-printer-fill"></i>
           </button>
         </td>
-        <!-- 4. Columna ANULAR -->
+        <!-- 4. Columna EDITAR -->
         <td class="text-center">
           ${!isAnulada ? `
-            <button class="btn-action-solid btn-cancel" title="Anular Guía" onclick="enviosModule.openAnularModal('${s.id_guia}', '${escapeHtml(s.nro_guia || '')}')">
+            <button class="btn-action-solid btn-edit" title="Editar Guía" onclick="enviosModule.openEditarGuiaModal('${targetId}')">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+          ` : `<span class="text-muted small">-</span>`}
+        </td>
+        <!-- 5. Columna ANULAR -->
+        <td class="text-center">
+          ${!isAnulada ? `
+            <button class="btn-action-solid btn-cancel" title="Anular Guía" onclick="enviosModule.openAnularModal('${targetId}', '${escapeHtml(s.nro_guia || '')}')">
               <i class="bi bi-x-circle-fill"></i>
             </button>
           ` : `<span class="text-muted small">-</span>`}
@@ -247,6 +256,7 @@ export function viewGuiaDetail(idGuia) {
               <th style="width: 50px;">#</th>
               <th style="width: 120px;">Código</th>
               <th>Descripción del Producto</th>
+              <th class="text-center" style="width: 90px;">U.M.</th>
               <th class="text-center" style="width: 120px;">Cantidad</th>
             </tr>
           </thead>
@@ -256,7 +266,8 @@ export function viewGuiaDetail(idGuia) {
                 <td>${idx + 1}</td>
                 <td class="font-monospace text-secondary fw-semibold">${escapeHtml(d.codigo_producto || '#' + d.id_producto)}</td>
                 <td class="fw-bold">${escapeHtml(d.nombre_producto || 'Producto')}</td>
-                <td class="text-center fw-bold text-success fs-6">${Number(d.cantidad || 0).toLocaleString()} UND</td>
+                <td class="text-center fw-bold text-secondary">${escapeHtml(d.unidad_medida || 'UNID')}</td>
+                <td class="text-center fw-bold text-success fs-6">${Number(d.cantidad || 0).toLocaleString()}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -280,17 +291,35 @@ export function viewGuiaDetail(idGuia) {
 }
 
 export function openPDF(idGuia) {
+  if (!idGuia || idGuia === 'undefined' || idGuia === 'null') {
+    alert('No se pudo determinar el código de la guía para abrir el PDF.');
+    return;
+  }
+  const numId = Number(idGuia);
+  if (isNaN(numId) || numId <= 0 || numId > 2147483647) {
+    alert('El identificador de la guía (' + idGuia + ') no es válido en el servidor.');
+    return;
+  }
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${numId}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
   window.open(pdfUrl, '_blank');
 }
 
 export async function printPDF(idGuia) {
-  let guia = currentShipments.find(s => String(s.id_guia) === String(idGuia));
+  if (!idGuia || idGuia === 'undefined' || idGuia === 'null') {
+    alert('No se pudo determinar el código de la guía para imprimir.');
+    return;
+  }
+  const numId = Number(idGuia);
+  if (isNaN(numId) || numId <= 0 || numId > 2147483647) {
+    alert('El identificador de la guía (' + idGuia + ') no es válido.');
+    return;
+  }
+  let guia = currentShipments.find(s => String(s.id_guia || s.id) === String(numId));
   if (!guia) {
     try {
-      guia = await api.getGuiaById(idGuia);
+      guia = await api.getGuiaById(numId);
     } catch (e) {
       console.warn("No se pudo obtener la guía por API:", e);
     }
@@ -304,7 +333,7 @@ export async function printPDF(idGuia) {
   // Fallback: If not in memory, print PDF stream directly via invisible iframe
   const savedPath = localStorage.getItem('inplabel_guias_pdf_storage_path') || 'C:\\Inplabel\\Guias';
   const savedSubfolders = localStorage.getItem('inplabel_pdf_subfolders') !== 'false';
-  const pdfUrl = `${BASE_URL}/guias/${idGuia}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
+  const pdfUrl = `${BASE_URL}/guias/${numId}/pdf?storageDir=${encodeURIComponent(savedPath)}&useSubfolders=${savedSubfolders}`;
 
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
@@ -353,6 +382,10 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
   const fechaStr = formatDate(guia.fecha_guia || guia.fecha_emision);
   const clienteNombre = escapeHtml(guia.nombre_cliente || 'Cliente General');
   const clienteRuc = escapeHtml(guia.nro_documento || '-');
+  
+  const docRefVal = String(guia.doc_referencia || guia.nro_orden || guia.nro_pedido || '').trim();
+  const docRef = escapeHtml((docRefVal && docRefVal !== 'null' && docRefVal !== 'undefined') ? docRefVal : '-');
+
   const puntoPartida = escapeHtml(guia.punto_partida || 'C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - CARABAYLLO - LIMA - LIMA');
   const puntoLlegada = escapeHtml(guia.punto_llegada || guia.direccion_destino || 'Dirección del cliente - LIMA - LIMA');
   const observaciones = escapeHtml(guia.observaciones || '');
@@ -364,7 +397,7 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
       <td style="border: 1px solid #444; padding: 5px 4px; font-weight: 500;">
         ${escapeHtml(item.nombre_producto || 'Producto')}
       </td>
-      <td style="text-align: center; border: 1px solid #444; padding: 5px 3px;">UND</td>
+      <td style="text-align: center; border: 1px solid #444; padding: 5px 3px;">${escapeHtml(item.unidad_medida || 'UNID')}</td>
       <td style="text-align: center; font-weight: bold; border: 1px solid #444; padding: 5px 3px;">${item.cantidad || 1}</td>
     </tr>
   `).join('');
@@ -404,18 +437,21 @@ function renderGuiaHalfHTML(guia, copiaNombre) {
           </tr>
         </table>
 
-        <!-- 2. Datos del Destinatario, RUC y Fecha -->
+        <!-- 2. Datos del Destinatario, RUC, Doc Referencia y Fecha -->
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 7px; font-size: 8px;">
           <tr>
-            <td colspan="2" style="padding: 2px 0;">
+            <td style="padding: 2px 0; width: 65%;">
               <strong>DESTINATARIO:</strong> <span style="font-weight: 500;">${clienteNombre}</span>
+            </td>
+            <td style="padding: 2px 0; width: 35%;">
+              <strong>RUC:</strong> <span style="font-weight: 500;">${clienteRuc}</span>
             </td>
           </tr>
           <tr>
-            <td style="padding: 2px 0; width: 55%;">
-              <strong>RUC:</strong> <span style="font-weight: 500;">${clienteRuc}</span>
+            <td style="padding: 2px 0; width: 65%;">
+              <strong>DOC. REFERENCIA:</strong> <span style="font-weight: 500;">${docRef}</span>
             </td>
-            <td style="padding: 2px 0; width: 45%;">
+            <td style="padding: 2px 0; width: 35%;">
               <strong>FECHA:</strong> <span style="font-weight: 500;">${fechaStr}</span>
             </td>
           </tr>
@@ -565,6 +601,19 @@ export function printGuiaDirectWithoutNewTab(guia) {
   doc.write(htmlContent);
   doc.close();
 
+  const cleanup = () => {
+    try {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    } catch (e) {}
+  };
+
+  try {
+    iframe.contentWindow.addEventListener('afterprint', cleanup);
+    iframe.contentWindow.onafterprint = cleanup;
+  } catch (e) {}
+
   setTimeout(() => {
     try {
       iframe.contentWindow.focus();
@@ -572,17 +621,359 @@ export function printGuiaDirectWithoutNewTab(guia) {
     } catch (e) {
       console.error("Error al disparar impresión nativa:", e);
     }
-    setTimeout(() => {
-      try { document.body.removeChild(iframe); } catch (e) { }
-    }, 3000);
   }, 350);
 }
 
 export function printGuiaPDF(guia) {
   if (guia && (guia.id_guia || guia.id)) {
-    printPDF(guia.id_guia || guia.id);
+    openPDF(guia.id_guia || guia.id);
     return;
   }
   printGuiaDirectWithoutNewTab(guia);
+}
+
+export async function openEditarGuiaModal(idGuia) {
+  let guia = currentShipments.find(s => String(s.id_guia) === String(idGuia));
+  if (!guia) {
+    try {
+      guia = await api.getGuiaById(idGuia);
+    } catch (e) {}
+  }
+  if (!guia) {
+    alert("No se encontró la información de la guía seleccionada.");
+    return;
+  }
+
+  document.getElementById('editGuiaId').value = guia.id_guia || idGuia;
+  document.getElementById('editGuiaNroGuia').value = guia.nro_guia || '';
+  document.getElementById('editGuiaFecha').value = (guia.fecha_guia || guia.fecha_emision || new Date().toISOString().split('T')[0]).split('T')[0];
+  document.getElementById('editGuiaDocRef').value = guia.doc_referencia || '';
+  document.getElementById('editGuiaPuntoPartida').value = guia.punto_partida || '';
+  document.getElementById('editGuiaPuntoLlegada').value = guia.punto_llegada || '';
+  document.getElementById('editGuiaObservaciones').value = guia.observaciones || '';
+
+  // Pre-load products list into window.app.products for quick autocomplete ranking
+  if (!window.app?.products || window.app.products.length === 0) {
+    try {
+      const productsList = await api.getProductos();
+      if (productsList && Array.isArray(productsList)) {
+        if (!window.app) window.app = {};
+        window.app.products = productsList;
+      }
+    } catch (e) {
+      console.warn("Error cargando productos para edición de guía:", e);
+    }
+  }
+
+  const selectClient = document.getElementById('editGuiaClienteSelect');
+  if (selectClient) {
+    selectClient.innerHTML = '<option value="">Cargando clientes...</option>';
+    try {
+      const clients = await api.getClientes();
+      if (!window.app) window.app = {};
+      window.app.clients = clients;
+
+      // Find the matching client using multiple strategies
+      const guiaIdCliente = guia.id_cliente;
+      const guiaNombreCliente = (guia.nombre_cliente || '').trim().toLowerCase();
+      const guiaNroDoc = (guia.nro_documento || '').trim();
+
+      selectClient.innerHTML = (clients || []).map(c => {
+        const clientName = c.nombre_cliente || c.razon_social || c.nombre || '';
+        const cId = c.id_cliente;
+        const cDoc = (c.nro_documento || '').trim();
+        const cName = clientName.trim().toLowerCase();
+
+        // Match by id_cliente first, then by nro_documento, then by nombre
+        const isSelected = (guiaIdCliente && String(cId) === String(guiaIdCliente))
+          || (!guiaIdCliente && guiaNroDoc && cDoc === guiaNroDoc)
+          || (!guiaIdCliente && !guiaNroDoc && guiaNombreCliente && cName === guiaNombreCliente);
+
+        return `
+          <option value="${cId}" ${isSelected ? 'selected' : ''}>
+            ${escapeHtml(clientName)} (${cDoc})
+          </option>
+        `;
+      }).join('');
+    } catch (e) {
+      console.warn("Error cargando clientes para edición de guía:", e);
+    }
+  }
+
+  const tbody = document.getElementById('editGuiaItemsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    const detalles = guia.detalles || [];
+    if (detalles.length === 0) {
+      addEditGuiaRow();
+    } else {
+      detalles.forEach(item => {
+        addEditGuiaRow(item);
+      });
+    }
+  }
+
+  showBootstrapModal('modalEditarGuia');
+}
+
+export function addEditGuiaRow(itemData = null) {
+  const tbody = document.getElementById('editGuiaItemsTableBody');
+  if (!tbody) return;
+
+  const rowId = Date.now() + Math.floor(Math.random() * 1000);
+  const prodName = itemData ? (itemData.nombre_producto || '') : '';
+  const cant = itemData ? (itemData.cantidad || 1) : 1;
+  const um = itemData ? (itemData.unidad_medida || 'UNID').toUpperCase() : 'UNID';
+
+  const tr = document.createElement('tr');
+  tr.id = `edit-row-${rowId}`;
+
+  tr.innerHTML = `
+    <td>
+      <div class="position-relative">
+        <input type="text" class="form-control form-control-sm edit-item-prod-input" placeholder="Escriba o busque el producto..." value="${escapeHtml(prodName)}" autocomplete="off" required>
+        <ul class="list-group position-absolute w-100 shadow edit-item-prod-list d-none" style="z-index: 1090; max-height: 200px; overflow-y: auto; top: 100%; left: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.6);"></ul>
+      </div>
+    </td>
+    <td class="text-center">
+      <span class="badge bg-secondary-subtle text-secondary-emphasis border px-2.5 py-1 fw-bold fs-7 edit-item-um-badge">${escapeHtml(um)}</span>
+      <input type="hidden" class="edit-item-um-val" value="${escapeHtml(um)}">
+    </td>
+    <td class="text-center">
+      <input type="text" inputmode="numeric" class="form-control form-control-sm text-center edit-item-cant-input" value="${cant}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+    </td>
+    <td class="text-center">
+      <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2" onclick="enviosModule.removeEditGuiaRow(this)">
+        <i class="bi bi-trash-fill"></i>
+      </button>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+  setupEditGuiaItemSearch(tr);
+}
+
+export function setupEditGuiaItemSearch(tr) {
+  const input = tr.querySelector('.edit-item-prod-input');
+  const list = tr.querySelector('.edit-item-prod-list');
+  if (!input || !list) return;
+
+  let activeIndex = -1;
+
+  const renderDropdown = (query) => {
+    const val = (query || '').trim();
+    activeIndex = -1;
+
+    if (!val) {
+      list.classList.add('d-none');
+      list.innerHTML = '';
+      return;
+    }
+
+    const products = (window.app?.products && window.app.products.length > 0)
+      ? window.app.products
+      : [];
+
+    const matches = filterAndRankItems(
+      products,
+      val,
+      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''} ${p.unidad_medida || ''}`
+    ).slice(0, 25);
+
+    if (matches.length === 0) {
+      list.innerHTML = `<li class="list-group-item text-muted py-2 fs-7">No se encontraron productos que coincidan con "${escapeHtml(val)}"</li>`;
+      list.classList.remove('d-none');
+      return;
+    }
+
+    list.innerHTML = matches.map((p, idx) => `
+      <li class="list-group-item list-group-item-action py-1.5 px-3 prod-opt-item d-flex align-items-center gap-2 fs-7" style="cursor: pointer;" data-index="${idx}">
+        <span class="fw-bold text-primary">#${escapeHtml(p.codigo_producto || p.id_producto)}</span>
+        <span class="fw-semibold text-body">- ${escapeHtml(p.nombre_producto)}</span>
+      </li>
+    `).join('');
+    list.classList.remove('d-none');
+
+    list.querySelectorAll('.prod-opt-item').forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        input.value = matches[idx].nombre_producto;
+        const umBadge = tr.querySelector('.edit-item-um-badge');
+        const umVal = tr.querySelector('.edit-item-um-val');
+        const newUM = (matches[idx].unidad_medida || 'UNID').toUpperCase();
+        if (umBadge) umBadge.textContent = newUM;
+        if (umVal) umVal.value = newUM;
+        list.classList.add('d-none');
+      });
+    });
+  };
+
+  input.addEventListener('input', (e) => {
+    renderDropdown(e.target.value);
+  });
+
+  input.addEventListener('focus', (e) => {
+    if (e.target.value.trim()) {
+      renderDropdown(e.target.value);
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = list.querySelectorAll('.prod-opt-item');
+    if (items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      updateActiveRowItem(items, activeIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      updateActiveRowItem(items, activeIndex);
+    } else if (e.key === 'Enter') {
+      if (!list.classList.contains('d-none')) {
+        e.preventDefault();
+        if (activeIndex >= 0 && items[activeIndex]) {
+          items[activeIndex].click();
+        } else if (items.length > 0) {
+          items[0].click();
+        }
+      }
+    } else if (e.key === 'Escape') {
+      list.classList.add('d-none');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!tr.contains(e.target)) {
+      list.classList.add('d-none');
+    }
+  });
+}
+
+function updateActiveRowItem(items, activeIndex) {
+  items.forEach((item, idx) => {
+    if (idx === activeIndex) {
+      item.classList.add('active', 'bg-primary', 'text-white');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('active', 'bg-primary', 'text-white');
+    }
+  });
+}
+
+export function removeEditGuiaRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr) {
+    const tbody = tr.parentElement;
+    tr.remove();
+    if (tbody && tbody.children.length === 0) {
+      addEditGuiaRow();
+    }
+  }
+}
+
+export async function saveEditarGuia() {
+  const idGuia = document.getElementById('editGuiaId')?.value;
+  if (!idGuia) return;
+
+  const nroGuia = document.getElementById('editGuiaNroGuia')?.value.trim();
+  const fechaGuia = document.getElementById('editGuiaFecha')?.value;
+  const idCliente = document.getElementById('editGuiaClienteSelect')?.value;
+  const docRef = document.getElementById('editGuiaDocRef')?.value.trim();
+  const puntoPartida = document.getElementById('editGuiaPuntoPartida')?.value.trim();
+  const puntoLlegada = document.getElementById('editGuiaPuntoLlegada')?.value.trim();
+  const observaciones = document.getElementById('editGuiaObservaciones')?.value.trim();
+
+  if (!nroGuia || !fechaGuia || !idCliente) {
+    alert("Por favor complete los campos obligatorios: N° Guía, Fecha y Cliente.");
+    return;
+  }
+
+  const itemRows = document.querySelectorAll('#editGuiaItemsTableBody tr');
+  const detalles = [];
+  itemRows.forEach(tr => {
+    const inputElem = tr.querySelector('.edit-item-prod-input');
+    const pName = inputElem ? inputElem.value.trim() : '';
+    const cant = parseInt(tr.querySelector('.edit-item-cant-input')?.value || 0);
+    const umVal = tr.querySelector('.edit-item-um-val');
+    const um = umVal ? (umVal.value || 'UNID').toUpperCase() : 'UNID';
+
+    if (pName && cant > 0) {
+      let pId = 0;
+      if (window.app && window.app.products) {
+        const match = window.app.products.find(p => (p.nombre_producto || '').trim().toLowerCase() === pName.toLowerCase());
+        if (match) pId = match.id_producto;
+      }
+      detalles.push({
+        id_producto: pId,
+        cantidad: cant,
+        unidad_medida: um,
+        nombre_producto: pName
+      });
+    }
+  });
+
+  if (detalles.length === 0) {
+    alert("Debe incluir al menos un producto válido con cantidad mayor a 0.");
+    return;
+  }
+
+  const payload = {
+    id_guia: parseInt(idGuia),
+    nro_guia: nroGuia,
+    fecha_guia: fechaGuia,
+    id_cliente: parseInt(idCliente),
+    doc_referencia: docRef,
+    punto_partida: puntoPartida,
+    punto_llegada: puntoLlegada,
+    observaciones: observaciones,
+    establecimiento: nroGuia.toUpperCase().startsWith('GR002') ? 'COMAS' : 'CARABAYLLO',
+    detalles: detalles
+  };
+
+  const saveBtn = document.querySelector('#formEditarGuia button[type="submit"]');
+  const originalText = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+  }
+
+  try {
+    const res = await api.updateGuia(idGuia, payload);
+    if (res) {
+      hideBootstrapModal('modalEditarGuia');
+
+      // Refresh shipments list
+      try {
+        const freshGuias = await api.getGuias();
+        if (Array.isArray(freshGuias) && freshGuias.length > 0) {
+          currentShipments = freshGuias;
+        } else {
+          const idx = currentShipments.findIndex(s => String(s.id_guia) === String(idGuia));
+          if (idx !== -1) {
+            currentShipments[idx] = { ...currentShipments[idx], ...payload, ...(res.id_guia ? res : {}) };
+          }
+        }
+      } catch (e) {
+        const idx = currentShipments.findIndex(s => String(s.id_guia) === String(idGuia));
+        if (idx !== -1) {
+          currentShipments[idx] = { ...currentShipments[idx], ...payload, ...(res.id_guia ? res : {}) };
+        }
+      }
+
+      renderEnviosTable(currentShipments, currentSearchQuery);
+      alert("¡Guía de Remisión actualizada exitosamente!");
+    } else {
+      alert("No se pudo actualizar la guía de remisión en el servidor. Verifique la conexión.");
+    }
+  } catch (err) {
+    console.error("Error al guardar edición de guía:", err);
+    alert("Error al actualizar la guía de remisión: " + (err.message || "Error del servidor"));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
+  }
 }
 

@@ -1,21 +1,23 @@
-export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http') && window.location.port === '8080')
-  ? '/api'
+export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
+  ? (window.location.port === '8080' ? '/api' : `${window.location.protocol}//${window.location.hostname || 'localhost'}:8080/api`)
   : 'http://localhost:8080/api';
 
 async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = 3000, headers = {}, ...fetchOptions } = options;
+  const { timeout = 10000, headers = {}, ...fetchOptions } = options;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
-  // Inyectar cabeceras de rol de usuario automáticamente
+  // Inyectar cabeceras de rol de usuario automáticamente (sanitizadas para cabeceras HTTP)
   let authHeaders = { ...headers };
   try {
     const rawUser = localStorage.getItem('inplabel_user');
     if (rawUser) {
       const u = JSON.parse(rawUser);
       if (u && u.rol) {
-        authHeaders['X-User-Role'] = u.rol;
-        authHeaders['X-Username'] = u.username;
+        authHeaders['X-User-Role'] = encodeURIComponent(String(u.rol || ''));
+      }
+      if (u && u.username) {
+        authHeaders['X-Username'] = encodeURIComponent(String(u.username || ''));
       }
     }
   } catch (e) {}
@@ -80,7 +82,7 @@ export const api = {
 
   async getStatus() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/status`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/status`, { timeout: 10000 });
       if (res && res.ok) return await res.json();
     } catch (e) {}
     return { connected: false, message: 'Spring Boot Backend Desconectado (Modo Local Activo)' };
@@ -88,10 +90,10 @@ export const api = {
 
   async getClientes() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 2500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('clientes', data);
           return data;
         }
@@ -106,15 +108,17 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clienteData),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('clientes', FALLBACK_CLIENTS);
-    const newClient = { id: Date.now(), ...clienteData };
-    list.unshift(newClient);
-    setLocalData('clientes', list);
-    return newClient;
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error de conexión al agregar cliente:", e);
+    }
+    return { success: false, error: 'No se pudo conectar con el servidor para registrar el cliente.' };
   },
 
   async updateCliente(id, clienteData) {
@@ -123,13 +127,17 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clienteData),
-        timeout: 3000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
     } catch (e) {
       console.error('Error al actualizar cliente en MySQL:', e);
     }
-    return { success: false };
+    return { success: false, error: 'No se pudo actualizar el cliente.' };
   },
 
   async deleteCliente(id) {
@@ -224,10 +232,10 @@ export const api = {
 
   async getProductos() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/productos`, { timeout: 2500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/productos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('productos', data);
           return data;
         }
@@ -242,15 +250,17 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productoData),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('productos', FALLBACK_PRODUCTS);
-    const newProd = { id: Date.now(), codigo_producto: 'PROD-' + Math.floor(100 + Math.random() * 900), ...productoData };
-    list.unshift(newProd);
-    setLocalData('productos', list);
-    return newProd;
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error al registrar producto:", e);
+    }
+    return { success: false, error: 'No se pudo conectar con el servidor para registrar el producto.' };
   },
 
   async updateProducto(id, productoData) {
@@ -259,25 +269,24 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productoData),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('productos', FALLBACK_PRODUCTS);
-    const idx = list.findIndex(p => String(p.id) === String(id));
-    if (idx !== -1) {
-      list[idx] = { ...list[idx], ...productoData };
-      setLocalData('productos', list);
-      return list[idx];
+      const data = await res.json().catch(() => null);
+      if (res.ok) return data;
+      if (data && (data.error || data.message)) {
+        return { success: false, error: data.error || data.message };
+      }
+    } catch (e) {
+      console.warn("Error al actualizar producto:", e);
     }
-    return null;
+    return { success: false, error: 'No se pudo actualizar el producto.' };
   },
 
   async deleteProducto(id) {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/productos/${id}`, {
         method: 'DELETE',
-        timeout: 2000
+        timeout: 10000
       });
       if (res.ok) return await res.json();
     } catch (e) {}
@@ -289,10 +298,10 @@ export const api = {
 
   async getPedidos() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/pedidos`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/pedidos`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setLocalData('pedidos', data);
           return data;
         }
@@ -307,7 +316,7 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedidoData),
-        timeout: 2500
+        timeout: 20000
       });
       if (res.ok) {
         const created = await res.json();
@@ -362,7 +371,7 @@ export const api = {
 
   async getGuias() {
     try {
-      const res = await fetchWithTimeout(`${BASE_URL}/guias`, { timeout: 1500 });
+      const res = await fetchWithTimeout(`${BASE_URL}/guias`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) return data;
@@ -401,24 +410,48 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(guiaData),
-        timeout: 2000
+        timeout: 25000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    const list = getLocalData('guias', FALLBACK_SHIPMENTS);
-    const newGuia = {
-      id_guia: Date.now(),
-      estado: 'EMITIDA',
-      fecha_guia: guiaData.fecha_guia || new Date().toISOString().split('T')[0],
-      ...guiaData
-    };
-    list.unshift(newGuia);
-    setLocalData('guias', list);
-    return newGuia;
+      if (res.ok) {
+        const saved = await res.json();
+        const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+        const idx = list.findIndex(g => String(g.id_guia) === String(saved.id_guia));
+        if (idx >= 0) {
+          list[idx] = saved;
+        } else {
+          list.unshift(saved);
+        }
+        setLocalData('guias', list);
+        return saved;
+      } else {
+        const errText = await res.text();
+        throw new Error(errText || `Error del servidor HTTP ${res.status}`);
+      }
+    } catch (e) {
+      console.error("Error al emitir guía en addGuia:", e);
+      throw e;
+    }
   },
 
   async createGuia(guiaData) {
     return this.addGuia(guiaData);
+  },
+
+  async addEnvioPedido(envioData) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/envios-pedido`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(envioData),
+        timeout: 3000
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {}
+    return null;
+  },
+
+  async getShipments() {
+    return this.getGuias();
   },
 
   async updateGuia(id, fields) {
@@ -427,10 +460,29 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
-        timeout: 2000
+        timeout: 10000
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res.ok) {
+        const data = await res.json();
+        const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+        const idx = list.findIndex(g => String(g.id_guia) === String(id));
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], ...fields, ...data };
+          setLocalData('guias', list);
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn("Error actualizando guía en backend:", e);
+    }
+
+    const list = getLocalData('guias', FALLBACK_SHIPMENTS);
+    const idx = list.findIndex(g => String(g.id_guia) === String(id));
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...fields };
+      setLocalData('guias', list);
+      return list[idx];
+    }
     return null;
   },
 
@@ -612,7 +664,7 @@ export const api = {
       return {
         success: true,
         message: 'Inicio de sesión (Administrador)',
-        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Inplabel', rol: 'ADMIN' }
+        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Operix', rol: 'ADMIN' }
       };
     } else if (cleanUser === 'operaciones' && password === 'operaciones123') {
       return {
@@ -623,7 +675,59 @@ export const api = {
     }
 
     return { success: false, message: 'Usuario o contraseña incorrectos.' };
-  }
+  },
 
+  async getUsers() {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios`, { timeout: 8000 });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn("Error fetching users from API:", e);
+    }
+    return [];
+  },
+
+  async createUser(payload) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error creating user:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  },
+
+  async updateUser(id, payload) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error updating user:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  },
+
+  async toggleUserActive(id) {
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/usuarios/${id}/toggle-active`, {
+        method: 'PUT',
+        timeout: 8000
+      });
+      return await res.json();
+    } catch (e) {
+      console.error("Error toggling user active state:", e);
+      return { message: "Error al conectar con el servidor." };
+    }
+  }
 };
 

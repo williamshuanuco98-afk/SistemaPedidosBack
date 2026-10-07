@@ -86,3 +86,28 @@
 .badge.bg-emerald { background-color: #10b981 !important; color: #ffffff !important; }
 .badge.bg-amber { background-color: #f59e0b !important; color: #1e293b !important; }
 .badge.bg-purple { background-color: #8b5cf6 !important; color: #ffffff !important; }
+
+/* Dark Mode Subtle Badge High Contrast Overrides */
+[data-theme="dark"] .bg-dark-subtle,
+[data-bs-theme="dark"] .bg-dark-subtle {
+  background-color: rgba(51, 65, 85, 0.7) !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+[data-theme="dark"] .text-dark,
+[data-bs-theme="dark"] .text-dark {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bg-secondary-subtle,
+[data-bs-theme="dark"] .bg-secondary-subtle {
+  background-color: rgba(71, 85, 105, 0.6) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+[data-theme="dark"] .text-secondary,
+[data-bs-theme="dark"] .text-secondary {
+  color: #e2e8f0 !important;
+}

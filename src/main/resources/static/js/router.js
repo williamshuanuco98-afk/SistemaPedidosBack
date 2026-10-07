@@ -191,7 +191,7 @@ const EMBEDDED_VIEWS = {
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" id="searchClientNameInput" class="form-control"
-              placeholder="Buscar (Enter)...">
+              placeholder="Buscar (Enter)..." autocomplete="one-time-code" data-lpignore="true" data-form-type="other" role="searchbox" spellcheck="false">
           </div>
         </div>
 
@@ -252,9 +252,7 @@ const EMBEDDED_VIEWS = {
           <th>Fecha Pedido</th>
           <th>Establecimiento</th>
           <th>Estado</th>
-          <th class="text-center" style="width: 85px;">FINALIZAR</th>
-          <th class="text-center" style="width: 75px;">ENVÍO</th>
-          <th class="text-center" style="width: 75px;">DETALLE</th>
+          <th class="text-center" style="width: 140px;">ACCIONES</th>
         </tr>
       </thead>
       <tbody id="pedidosTableBody"></tbody>
@@ -379,6 +377,7 @@ const EMBEDDED_VIEWS = {
                   <th>Código / Producto</th>
                   <th class="text-center">Cant. Solicitada</th>
                   <th class="text-center">Entregado Previo</th>
+                  <th class="text-center">Falta</th>
                   <th class="text-center" style="width: 150px;">Cant. a Enviar Ahora *</th>
                 </tr>
               </thead>
@@ -407,7 +406,7 @@ const EMBEDDED_VIEWS = {
 </div>
 
 <!-- Modal Registrar Pago para Pedido Existente -->
-<div class="modal fade" id="modalAgregarPagoPedido" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalAgregarPagoPedido" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-success text-white py-3">
@@ -462,20 +461,6 @@ const EMBEDDED_VIEWS = {
 
   'nuevo-pedido': `
 <div class="content-card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-outline-secondary btn-sm" onclick="app.confirmLeaveNuevoPedido()">
-        <i class="bi bi-arrow-left"></i> Volver a Pedidos
-      </button>
-      <h3 class="card-title mb-0">
-        <i class="bi bi-cart-plus text-primary"></i> Registrar Nuevo Pedido
-      </h3>
-    </div>
-    <div>
-      <span class="badge bg-primary fs-7">Operaciones Inplabel</span>
-    </div>
-  </div>
-
   <div class="p-4">
     <form id="formNuevoPedido" onsubmit="event.preventDefault();">
       <div class="row g-4">
@@ -798,6 +783,7 @@ const EMBEDDED_VIEWS = {
           <th class="text-center" style="width: 80px;">DETALLES</th>
           <th class="text-center" style="width: 70px;">PDF</th>
           <th class="text-center" style="width: 70px;">PRINT</th>
+          <th class="text-center" style="width: 70px;">EDITAR</th>
           <th class="text-center" style="width: 70px;">ANULAR</th>
         </tr>
       </thead>
@@ -815,13 +801,13 @@ const EMBEDDED_VIEWS = {
         <h5 class="modal-title fw-bold" id="guiaDetailTitle">
           <i class="bi bi-truck text-white me-2"></i> Detalle de Guía de Remisión
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="hideBootstrapModal('guiaDetailModal')" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4" id="guiaDetailBody">
         <!-- Dynamic content filled by viewGuiaDetail -->
       </div>
       <div class="modal-footer bg-body-tertiary">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" onclick="hideBootstrapModal('guiaDetailModal')">Cerrar</button>
         <button type="button" class="btn btn-success btn-sm" id="btnPrintGuiaModal">
           <i class="bi bi-printer me-1"></i> Imprimir Guía
         </button>
@@ -864,24 +850,90 @@ const EMBEDDED_VIEWS = {
     </div>
   </div>
 </div>
+
+<!-- Modal Editar Guía de Remisión -->
+<div class="modal fade" id="modalEditarGuia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold" id="modalEditarGuiaTitle">
+          <i class="bi bi-pencil-square me-2"></i> Editar Guía de Remisión
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="formEditarGuia" onsubmit="event.preventDefault(); enviosModule.saveEditarGuia();">
+          <input type="hidden" id="editGuiaId">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">N° Guía de Remisión *</label>
+              <input type="text" id="editGuiaNroGuia" class="form-control form-control-sm font-monospace fw-bold" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Fecha Emisión *</label>
+              <input type="date" id="editGuiaFecha" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Cliente / Razón Social *</label>
+              <select id="editGuiaClienteSelect" class="form-select form-select-sm" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Doc. Referencia / Factura / OC</label>
+              <input type="text" id="editGuiaDocRef" class="form-control form-control-sm" placeholder="Ej: FF01-1234 o PED-0001">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Punto de Partida</label>
+              <input type="text" id="editGuiaPuntoPartida" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Punto de Llegada</label>
+              <input type="text" id="editGuiaPuntoLlegada" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold">Observaciones</label>
+              <input type="text" id="editGuiaObservaciones" class="form-control form-control-sm" placeholder="Ej: RECOGIO CLIENTE">
+            </div>
+          </div>
+
+          <datalist id="editGuiaProductsDatalist"></datalist>
+
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-secondary mb-0"><i class="bi bi-boxes me-1"></i> Productos / Ítems de la Guía</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2 fs-8 fw-bold" onclick="enviosModule.addEditGuiaRow()">
+              <i class="bi bi-plus-lg me-1"></i> Agregar Producto
+            </button>
+          </div>
+
+          <div class="table-responsive border rounded mb-3">
+            <table class="table custom-table table-sm align-middle mb-0">
+              <thead class="bg-body-tertiary">
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center" style="width: 100px;">U.M.</th>
+                  <th class="text-center" style="width: 140px;">Cantidad</th>
+                  <th class="text-center" style="width: 60px;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="editGuiaItemsTableBody">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">
+              <i class="bi bi-check-circle-fill me-1"></i> Guardar Cambios en Guía
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 `,
 
   'nueva-guia': `
 <div class="content-card">
-  <!-- Cabecera de la Vista -->
-  <div class="card-header flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-2">
-      <h3 class="card-title mb-0">
-        <i class="bi bi-file-earmark-plus text-primary me-1"></i> Generar Nueva Guía de Remisión
-      </h3>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="app.navigateTo('envios')">
-        <i class="bi bi-arrow-left me-1"></i> Volver a Listado de Guías
-      </button>
-    </div>
-  </div>
-
   <div class="card-body p-4">
     <form id="formNuevaGuia" onsubmit="event.preventDefault(); nuevaGuiaModule.submitNuevaGuia();">
       
@@ -970,13 +1022,14 @@ const EMBEDDED_VIEWS = {
               <tr>
                 <th style="width: 120px;">Código</th>
                 <th>Descripción del Producto</th>
+                <th style="width: 110px;" class="text-center">U.M.</th>
                 <th style="width: 150px;" class="text-center">Cantidad Enviada</th>
                 <th style="width: 80px;" class="text-center">Acción</th>
               </tr>
             </thead>
             <tbody id="tableProductosGuiaBody">
               <tr>
-                <td colspan="4" class="text-center text-muted py-4">No se han agregado productos a la guía.</td>
+                <td colspan="5" class="text-center text-muted py-4">No se han agregado productos a la guía.</td>
               </tr>
             </tbody>
           </table>
@@ -1116,6 +1169,7 @@ const EMBEDDED_VIEWS = {
           <th style="width: 90px;">ID</th>
           <th>Nombre del Producto / Insumo</th>
           <th>Tipo de Producto</th>
+          <th style="width: 85px;" class="text-center">U.M.</th>
           <th style="width: 100px;">Estado</th>
           <th style="width: 75px;" class="text-center">EDITAR</th>
           <th style="width: 75px;" class="text-center">ELIMINAR</th>
@@ -1151,6 +1205,13 @@ const EMBEDDED_VIEWS = {
               <option value="TAPAS">TAPAS</option>
               <option value="ASAS">ASAS</option>
               <option value="PRODUCTOS COMPLEMENTARIOS">PRODUCTOS COMPLEMENTARIOS</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Unidad de Medida (U.M.) *</label>
+            <select id="modalProductoUnidadMedida" class="form-select" required>
+              <option value="UNID" selected>UNID</option>
+              <option value="KG">KG</option>
             </select>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
@@ -1323,7 +1384,7 @@ const EMBEDDED_VIEWS = {
             <label for="guiasPdfFolderPathInput" class="form-label fw-semibold fs-7">Ruta de Guardado para Guías de Remisión (PDF) *</label>
             <div class="input-group input-group-sm">
               <span class="input-group-text"><i class="bi bi-truck"></i></span>
-              <input type="text" id="guiasPdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Inplabel\\Guias" required>
+              <input type="text" id="guiasPdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Operix\\Guias" required>
             </div>
             <div class="form-text fs-8">Directorio en el disco local de la PC donde se almacenarán las guías emitidas.</div>
           </div>
@@ -1332,7 +1393,7 @@ const EMBEDDED_VIEWS = {
             <label for="pdfFolderPathInput" class="form-label fw-semibold fs-7">Ruta de Guardado para Pedidos / Cotizaciones (PDF) *</label>
             <div class="input-group input-group-sm">
               <span class="input-group-text"><i class="bi bi-folder2-open"></i></span>
-              <input type="text" id="pdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Inplabel\\Pedidos" required>
+              <input type="text" id="pdfFolderPathInput" class="form-control font-monospace" placeholder="Ej: C:\\Operix\\Pedidos" required>
             </div>
             <div class="form-text fs-8">Directorio en el disco local para exportaciones de órdenes y cotizaciones.</div>
           </div>
@@ -1746,7 +1807,7 @@ const EMBEDDED_VIEWS = {
     <div class="d-flex align-items-center gap-3">
       <i class="bi bi-database-check text-primary fs-1"></i>
       <div>
-        <h2 class="h4 fw-bold mb-1">Backend Spring Boot 3.2.5: Base de Datos 'inplabel'</h2>
+        <h2 class="h4 fw-bold mb-1">Backend Spring Boot 3.2.5: Base de Datos Operix</h2>
         <p class="text-muted small mb-0">API REST disponible en http://localhost:8080/api</p>
       </div>
     </div>
@@ -1858,7 +1919,7 @@ const EMBEDDED_VIEWS = {
   <div class="card border-0 rounded-4 overflow-hidden shadow-lg" style="width: 100%; max-width: 900px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12) !important;">
     <div class="row g-0">
       
-      <!-- Columna Izquierda: Banner Corporativo Inplabel -->
+      <!-- Columna Izquierda: Banner Corporativo Operix -->
       <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 text-white" style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); position: relative; overflow: hidden;">
         
         <!-- Elemento de fondo decorativo -->
@@ -1868,10 +1929,10 @@ const EMBEDDED_VIEWS = {
         <!-- Top: Título y Presentación del Sistema -->
         <div style="position: relative; z-index: 2;">
           <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(0, 175, 80, 0.15); border: 1px solid rgba(0, 175, 80, 0.3); color: #4ade80; font-size: 0.8rem; font-weight: 700;">
-            <i class="bi bi-layers-fill"></i> Sistema Empresarial
+            <i class="bi bi-layers-fill"></i> Operix ERP
           </div>
-          <h4 class="fw-bold text-white mb-2" style="font-size: 1.45rem; letter-spacing: -0.3px; line-height: 1.25;">Plataforma de Gestión</h4>
-          <p class="text-white-50 small mb-0" style="font-size: 0.88rem; line-height: 1.4;">Sistema Operativo Central de Ventas y Planta Industrial</p>
+          <h4 class="fw-bold text-white mb-2" style="font-size: 1.45rem; letter-spacing: -0.3px; line-height: 1.25;">Plataforma Operix</h4>
+          <p class="text-white-50 small mb-0" style="font-size: 0.88rem; line-height: 1.4;">Sistema Operativo Central de Ventas y Gestión Operativa</p>
         </div>
 
         <!-- Middle: Módulos Activos -->
@@ -1905,9 +1966,9 @@ const EMBEDDED_VIEWS = {
       <!-- Columna Derecha: Formulario de Inicio de Sesión -->
       <div class="col-lg-7 p-4 p-md-5 d-flex flex-column justify-content-center" style="background: #ffffff;">
         
-        <!-- Logo de Inplabel en la cabecera del formulario -->
+        <!-- Logo de Operix en la cabecera del formulario -->
         <div class="text-center text-lg-start mb-4">
-          <img src="img/inplabel-logo.png" alt="Inplabel - Industrias plasticos belsa S.A.C" style="max-height: 82px; width: auto; object-fit: contain;" class="mb-3">
+          <img src="img/operix-logo.png" alt="Operix" style="max-height: 68px; width: auto; object-fit: contain;" class="mb-3">
           <h3 class="fw-bold mb-1" style="color: #0f172a; font-size: 1.6rem; letter-spacing: -0.4px;">Bienvenido</h3>
           <p class="small mb-0" style="color: #64748b; font-size: 0.88rem;">Ingresa tus credenciales para acceder al sistema.</p>
         </div>
@@ -1929,7 +1990,7 @@ const EMBEDDED_VIEWS = {
               <span class="input-group-text" style="border-radius: 10px 0 0 10px;">
                 <i class="bi bi-person-fill fs-6"></i>
               </span>
-              <input type="text" id="loginUsername" name="inplabel_user_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu usuario..." autocomplete="new-password" required autofocus style="border-radius: 0 10px 10px 0;">
+              <input type="text" id="loginUsername" name="login_user_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu usuario..." autocomplete="new-password" required autofocus style="border-radius: 0 10px 10px 0;">
             </div>
           </div>
 
@@ -1942,7 +2003,7 @@ const EMBEDDED_VIEWS = {
               <span class="input-group-text" style="border-radius: 10px 0 0 10px;">
                 <i class="bi bi-lock-fill fs-6"></i>
               </span>
-              <input type="password" id="loginPassword" name="inplabel_pass_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu contraseña..." autocomplete="new-password" required style="border-radius: 0;">
+              <input type="password" id="loginPassword" name="login_pass_input" class="form-control modern-login-input py-2.5" placeholder="Escribe tu contraseña..." autocomplete="new-password" required style="border-radius: 0;">
               <button type="button" class="btn btn-toggle-pass" onclick="authModule.togglePasswordVisibility()" title="Mostrar/Ocultar contraseña" style="border-radius: 0 10px 10px 0;">
                 <i id="togglePassIcon" class="bi bi-eye-fill"></i>
               </button>
@@ -1958,12 +2019,244 @@ const EMBEDDED_VIEWS = {
         <!-- Footer -->
         <div class="mt-4 pt-3 border-top text-center" style="border-color: #f1f5f9 !important;">
           <small class="d-block" style="font-size: 0.76rem; color: #94a3b8;">
-            © 2026 Inplabel S.A.C. • Todos los derechos reservados
+            © 2026 Operix • Todos los derechos reservados
           </small>
         </div>
 
       </div>
 
+    </div>
+  </div>
+</div>
+`,
+usuarios: `
+<div class="content-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0"><i class="bi bi-shield-lock-fill text-primary me-1"></i> Administración de Usuarios y Matriz de Permisos</h3>
+    <button class="btn btn-primary btn-sm px-3 fw-bold" onclick="usuariosModule.openNewUserModal()">
+      <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
+    </button>
+  </div>
+
+  <div class="p-3 bg-body-tertiary border-bottom">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" id="searchUsuariosInput" class="form-control"
+        placeholder="Buscar usuario por nombre, username o rol..."
+        oninput="usuariosModule.filterUsuarios(this.value)">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table custom-table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Usuario (Username)</th>
+          <th>Nombre Completo</th>
+          <th>Rol Principal</th>
+          <th>Establecimiento</th>
+          <th>Permisos Concedidos</th>
+          <th class="text-center">Estado</th>
+          <th style="width: 140px;" class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usuariosTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Crear / Editar Usuario con Matriz Granular de Permisos -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow">
+      <div class="modal-header bg-primary text-white py-2.5">
+        <h5 class="modal-title fs-6 fw-bold" id="modalUsuarioTitle">
+          <i class="bi bi-person-gear me-1"></i> Registrar Nuevo Usuario
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formUsuario" onsubmit="event.preventDefault(); usuariosModule.saveUsuario();">
+        <div class="modal-body p-3">
+          <input type="hidden" id="usuarioIdInput" value="">
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Nombre de Usuario (Login) *</label>
+              <input type="text" id="usuarioUsernameInput" class="form-control form-control-sm" placeholder="Ej: jsmith, vendedor1" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Contraseña <span id="usuarioPasswordHint" class="text-muted fw-normal small">(Requerida para nuevos)</span> *</label>
+              <input type="password" id="usuarioPasswordInput" class="form-control form-control-sm" placeholder="••••••••">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label small fw-bold mb-1">Nombre Completo *</label>
+              <input type="text" id="usuarioNombreInput" class="form-control form-control-sm" placeholder="Ej: Juan Pérez Morales" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1">Rol de Referencia *</label>
+              <select id="usuarioRolSelect" class="form-select form-select-sm" required onchange="usuariosModule.onRolPresetChange(this.value)">
+                <option value="OPERADOR">OPERADOR (Personalizado)</option>
+                <option value="ADMIN">ADMINISTRADOR (Acceso Total)</option>
+                <option value="VENTAS">VENTAS (Pedidos y Clientes)</option>
+                <option value="PRODUCCION">PRODUCCIÓN (Control y Productos)</option>
+                <option value="ALMACEN">ALMACÉN / DESPACHO (Envíos y Guías)</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold mb-1"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Establecimiento por Defecto *</label>
+              <select id="usuarioEstablecimientoSelect" class="form-select form-select-sm" required>
+                <option value="CARABAYLLO">Carabayllo (Sucursal - GR001)</option>
+                <option value="COMAS">Comas (Planta Principal - GR002)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="border rounded p-3 bg-body-tertiary mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="fw-bold mb-0 text-primary fs-7">
+                <i class="bi bi-ui-checks me-1"></i> Matriz Granular de Permisos (Checkboxes)
+              </h6>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fs-8" onclick="usuariosModule.selectAllPerms(true)">Marcar Todos</button>
+                <span class="text-muted">|</span>
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fs-8 text-muted" onclick="usuariosModule.selectAllPerms(false)">Desmarcar Todos</button>
+              </div>
+            </div>
+            <p class="small text-muted mb-3 fs-8">Seleccione las acciones exactas que este usuario tiene permitido realizar en el sistema:</p>
+
+            <div class="row g-3">
+              <!-- MÓDULO PEDIDOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-primary-subtle fw-bold fs-8 text-primary">
+                    <i class="bi bi-cart-fill me-1"></i> Módulo de Pedidos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_view" value="pedidos.view" checked>
+                      <label class="form-check-label" for="perm_pedidos_view">Ver Lista y Ficha de Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_create" value="pedidos.create">
+                      <label class="form-check-label" for="perm_pedidos_create">Crear Nuevos Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_edit" value="pedidos.edit">
+                      <label class="form-check-label" for="perm_pedidos_edit">Editar Pedidos Existentes</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_cancel" value="pedidos.cancel">
+                      <label class="form-check-label" for="perm_pedidos_cancel">Anular / Cancelar Pedidos</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_finish" value="pedidos.finish">
+                      <label class="form-check-label" for="perm_pedidos_finish">Finalizar Orden / Cambiar Estado</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_pedidos_finances" value="pedidos.finances">
+                      <label class="form-check-label text-success fw-semibold" for="perm_pedidos_finances">Ver Adelantos y Dinero (Soles)</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO ENVÍOS Y DESPACHOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-warning-subtle fw-bold fs-8 text-warning-emphasis">
+                    <i class="bi bi-truck me-1"></i> Despachos y Envíos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_envios_create" value="envios.create">
+                      <label class="form-check-label" for="perm_envios_create">Registrar Despacho / Envío Físico</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_envios_view" value="envios.view">
+                      <label class="form-check-label" for="perm_envios_view">Ver Historial de Despachos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO GUÍAS DE REMISIÓN -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-info-subtle fw-bold fs-8 text-info-emphasis">
+                    <i class="bi bi-file-earmark-text me-1"></i> Guías de Remisión
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_guias_create" value="guias.create">
+                      <label class="form-check-label" for="perm_guias_create">Emitir Guías Oficiales (GR001 / GR002)</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_guias_view" value="guias.view">
+                      <label class="form-check-label" for="perm_guias_view">Ver e Imprimir PDF de Guías</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÓDULO PRODUCCIÓN -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-success-subtle fw-bold fs-8 text-success">
+                    <i class="bi bi-gear-wide-connected me-1"></i> Control de Producción
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_produccion_view" value="produccion.view">
+                      <label class="form-check-label" for="perm_produccion_view">Ver Órdenes de Producción Pendientes</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CLIENTES & PRODUCTOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-secondary-subtle fw-bold fs-8 text-secondary">
+                    <i class="bi bi-boxes me-1"></i> Clientes y Productos
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_clientes_manage" value="clientes.manage">
+                      <label class="form-check-label" for="perm_clientes_manage">Crear / Editar Clientes</label>
+                    </div>
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_productos_manage" value="productos.manage">
+                      <label class="form-check-label" for="perm_productos_manage">Crear / Editar Productos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GESTIÓN DE USUARIOS -->
+              <div class="col-md-6">
+                <div class="card border-0 shadow-xs h-100">
+                  <div class="card-header py-1.5 px-3 bg-danger-subtle fw-bold fs-8 text-danger">
+                    <i class="bi bi-shield-lock me-1"></i> Administración del Sistema
+                  </div>
+                  <div class="card-body p-2 d-flex flex-column gap-1.5">
+                    <div class="form-check form-switch fs-8">
+                      <input class="form-check-input perm-cb" type="checkbox" id="perm_usuarios_manage" value="usuarios.manage">
+                      <label class="form-check-label text-danger fw-bold" for="perm_usuarios_manage">Administrar Usuarios y Permisos</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+            <i class="bi bi-check-circle-fill me-1"></i> Guardar Usuario
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -1977,12 +2270,23 @@ export class Router {
   }
 
   async navigateTo(route) {
-    // Remove any leftover Bootstrap modal backdrops and restore body state
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-    document.body.style.removeProperty('pointer-events');
+    // Cerrar cualquier modal que haya quedado abierto y limpiar backdrops
+    if (typeof window.closeAllOpenModals === 'function') {
+      window.closeAllOpenModals();
+    } else {
+      document.querySelectorAll('.modal').forEach(el => {
+        el.classList.remove('show');
+        el.style.removeProperty('display');
+        el.style.removeProperty('pointer-events');
+        el.setAttribute('aria-hidden', 'true');
+        el.removeAttribute('aria-modal');
+      });
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+      document.body.style.removeProperty('pointer-events');
+    }
 
     // Verificar si el usuario está autenticado
     const isAuth = window.authModule && typeof window.authModule.isAuthenticated === 'function' 
@@ -2041,13 +2345,14 @@ export class Router {
       clientes: '<i class="bi bi-people text-primary"></i> Clientes',
       productos: '<i class="bi bi-box-seam text-primary"></i> Productos',
       produccion: '<i class="bi bi-gear-wide-connected text-primary"></i> Control de Producción',
+      usuarios: '<i class="bi bi-shield-lock-fill text-primary"></i> Administración de Usuarios y Matriz de Permisos',
       config: '<i class="bi bi-gear-fill text-primary"></i> Configuración del Sistema',
       bd: '<i class="bi bi-database-check text-primary"></i> Estado Base de Datos',
       login: '<i class="bi bi-box-arrow-in-right text-primary"></i> Iniciar Sesión'
     };
 
     const titleElem = document.getElementById('pageTitle');
-    if (titleElem) titleElem.innerHTML = titles[route] || 'INPLABEL Pedidos';
+    if (titleElem) titleElem.innerHTML = titles[route] || 'OPERIX Pedidos';
 
     const container = document.getElementById('viewContainer');
     if (!container) return;

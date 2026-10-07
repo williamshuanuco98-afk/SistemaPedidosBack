@@ -319,7 +319,11 @@ export async function consultarDni(dni) {
   }
 }
 
+let isSubmittingCliente = false;
+
 export async function saveClientFromModal() {
+  if (isSubmittingCliente) return;
+
   const clientId = document.getElementById('modalClienteId')?.value;
   const tipoDoc = document.getElementById('modalClienteTipoDoc')?.value || 'RUC';
   const nroDoc = document.getElementById('modalClienteNroDoc')?.value.trim();
@@ -331,6 +335,15 @@ export async function saveClientFromModal() {
     return;
   }
 
+  const btnSave = document.getElementById('btnSaveClienteModal') || document.querySelector('#formCliente button[type="submit"]');
+  const originalBtnHtml = btnSave ? btnSave.innerHTML : '<i class="bi bi-save me-1"></i> Guardar Cliente';
+
+  isSubmittingCliente = true;
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...';
+  }
+
   const payload = {
     tipo_documento: tipoDoc,
     nro_documento: nroDoc,
@@ -339,20 +352,48 @@ export async function saveClientFromModal() {
   };
 
   const modalElem = document.getElementById('modalCliente');
-  const modal = bootstrap.Modal.getInstance(modalElem);
+  const modal = modalElem ? bootstrap.Modal.getInstance(modalElem) : null;
 
-  if (clientId) {
-    // Update existing client in MySQL
-    await api.updateCliente(clientId, payload);
-  } else {
-    // Save new client in MySQL
-    await api.addCliente(payload);
+  try {
+    let res;
+    if (clientId) {
+      // Update existing client in MySQL
+      res = await api.updateCliente(clientId, payload);
+    } else {
+      // Save new client in MySQL
+      res = await api.addCliente(payload);
+    }
+
+    if (res && (res.success === false || res.error)) {
+      alert(res.error || res.message || 'No se pudo registrar el cliente.');
+      return;
+    }
+
+    // Re-fetch fresh list directly from MySQL database
+    currentClients = await api.getClientes();
+    if (window.app) window.app.clients = [...currentClients];
+
+    if (modal) modal.hide();
+
+    // Reset modal fields for next client registration
+    const idElem = document.getElementById('modalClienteId');
+    const nroElem = document.getElementById('modalClienteNroDoc');
+    const razonElem = document.getElementById('modalClienteRazonSocial');
+    const dirElem = document.getElementById('modalClienteDireccion');
+    if (idElem) idElem.value = '';
+    if (nroElem) nroElem.value = '';
+    if (razonElem) razonElem.value = '';
+    if (dirElem) dirElem.value = '';
+
+    filterClientes();
+  } catch (err) {
+    console.error('Error al guardar cliente:', err);
+    alert('Ocurrió un error inesperado al procesar la solicitud.');
+  } finally {
+    isSubmittingCliente = false;
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = originalBtnHtml;
+    }
   }
-
-  // Re-fetch fresh list directly from MySQL database
-  currentClients = await api.getClientes();
-  if (window.app) window.app.clients = [...currentClients];
-
-  if (modal) modal.hide();
-  filterClientes();
 }

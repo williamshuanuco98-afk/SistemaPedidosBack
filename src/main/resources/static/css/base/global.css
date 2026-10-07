@@ -1,6 +1,6 @@
-/* Instant theme switch without transition lag/delay */
-.no-transitions,
-.no-transitions *,
+/* Instant theme switch without transition lag/delay (except smooth switch knob) */
+.no-transitions:not(.theme-switch-input),
+.no-transitions *:not(.theme-switch-input):not(.sidebar-theme-switch-wrapper),
 .no-transitions *::before,
 .no-transitions *::after {
   transition: none !important;
@@ -426,4 +426,16 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Hide number input spinners / arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+input[type=number] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
 

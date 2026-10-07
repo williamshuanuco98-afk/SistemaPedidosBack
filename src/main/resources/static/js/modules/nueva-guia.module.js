@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { escapeHtml, filterAndRankItems } from '../helpers.js';
 import { openPDF, printGuiaPDF } from './envios.module.js';
+import { getCurrentUser } from './auth.module.js';
 
 const DIRECCION_CARABAYLLO = "C.P. Las Piedritas Av. Las Piedritas Mz D Lt 9 - Carabayllo - Lima - Lima";
 const DIRECCION_COMAS = "Av. Maria Parado de Belllido Lt. 5 Lotizacion Chacra Cerro - Comas - Lima - Lima";
@@ -15,7 +16,10 @@ const state = {
 };
 
 export async function initNuevaGuiaView() {
-  state.selectedLocal = 'CARABAYLLO';
+  const currentUser = getCurrentUser();
+  const defaultLocal = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+
+  state.selectedLocal = defaultLocal;
   state.selectedClient = null;
   state.guiaItems = [];
   state.activeClientIndex = -1;
@@ -29,8 +33,8 @@ export async function initNuevaGuiaView() {
 
   // Setup local & address
   const localSelect = document.getElementById('selectLocalGuia');
-  if (localSelect) localSelect.value = 'CARABAYLLO';
-  await updateLocalAndCorrelative('CARABAYLLO');
+  if (localSelect) localSelect.value = defaultLocal;
+  await updateLocalAndCorrelative(defaultLocal);
 
   setupClientSearch();
   setupProductSearch();
@@ -197,8 +201,8 @@ function setupProductSearch() {
     const matches = filterAndRankItems(
       products,
       val,
-      p => `#${p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''}`
-    ).slice(0, 15);
+      p => `#${p.codigo_producto || p.id_producto || ''} ${p.id_producto || ''} ${p.codigo_producto || ''} ${p.nombre_producto || ''} ${p.tipo_producto || ''} ${p.categoria || ''}`
+    ).slice(0, 25);
 
     if (matches.length === 0) {
       list.innerHTML = `<li class="list-group-item text-muted py-2 fs-7">No se encontraron productos para "${escapeHtml(val)}"</li>`;
@@ -259,17 +263,15 @@ function addProductToGuia(product) {
   if (input) input.value = '';
   if (list) list.classList.add('d-none');
 
-  const existing = state.guiaItems.find(i => String(i.id_producto) === String(product.id_producto));
-  if (existing) {
-    existing.cantidad += 1;
-  } else {
-    state.guiaItems.push({
-      id_producto: product.id_producto,
-      nombre_producto: product.nombre_producto,
-      codigo_producto: product.codigo_producto || '',
-      cantidad: 1
-    });
-  }
+  // Always append a new independent row for selected products with default product's UM or UNID
+  const defaultUM = (product.unidad_medida || 'UNID').toUpperCase();
+  state.guiaItems.push({
+    id_producto: product.id_producto,
+    nombre_producto: product.nombre_producto,
+    codigo_producto: product.codigo_producto || '',
+    unidad_medida: defaultUM,
+    cantidad: 1
+  });
 
   renderGuiaProductsTable();
 }
@@ -284,6 +286,12 @@ export function updateItemQty(index, qty) {
   renderGuiaProductsTable();
 }
 
+export function updateItemUM(index, um) {
+  if (state.guiaItems[index]) {
+    state.guiaItems[index].unidad_medida = (um || 'UNID').toUpperCase();
+  }
+}
+
 export function removeItemRow(index) {
   state.guiaItems.splice(index, 1);
   renderGuiaProductsTable();
@@ -295,17 +303,21 @@ function renderGuiaProductsTable() {
   tbody.innerHTML = '';
 
   if (state.guiaItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No se han agregado productos a la guía.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No se han agregado productos a la guía.</td></tr>`;
     return;
   }
 
   state.guiaItems.forEach((item, idx) => {
+    const curUM = (item.unidad_medida || 'UNID').toUpperCase();
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="fw-bold">${escapeHtml(item.codigo_producto || '#' + item.id_producto)}</td>
       <td class="fw-semibold">${escapeHtml(item.nombre_producto)}</td>
+      <td class="text-center">
+        <span class="badge bg-secondary-subtle text-secondary-emphasis border px-2.5 py-1 fw-bold fs-7">${escapeHtml(curUM)}</span>
+      </td>
       <td>
-        <input type="number" class="form-control form-control-sm py-0 px-2 fs-7 text-center mx-auto" value="${item.cantidad}" min="1" onchange="nuevaGuiaModule.updateItemQty(${idx}, this.value)" style="width: 100px; height: 28px;">
+        <input type="text" inputmode="numeric" class="form-control form-control-sm py-0 px-2 fs-7 text-center mx-auto" value="${item.cantidad}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onchange="nuevaGuiaModule.updateItemQty(${idx}, this.value)" style="width: 100px; height: 28px;">
       </td>
       <td class="text-center">
         <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-1" onclick="nuevaGuiaModule.removeItemRow(${idx})">
@@ -372,33 +384,72 @@ export async function submitNuevaGuia() {
       id_producto: item.id_producto,
       nombre_producto: item.nombre_producto,
       codigo_producto: item.codigo_producto || '',
+      unidad_medida: item.unidad_medida || 'UNID',
       cantidad: item.cantidad
     }))
   };
 
   try {
     const newGuia = await api.createGuia(payload);
+    if (!newGuia || (!newGuia.id_guia && !newGuia.id)) {
+      throw new Error('El servidor no devolvió una respuesta válida con el número de la guía.');
+    }
 
     // Add to in-memory window.app.shipments
     if (window.app) {
       if (!Array.isArray(window.app.shipments)) window.app.shipments = [];
-      const exists = window.app.shipments.some(g => String(g.id_guia) === String(newGuia.id_guia));
+      const guiaId = newGuia.id_guia || newGuia.id;
+      const exists = window.app.shipments.some(g => String(g.id_guia || g.id) === String(guiaId));
       if (!exists) {
         window.app.shipments.unshift(newGuia);
       }
     }
 
     showGuiaSuccessModal(newGuia);
+    await resetNuevaGuiaForm();
 
   } catch (err) {
     console.error("Error al emitir la guía:", err);
-    alert('Ocurrió un error al guardar la guía de remisión. Se guardará de forma local.');
+    alert('Ocurrió un error al emitir la guía de remisión: ' + (err.message || 'Error de conexión'));
   } finally {
     if (btnGuardar) {
       btnGuardar.disabled = false;
       btnGuardar.innerHTML = `<i class="bi bi-check-circle me-1"></i> Emitir Guía de Remisión`;
     }
   }
+}
+
+export async function resetNuevaGuiaForm() {
+  state.selectedClient = null;
+  state.guiaItems = [];
+  state.activeClientIndex = -1;
+  state.activeProductIndex = -1;
+
+  const clientInput = document.getElementById('searchClienteGuiaInput');
+  const rucInput = document.getElementById('rucDniGuiaInput');
+  const docRefInput = document.getElementById('docReferenciaGuiaInput');
+  const llegadaInput = document.getElementById('puntoLlegadaGuiaInput');
+  const obsInput = document.getElementById('observacionesGuiaInput');
+  const prodSearchInput = document.getElementById('searchProductGuiaInput');
+
+  if (clientInput) clientInput.value = '';
+  if (rucInput) rucInput.value = '';
+  if (docRefInput) docRefInput.value = '';
+  if (llegadaInput) llegadaInput.value = '';
+  if (obsInput) obsInput.value = '';
+  if (prodSearchInput) prodSearchInput.value = '';
+
+  const dateInput = document.getElementById('fechaEmisionGuiaInput');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  const currentUser = getCurrentUser();
+  const defaultLocal = (currentUser && currentUser.establecimiento) ? currentUser.establecimiento.toUpperCase() : 'CARABAYLLO';
+  state.selectedLocal = defaultLocal;
+  const localSelect = document.getElementById('selectLocalGuia');
+  if (localSelect) localSelect.value = defaultLocal;
+
+  await updateLocalAndCorrelative(defaultLocal);
+  renderGuiaProductsTable();
 }
 
 function showGuiaSuccessModal(guia) {
@@ -441,20 +492,29 @@ function showGuiaSuccessModal(guia) {
     document.body.appendChild(modalEl);
   }
 
+  const targetId = guia?.id_guia || guia?.id;
   const nroLabel = modalEl.querySelector('#successModalNroGuia');
-  if (nroLabel) nroLabel.textContent = guia.nro_guia || 'Guía Emitida';
+  if (nroLabel) nroLabel.textContent = guia?.nro_guia || 'Guía Emitida';
 
   const btnPrint = modalEl.querySelector('#btnSuccessPrintGuia');
   if (btnPrint) {
     btnPrint.onclick = () => {
-      printGuiaPDF(guia);
+      if (targetId && !isNaN(Number(targetId))) {
+        printGuiaPDF(guia);
+      } else {
+        alert('No se pudo identificar la guía de remisión para imprimir.');
+      }
     };
   }
 
   const btnPdf = modalEl.querySelector('#btnSuccessPdfGuia');
   if (btnPdf) {
     btnPdf.onclick = () => {
-      openPDF(guia.id_guia);
+      if (targetId && !isNaN(Number(targetId))) {
+        openPDF(targetId);
+      } else {
+        alert('No se pudo identificar el código de la guía para visualizar el PDF.');
+      }
     };
   }
 

@@ -20,7 +20,13 @@ import {
   openAgregarPagoModal,
   savePagoPedido,
   viewOrderDetail,
-  setupDefaultDateFilters
+  setupDefaultDateFilters,
+  openRegistrarEnvioFromDetails,
+  openFinalizarOrdenFromDetails,
+  switchDetailTab,
+  saveRegistrarEnvioFromTab,
+  saveFinalizarOrdenFromTab,
+  toggleTabFinalizarFields
 } from './modules/pedidos.module.js';
 import { 
   renderNuevoPedidoPage, 
@@ -44,7 +50,11 @@ import {
   viewGuiaDetail,
   anularGuia,
   openAnularModal,
-  confirmAnularGuia
+  confirmAnularGuia,
+  openEditarGuiaModal,
+  addEditGuiaRow,
+  removeEditGuiaRow,
+  saveEditarGuia
 } from './modules/envios.module.js';
 import { 
   initNuevaGuiaView, 
@@ -76,6 +86,7 @@ import {
 } from './modules/productos.module.js';
 import { renderConfigView, saveStorageConfig } from './modules/config.module.js';
 import { renderProduccionTable, changePage as changeProduccionPage, onCategoryFilterChange, openProductDetailModal, onSearchInput as onProduccionSearch } from './modules/produccion.module.js';
+import * as usuariosModule from './modules/usuarios.module.js';
 import * as letrasModule from './modules/letras.module.js';
 import * as dashboardModule from './modules/dashboard.module.js';
 import * as authModule from './modules/auth.module.js';
@@ -90,6 +101,7 @@ window.app = {
 window.authModule = authModule;
 window.letrasModule = letrasModule;
 window.dashboardModule = dashboardModule;
+window.usuariosModule = usuariosModule;
 
 
 // Attach modules globally for inline HTML event handlers
@@ -122,7 +134,11 @@ window.enviosModule = {
   viewGuiaDetail,
   anularGuia,
   openAnularModal,
-  confirmAnularGuia
+  confirmAnularGuia,
+  openEditarGuiaModal,
+  addEditGuiaRow,
+  removeEditGuiaRow,
+  saveEditarGuia
 };
 
 window.clientesModule = {
@@ -146,7 +162,13 @@ window.pedidosModule = {
   saveRegistrarEnvio,
   openAgregarPagoModal,
   savePagoPedido,
-  viewOrderDetail
+  viewOrderDetail,
+  openRegistrarEnvioFromDetails,
+  openFinalizarOrdenFromDetails,
+  switchDetailTab,
+  saveRegistrarEnvioFromTab,
+  saveFinalizarOrdenFromTab,
+  toggleTabFinalizarFields
 };
 
 window.productosModule = {
@@ -228,14 +250,7 @@ class ModularSpaApp {
           localStorage.setItem('inplabel_pedidos', JSON.stringify(filtered));
         }
       }
-      const rawL = localStorage.getItem('inplabel_letras');
-      if (rawL) {
-        const arr = JSON.parse(rawL);
-        if (Array.isArray(arr)) {
-          const filtered = arr.filter(l => l.nro_letra !== '261-2025' && l.nro_letra !== '262-2025');
-          localStorage.setItem('inplabel_letras', JSON.stringify(filtered));
-        }
-      }
+      localStorage.setItem('inplabel_letras', '[]');
       const rawC = localStorage.getItem('inplabel_clientes');
       if (rawC) {
         const arr = JSON.parse(rawC);
@@ -257,7 +272,7 @@ class ModularSpaApp {
     }
 
     const hash = window.location.hash.replace('#', '');
-    const validRoutes = ['dashboard', 'pedidos', 'nuevo-pedido', 'envios', 'nueva-guia', 'letras', 'clientes', 'productos', 'produccion', 'config', 'bd'];
+    const validRoutes = ['dashboard', 'pedidos', 'nuevo-pedido', 'envios', 'nueva-guia', 'letras', 'clientes', 'productos', 'produccion', 'usuarios', 'config', 'bd'];
     const initialRoute = (hash && validRoutes.includes(hash)) ? hash : 'dashboard';
 
     // Navigate to initial route immediately
@@ -278,12 +293,23 @@ class ModularSpaApp {
       if (nameEl) nameEl.textContent = user.nombreCompleto || user.username;
       if (roleEl) {
         roleEl.textContent = user.rol || 'OPERACIONES';
-        roleEl.className = user.rol === 'ADMIN' ? 'badge bg-primary fs-9 py-0 px-1' : 'badge bg-warning text-dark fs-9 py-0 px-1';
+        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+        roleEl.className = isAdminUser ? 'badge bg-primary fs-9 py-0 px-1' : 'badge bg-warning text-dark fs-9 py-0 px-1';
       }
       if (avatarEl) {
-        const initials = user.rol === 'ADMIN' ? 'AD' : 'OP';
+        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+        const initials = isAdminUser ? 'AD' : 'OP';
         avatarEl.textContent = initials;
-        avatarEl.style.background = user.rol === 'ADMIN' ? '#0d6efd' : '#f59e0b';
+        avatarEl.style.background = isAdminUser ? '#0d6efd' : '#f59e0b';
+      }
+
+      // Dynamic permission UI enforcement
+      const perms = new Set(user.permisos || []);
+      const isAdmin = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+
+      const navUsuarios = document.getElementById('navItemUsuarios');
+      if (navUsuarios) {
+        navUsuarios.classList.toggle('d-none', !isAdmin && !perms.has('usuarios.manage'));
       }
     }
   }
@@ -342,8 +368,8 @@ class ModularSpaApp {
 
     document.querySelectorAll('.modal').forEach(m => {
       m.classList.remove('show');
-      m.style.display = 'none';
-      m.style.removeProperty('pointer-events');
+      m.style.setProperty('display', 'none', 'important');
+      m.style.setProperty('pointer-events', 'none', 'important');
     });
 
     if (typeof bootstrap === 'undefined' || !bootstrap.Modal) return;
@@ -367,14 +393,26 @@ class ModularSpaApp {
       themeBtn.addEventListener('click', () => this.toggleTheme());
     }
 
-    // Clean any orphaned modal backdrops automatically
+    // Clean any open modals when backdrop is clicked
     document.addEventListener('click', (e) => {
       if (e.target && e.target.classList && e.target.classList.contains('modal-backdrop')) {
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-        document.body.style.removeProperty('pointer-events');
+        const openModals = document.querySelectorAll('.modal.show');
+        openModals.forEach(m => {
+          if (typeof window.hideBootstrapModal === 'function') {
+            window.hideBootstrapModal(m);
+          }
+        });
+      }
+
+      // Universal close button handler for any modal close button (X or Cerrar)
+      const dismissBtn = e.target.closest('[data-bs-dismiss="modal"], .btn-close');
+      if (dismissBtn) {
+        const modalParent = dismissBtn.closest('.modal');
+        if (modalParent) {
+          if (typeof window.hideBootstrapModal === 'function') {
+            window.hideBootstrapModal(modalParent);
+          }
+        }
       }
     });
 
@@ -482,46 +520,47 @@ class ModularSpaApp {
   }
 
   async refreshData() {
-    let statusData = { connected: false };
-    let clients = [];
-    let products = [];
-    let orders = [];
-    let shipments = [];
+    // Limpiar cachés vacíos en localStorage si quedaron en [] por desconexión previa
+    ['inplabel_pedidos', 'inplabel_clientes', 'inplabel_productos', 'inplabel_guias'].forEach(k => {
+      try {
+        if (localStorage.getItem(k) === '[]') localStorage.removeItem(k);
+      } catch (e) {}
+    });
 
+    // 1. Verificar estado del backend inmediatamente y actualizar indicador visual
+    try {
+      const statusData = await api.getStatus();
+      this.statusData = statusData || { connected: false };
+      const indicator = document.getElementById('backendStatusIndicator');
+      if (indicator) {
+        indicator.removeAttribute('style');
+        if (this.statusData && this.statusData.connected) {
+          indicator.className = 'status-badge ACTIVA py-2 px-3 fs-7';
+          indicator.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Spring Boot: Conectado a MySQL';
+        } else {
+          indicator.className = 'status-badge CANCELADO py-2 px-3 fs-7';
+          indicator.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Spring Boot: Desconectado';
+        }
+      }
+    } catch (err) {
+      console.warn("Error consultando estado del backend:", err);
+    }
+
+    // 2. Obtener conjuntos de datos en paralelo directamente desde MySQL API
     try {
       const results = await Promise.allSettled([
-        api.getStatus(),
         api.getClientes(),
         api.getProductos(),
         api.getPedidos(),
         api.getGuias()
       ]);
 
-      if (results[0].status === 'fulfilled' && results[0].value) statusData = results[0].value;
-      if (results[1].status === 'fulfilled' && results[1].value) clients = results[1].value;
-      if (results[2].status === 'fulfilled' && results[2].value) products = results[2].value;
-      if (results[3].status === 'fulfilled' && results[3].value) orders = results[3].value;
-      if (results[4].status === 'fulfilled' && results[4].value) shipments = results[4].value;
+      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value) && results[0].value.length > 0) this.clients = results[0].value;
+      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value) && results[1].value.length > 0) this.products = results[1].value;
+      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value) && results[2].value.length > 0) this.orders = results[2].value;
+      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value) && results[3].value.length > 0) this.shipments = results[3].value;
     } catch (err) {
-      console.warn("Backend Spring Boot offline or unreachable:", err);
-    }
-
-    this.statusData = statusData;
-    if (clients && clients.length > 0) this.clients = clients;
-    if (products && products.length > 0) this.products = products;
-    if (orders && orders.length > 0) this.orders = orders;
-    if (shipments && shipments.length > 0) this.shipments = shipments;
-
-    const indicator = document.getElementById('backendStatusIndicator');
-    if (indicator) {
-      indicator.removeAttribute('style');
-      if (statusData && statusData.connected) {
-        indicator.className = 'status-badge ACTIVA py-2 px-3 fs-7';
-        indicator.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Spring Boot: Conectado a MySQL';
-      } else {
-        indicator.className = 'status-badge CANCELADO py-2 px-3 fs-7';
-        indicator.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Spring Boot: Desconectado';
-      }
+      console.warn("Backend Spring Boot offline o inalcanzable:", err);
     }
 
     this.updateBadges();
@@ -567,6 +606,8 @@ class ModularSpaApp {
         renderProductosTable(this.products, this.searchQuery);
       } else if (route === 'produccion') {
         renderProduccionTable(this.orders, this.products, this.searchQuery);
+      } else if (route === 'usuarios') {
+        usuariosModule.initUsuariosView();
       } else if (route === 'config' || route === 'bd') {
         renderConfigView(this.clients.length, this.products.length);
       }

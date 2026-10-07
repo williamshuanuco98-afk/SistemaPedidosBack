@@ -1,20 +1,6 @@
-/* Header / Top Navbar - Sticky Always Visible & Fully Responsive */
+/* Header / Top Navbar - Permanently hidden as requested */
 .top-header {
-  position: sticky;
-  top: 0;
-  z-index: 1040;
-  height: 72px;
-  min-height: 72px;
-  background: var(--bg-card);
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-sizing: border-box;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
-  gap: 12px;
+  display: none !important;
 }
 
 .page-title {
