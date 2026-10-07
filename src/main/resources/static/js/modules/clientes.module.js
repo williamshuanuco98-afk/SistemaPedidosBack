@@ -258,7 +258,25 @@ export async function consultarSunat(ruc) {
   lastSunatQueryRuc = ruc;
   const feedback = document.getElementById('sunatStatusFeedback');
   const btn = document.getElementById('btnConsultarSunat');
+  const razonInput = document.getElementById('modalClienteRazonSocial');
+  const dirInput = document.getElementById('modalClienteDireccion');
 
+  // 1. Check if already registered in local database/list
+  const cleanRuc = (ruc || '').trim();
+  const allClients = (currentClients && currentClients.length > 0) ? currentClients : (api.getLocalClientes() || []);
+  const existing = allClients.find(c => String(c.nro_documento || '').trim() === cleanRuc);
+
+  if (existing) {
+    if (razonInput && !razonInput.value) razonInput.value = existing.nombre_cliente || '';
+    if (dirInput && !dirInput.value) dirInput.value = existing.direccion || '';
+    if (feedback) {
+      feedback.className = 'form-text mt-1 text-success fw-bold fs-8';
+      feedback.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Cliente ya registrado en el sistema: ${escapeHtml(existing.nombre_cliente)}`;
+    }
+    return;
+  }
+
+  // 2. Query external SUNAT API
   if (feedback) {
     feedback.className = 'form-text mt-1 text-warning fw-semibold fs-8';
     feedback.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Consultando SUNAT en tiempo real...';
@@ -270,9 +288,6 @@ export async function consultarSunat(ruc) {
   if (btn) btn.disabled = false;
 
   if (res && res.success) {
-    const razonInput = document.getElementById('modalClienteRazonSocial');
-    const dirInput = document.getElementById('modalClienteDireccion');
-
     if (razonInput && res.nombre_cliente) razonInput.value = res.nombre_cliente;
     if (dirInput && res.direccion) dirInput.value = res.direccion;
 
@@ -282,8 +297,8 @@ export async function consultarSunat(ruc) {
     }
   } else {
     if (feedback) {
-      feedback.className = 'form-text mt-1 text-danger fs-8';
-      feedback.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> No se encontró respuesta de SUNAT. Ingrese los datos manualmente.';
+      feedback.className = 'form-text mt-1 text-info fs-8';
+      feedback.innerHTML = '<i class="bi bi-info-circle-fill me-1"></i> No se encontró en SUNAT. Ingrese los datos del cliente manualmente.';
     }
   }
 }
@@ -292,7 +307,23 @@ export async function consultarDni(dni) {
   lastSunatQueryRuc = dni;
   const feedback = document.getElementById('sunatStatusFeedback');
   const btn = document.getElementById('btnConsultarSunat');
+  const razonInput = document.getElementById('modalClienteRazonSocial');
 
+  // 1. Check if already registered in local database/list
+  const cleanDni = (dni || '').trim();
+  const allClients = (currentClients && currentClients.length > 0) ? currentClients : (api.getLocalClientes() || []);
+  const existing = allClients.find(c => String(c.nro_documento || '').trim() === cleanDni);
+
+  if (existing) {
+    if (razonInput && !razonInput.value) razonInput.value = existing.nombre_cliente || '';
+    if (feedback) {
+      feedback.className = 'form-text mt-1 text-success fw-bold fs-8';
+      feedback.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Cliente ya registrado en el sistema: ${escapeHtml(existing.nombre_cliente)}`;
+    }
+    return;
+  }
+
+  // 2. Query external RENIEC DNI API
   if (feedback) {
     feedback.className = 'form-text mt-1 text-warning fw-semibold fs-8';
     feedback.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Consultando DNI en tiempo real...';
@@ -304,7 +335,6 @@ export async function consultarDni(dni) {
   if (btn) btn.disabled = false;
 
   if (res && res.success) {
-    const razonInput = document.getElementById('modalClienteRazonSocial');
     if (razonInput && res.nombre_cliente) razonInput.value = res.nombre_cliente;
 
     if (feedback) {
@@ -313,8 +343,8 @@ export async function consultarDni(dni) {
     }
   } else {
     if (feedback) {
-      feedback.className = 'form-text mt-1 text-danger fs-8';
-      feedback.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> No se encontró respuesta para el DNI ingresado.';
+      feedback.className = 'form-text mt-1 text-info fs-8';
+      feedback.innerHTML = '<i class="bi bi-info-circle-fill me-1"></i> No se encontró en RENIEC. Ingrese el nombre manualmente.';
     }
   }
 }

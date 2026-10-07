@@ -74,8 +74,13 @@ function setupClientSearch() {
       return;
     }
 
+    const allClients = (window.app && window.app.clients && window.app.clients.length > 0) 
+      ? window.app.clients 
+      : ((state.clients && state.clients.length > 0) ? state.clients : api.getLocalClientes());
+    state.clients = allClients;
+
     const matches = filterAndRankItems(
-      state.clients, 
+      allClients, 
       val, 
       c => `${c.nro_documento || ''} ${c.nombre_cliente || ''} ${c.direccion || ''}`
     ).slice(0, 15);

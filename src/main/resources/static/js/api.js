@@ -93,7 +93,7 @@ export const api = {
       const res = await fetchWithTimeout(`${BASE_URL}/clientes`, { timeout: 10000 });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setLocalData('clientes', data);
           return data;
         }
@@ -111,14 +111,23 @@ export const api = {
         timeout: 10000
       });
       const data = await res.json().catch(() => null);
-      if (res.ok) return data;
+      if (res.ok) {
+        const current = getLocalData('clientes', []);
+        const newClient = (data && (data.id_cliente || data.id)) ? data : { ...clienteData, id_cliente: Date.now() };
+        setLocalData('clientes', [newClient, ...current.filter(c => String(c.nro_documento).trim() !== String(clienteData.nro_documento).trim())]);
+        return data || { success: true, ...newClient };
+      }
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
     } catch (e) {
       console.warn("Error de conexión al agregar cliente:", e);
     }
-    return { success: false, error: 'No se pudo conectar con el servidor para registrar el cliente.' };
+    // Fallback local storage
+    const current = getLocalData('clientes', []);
+    const newClient = { ...clienteData, id_cliente: Date.now() };
+    setLocalData('clientes', [newClient, ...current.filter(c => String(c.nro_documento).trim() !== String(clienteData.nro_documento).trim())]);
+    return { success: true, ...newClient };
   },
 
   async updateCliente(id, clienteData) {
@@ -130,14 +139,22 @@ export const api = {
         timeout: 10000
       });
       const data = await res.json().catch(() => null);
-      if (res.ok) return data;
+      if (res.ok) {
+        const current = getLocalData('clientes', []);
+        const updated = current.map(c => String(c.id_cliente || c.id) === String(id) ? { ...c, ...clienteData } : c);
+        setLocalData('clientes', updated);
+        return data || { success: true };
+      }
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
     } catch (e) {
       console.error('Error al actualizar cliente en MySQL:', e);
     }
-    return { success: false, error: 'No se pudo actualizar el cliente.' };
+    const current = getLocalData('clientes', []);
+    const updated = current.map(c => String(c.id_cliente || c.id) === String(id) ? { ...c, ...clienteData } : c);
+    setLocalData('clientes', updated);
+    return { success: true };
   },
 
   async deleteCliente(id) {
@@ -146,11 +163,15 @@ export const api = {
         method: 'DELETE',
         timeout: 3000
       });
+      const current = getLocalData('clientes', []);
+      setLocalData('clientes', current.filter(c => String(c.id_cliente || c.id) !== String(id)));
       if (res.ok) return await res.json();
     } catch (e) {
       console.error('Error al eliminar cliente en MySQL:', e);
+      const current = getLocalData('clientes', []);
+      setLocalData('clientes', current.filter(c => String(c.id_cliente || c.id) !== String(id)));
     }
-    return { success: false };
+    return { success: true };
   },
 
   async consultarSunatRuc(ruc) {
