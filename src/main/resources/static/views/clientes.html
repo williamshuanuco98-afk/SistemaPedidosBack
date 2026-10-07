@@ -36,30 +36,35 @@
 
 <!-- Modal Registrar / Modificar Cliente con Consulta SUNAT Automática -->
 <div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="modalClienteTitle"><i class="bi bi-person-plus me-2 text-primary"></i>Registrar Cliente</h5>
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 650px;">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header px-4 py-3 border-bottom">
+        <div>
+          <h5 class="modal-title fw-bold mb-0" id="modalClienteTitle">
+            <i class="bi bi-person-plus me-2 text-primary"></i>Registrar Cliente
+          </h5>
+          <small class="text-muted fs-8">Complete los datos del cliente o consulte en tiempo real con SUNAT/RENIEC</small>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body px-4 py-3">
         <form id="formCliente" onsubmit="event.preventDefault(); clientesModule.saveClientFromModal();">
           <input type="hidden" id="modalClienteId" value="">
           <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label fw-semibold">Tipo Doc. *</label>
-              <select id="modalClienteTipoDoc" class="form-select" onchange="clientesModule.onTipoDocChange(this.value)">
+            <div class="col-sm-5 col-12">
+              <label class="form-label fw-semibold fs-7 mb-1 text-secondary">Tipo Doc. <span class="text-danger">*</span></label>
+              <select id="modalClienteTipoDoc" class="form-select form-select-md" onchange="clientesModule.onTipoDocChange(this.value)">
                 <option value="RUC" selected>RUC (11 dígitos)</option>
                 <option value="DNI">DNI (8 dígitos)</option>
               </select>
             </div>
-            <div class="col-md-8">
-              <label class="form-label fw-semibold">N° Documento *</label>
+            <div class="col-sm-7 col-12">
+              <label class="form-label fw-semibold fs-7 mb-1 text-secondary">N° Documento <span class="text-danger">*</span></label>
               <div class="input-group">
-                <input type="text" id="modalClienteNroDoc" class="form-control" placeholder="Ingrese 11 dígitos de RUC"
+                <input type="text" id="modalClienteNroDoc" class="form-control form-control-md font-monospace" placeholder="Ingrese 11 dígitos de RUC"
                   maxlength="11" required oninput="clientesModule.onNroDocInput(this.value)">
-                <button type="button" class="btn btn-outline-primary" id="btnConsultarSunat" onclick="clientesModule.consultarSunatManual()">
-                  <i class="bi bi-search me-1"></i> SUNAT
+                <button type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3 fw-semibold" id="btnConsultarSunat" onclick="clientesModule.consultarSunatManual()">
+                  <i class="bi bi-search"></i> <span>SUNAT</span>
                 </button>
               </div>
               <div id="sunatStatusFeedback" class="form-text mt-1 text-muted fs-8">
@@ -67,17 +72,19 @@
               </div>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Razón Social / Nombre Completo *</label>
-              <input type="text" id="modalClienteRazonSocial" class="form-control" placeholder="Razón social del cliente" required>
+              <label class="form-label fw-semibold fs-7 mb-1 text-secondary">Razón Social / Nombre Completo <span class="text-danger">*</span></label>
+              <input type="text" id="modalClienteRazonSocial" class="form-control form-control-md" placeholder="Razón social del cliente" required>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Domicilio Fiscal</label>
-              <textarea id="modalClienteDireccion" class="form-control" rows="2" placeholder="Domicilio fiscal completo devuelto por SUNAT"></textarea>
+              <label class="form-label fw-semibold fs-7 mb-1 text-secondary">Domicilio Fiscal</label>
+              <textarea id="modalClienteDireccion" class="form-control" rows="3" placeholder="Domicilio fiscal devuelto por SUNAT o ingresado manualmente"></textarea>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" id="btnSaveClienteModal" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar Cliente</button>
+          <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-outline-secondary px-4 py-2" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" id="btnSaveClienteModal" class="btn btn-primary px-4 py-2 fw-semibold shadow-sm">
+              <i class="bi bi-check-circle me-1"></i> Guardar Cliente
+            </button>
           </div>
         </form>
       </div>
