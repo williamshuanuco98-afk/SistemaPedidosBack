@@ -2408,6 +2408,7 @@ export class Router {
     const mobileToggleBtn = document.getElementById('btnMobileSidebarToggle');
 
     if (route === 'login') {
+      document.documentElement.classList.add('unauthenticated');
       if (sidebarEl) sidebarEl.style.display = 'none';
       if (headerEl) headerEl.style.display = 'none';
       if (mobileToggleBtn) mobileToggleBtn.style.display = 'none';
@@ -2417,6 +2418,7 @@ export class Router {
         mainEl.style.maxWidth = '100%';
       }
     } else {
+      document.documentElement.classList.remove('unauthenticated');
       if (sidebarEl) sidebarEl.style.display = '';
       if (headerEl) headerEl.style.display = '';
       if (mobileToggleBtn) mobileToggleBtn.style.display = '';

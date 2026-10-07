@@ -6,6 +6,18 @@
   transition: none !important;
 }
 
+/* Zero-flash protection for unauthenticated initial render */
+html.unauthenticated #sidebar,
+html.unauthenticated #btnMobileSidebarToggle {
+  display: none !important;
+}
+
+html.unauthenticated .main-content {
+  margin-left: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+
 body,
 .content-card,
 .sidebar,
