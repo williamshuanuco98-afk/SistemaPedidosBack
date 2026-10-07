@@ -230,17 +230,20 @@
           <span class="nav-label text-danger fw-semibold">Cerrar Sesión</span>
         </button>
 
-        <!-- Tarjeta de Usuario del Sistema -->
-        <div class="user-profile-card" id="userProfileCard" title="Usuario Conectado">
+        <!-- Tarjeta de Usuario del Sistema (Diseño Premium Glass) -->
+        <div class="user-profile-card" id="userProfileCard" title="Sesión activa">
           <div class="user-avatar-wrapper">
             <div id="userAvatar" class="user-avatar-badge">AD</div>
             <span class="user-status-online" title="En línea"></span>
           </div>
           <div class="user-details">
-            <span id="userNameDisplay" class="user-name">Administrador</span>
+            <div class="user-name-wrapper">
+              <span id="userNameDisplay" class="user-name">Administrador</span>
+              <i class="bi bi-patch-check-fill user-verified-icon" title="Usuario Verificado"></i>
+            </div>
             <div class="user-meta">
               <span id="userRoleDisplay" class="user-role-badge">ADMIN</span>
-              <span class="user-tenant-label">Inplabel</span>
+              <span class="user-status-text"><i class="bi bi-circle-fill dot-pulse"></i> En línea</span>
             </div>
           </div>
         </div>
