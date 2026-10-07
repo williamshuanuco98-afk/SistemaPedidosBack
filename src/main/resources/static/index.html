@@ -231,15 +231,16 @@
         </button>
 
         <!-- Tarjeta de Usuario del Sistema -->
-        <div class="user-profile d-flex align-items-center p-2 rounded border border-secondary border-opacity-25"
-          style="background: rgba(0,0,0,0.15);">
-          <div class="d-flex align-items-center gap-2 overflow-hidden w-100">
-            <div id="userAvatar" class="user-avatar"
-              style="width: 34px; height: 34px; font-size: 0.8rem; font-weight: bold; background: #00AF50; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              AD</div>
-            <div class="user-info text-truncate">
-              <span id="userNameDisplay" class="user-name text-truncate d-block fw-bold fs-7">Administrador</span>
-              <span id="userRoleDisplay" class="badge bg-primary fs-9 py-0 px-1">ADMIN</span>
+        <div class="user-profile-card" id="userProfileCard" title="Usuario Conectado">
+          <div class="user-avatar-wrapper">
+            <div id="userAvatar" class="user-avatar-badge">AD</div>
+            <span class="user-status-online" title="En línea"></span>
+          </div>
+          <div class="user-details">
+            <span id="userNameDisplay" class="user-name">Administrador</span>
+            <div class="user-meta">
+              <span id="userRoleDisplay" class="user-role-badge">ADMIN</span>
+              <span class="user-tenant-label">Inplabel</span>
             </div>
           </div>
         </div>

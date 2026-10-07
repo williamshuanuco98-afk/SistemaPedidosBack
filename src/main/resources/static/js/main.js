@@ -290,17 +290,31 @@ class ModularSpaApp {
     const avatarEl = document.getElementById('userAvatar');
 
     if (user) {
-      if (nameEl) nameEl.textContent = user.nombreCompleto || user.username;
+      const displayName = user.nombreCompleto || user.username || 'Administrador';
+      if (nameEl) nameEl.textContent = displayName;
+
+      const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+
       if (roleEl) {
-        roleEl.textContent = user.rol || 'OPERACIONES';
-        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
-        roleEl.className = isAdminUser ? 'badge bg-primary fs-9 py-0 px-1' : 'badge bg-warning text-dark fs-9 py-0 px-1';
+        roleEl.textContent = (user.rol || (isAdminUser ? 'ADMIN' : 'OPERACIONES')).toUpperCase();
+        roleEl.className = isAdminUser ? 'user-role-badge' : 'user-role-badge role-operaciones';
       }
+
       if (avatarEl) {
-        const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
-        const initials = isAdminUser ? 'AD' : 'OP';
+        let initials = 'AD';
+        const parts = displayName.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          initials = (parts[0][0] + parts[1][0]).toUpperCase();
+        } else if (parts[0]) {
+          initials = parts[0].substring(0, 2).toUpperCase();
+        }
         avatarEl.textContent = initials;
-        avatarEl.style.background = isAdminUser ? '#0d6efd' : '#f59e0b';
+        avatarEl.style.background = isAdminUser
+          ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+          : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        avatarEl.style.boxShadow = isAdminUser
+          ? '0 2px 8px rgba(16, 185, 129, 0.3)'
+          : '0 2px 8px rgba(245, 158, 11, 0.3)';
       }
 
       // Dynamic permission UI enforcement
