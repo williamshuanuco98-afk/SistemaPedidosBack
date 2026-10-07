@@ -344,7 +344,4 @@
   box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.22) !important;
 }
 
-.page-body .content-card {
-  animation: metricCardEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: 0.15s;
-}
+
