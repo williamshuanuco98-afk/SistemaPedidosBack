@@ -3,6 +3,31 @@ import { escapeHtml, formatDate } from '../helpers.js';
 let cachedOrders = [];
 let activeScheduleDateFilter = null;
 
+function animateCountUp(element, targetValue, duration = 450) {
+  if (!element) return;
+  const target = parseInt(targetValue, 10) || 0;
+  if (target === 0) {
+    element.textContent = '0';
+    return;
+  }
+  const startTime = performance.now();
+  const startValue = 0;
+  
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(startValue + (target - startValue) * easeOut);
+    element.textContent = current.toLocaleString('es-PE');
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target.toLocaleString('es-PE');
+    }
+  }
+  requestAnimationFrame(update);
+}
+
 export function renderDashboard(orders = [], shipments = [], clients = [], products = [], statusData = null) {
   cachedOrders = orders || [];
   activeScheduleDateFilter = null;
@@ -32,18 +57,18 @@ export function renderDashboard(orders = [], shipments = [], clients = [], produ
     totalClientsCount = window.app.statusData.counts.clientes;
   }
 
-  // Update 5 KPI Cards
+  // Update 5 KPI Cards with smooth animated count-up
   const sTotalO = document.getElementById('statTotalOrders');
   const sPendO = document.getElementById('statPendingOrders');
   const sCompO = document.getElementById('statCompletedOrders');
   const sTotalP = document.getElementById('statTotalProducts');
   const sTotalC = document.getElementById('statTotalClients');
 
-  if (sTotalO) sTotalO.textContent = orders.length;
-  if (sPendO) sPendO.textContent = pendingOrders.length;
-  if (sCompO) sCompO.textContent = completedOrders.length;
-  if (sTotalP) sTotalP.textContent = totalProductsCount;
-  if (sTotalC) sTotalC.textContent = totalClientsCount;
+  if (sTotalO) animateCountUp(sTotalO, orders.length);
+  if (sPendO) animateCountUp(sPendO, pendingOrders.length);
+  if (sCompO) animateCountUp(sCompO, completedOrders.length);
+  if (sTotalP) animateCountUp(sTotalP, totalProductsCount);
+  if (sTotalC) animateCountUp(sTotalC, totalClientsCount);
 
   // Render Recent Orders Table
   renderRecentOrdersTable(orders);
