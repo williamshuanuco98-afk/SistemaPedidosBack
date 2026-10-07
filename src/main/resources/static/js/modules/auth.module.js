@@ -37,10 +37,7 @@ export function getCurrentUser() {
     }
   } catch (e) {}
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN));
-  } catch (e) {}
-  return DEFAULT_ADMIN;
+  return null;
 }
 
 export function isAuthenticated() {

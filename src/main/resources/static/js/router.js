@@ -2388,13 +2388,15 @@ export class Router {
       document.body.style.removeProperty('pointer-events');
     }
 
-    // Verificar si el usuario está autenticado
+    // Strict Route Guard: if not authenticated, redirect to login
     const isAuth = window.authModule && typeof window.authModule.isAuthenticated === 'function' 
       ? window.authModule.isAuthenticated() 
       : Boolean(localStorage.getItem('inplabel_user'));
 
-    if (!isAuth && route !== 'login') {
+    if (!isAuth) {
       route = 'login';
+    } else if (route === 'login') {
+      route = 'dashboard';
     }
 
     this.currentRoute = route;
@@ -2403,10 +2405,12 @@ export class Router {
     const sidebarEl = document.getElementById('sidebar');
     const headerEl = document.querySelector('.top-header');
     const mainEl = document.querySelector('.main-content');
+    const mobileToggleBtn = document.getElementById('btnMobileSidebarToggle');
 
     if (route === 'login') {
       if (sidebarEl) sidebarEl.style.display = 'none';
       if (headerEl) headerEl.style.display = 'none';
+      if (mobileToggleBtn) mobileToggleBtn.style.display = 'none';
       if (mainEl) {
         mainEl.style.marginLeft = '0';
         mainEl.style.padding = '0';
@@ -2415,6 +2419,7 @@ export class Router {
     } else {
       if (sidebarEl) sidebarEl.style.display = '';
       if (headerEl) headerEl.style.display = '';
+      if (mobileToggleBtn) mobileToggleBtn.style.display = '';
       if (mainEl) {
         mainEl.style.marginLeft = '';
         mainEl.style.padding = '';
