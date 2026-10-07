@@ -298,6 +298,10 @@ function renderMonthlyOrdersChart(orders) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 900,
+          easing: 'easeOutCubic'
+        },
         plugins: {
           legend: { display: false }
         },
@@ -400,6 +404,12 @@ function renderOrderStatusChart(orders) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 950,
+          easing: 'easeOutQuart'
+        },
         plugins: {
           legend: {
             position: 'bottom',
@@ -464,6 +474,10 @@ function renderTopProductsChart(orders) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 900,
+          easing: 'easeOutQuart'
+        },
         indexAxis: 'y',
         plugins: {
           legend: { display: false }
