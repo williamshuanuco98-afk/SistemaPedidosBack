@@ -68,7 +68,7 @@
         if (!isAuth) {
           document.documentElement.classList.add('unauthenticated');
         }
-      } catch (e) {}
+      } catch (e) { }
     })();
   </script>
 
@@ -199,7 +199,8 @@
 
       <div class="sidebar-footer">
         <!-- Switch de Modo Claro / Oscuro -->
-        <div class="sidebar-theme-switch-wrapper d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded"
+        <div
+          class="sidebar-theme-switch-wrapper d-flex align-items-center justify-content-between px-3 py-2 mb-2 rounded"
           id="sidebarThemeToggleBtn" title="Alternar Modo Claro / Oscuro" onclick="app.toggleTheme()">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-moon-stars-fill icon text-warning" id="sidebarThemeIcon"></i>
@@ -254,8 +255,7 @@
     <div id="sidebarMobileBackdrop" class="sidebar-mobile-backdrop d-lg-none"></div>
 
     <!-- Floating Mobile Sidebar Toggle Button -->
-    <button type="button" id="btnMobileSidebarToggle"
-      class="btn-floating-mobile-menu d-lg-none" title="Abrir Menú">
+    <button type="button" id="btnMobileSidebarToggle" class="btn-floating-mobile-menu d-lg-none" title="Abrir Menú">
       <i class="bi bi-list fs-3"></i>
     </button>
 
@@ -269,7 +269,8 @@
 
   <!-- Detalle Pedido Modal -->
   <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1200px; width: 95%;">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
+      style="max-width: 1200px; width: 95%;">
       <div class="modal-content border-0 shadow">
         <div class="modal-header">
           <h5 id="orderDetailTitle" class="modal-title fw-bold">Detalle de Pedido</h5>
@@ -314,7 +315,8 @@
             <i id="globalConfirmIcon" class="bi bi-box-arrow-right fs-2"></i>
           </div>
           <h5 id="globalConfirmTitle" class="fw-bold mb-2">¿Cerrar Sesión?</h5>
-          <p id="globalConfirmMessage" class="small mb-4 text-secondary">¿Está seguro de que desea salir del sistema?</p>
+          <p id="globalConfirmMessage" class="small mb-4 text-secondary">¿Está seguro de que desea salir del sistema?
+          </p>
           <div class="d-flex gap-2 justify-content-center">
             <button type="button" id="globalConfirmCancelBtn"
               class="btn btn-outline-secondary flex-fill py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">

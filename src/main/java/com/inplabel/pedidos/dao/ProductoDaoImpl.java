@@ -21,11 +21,14 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public List<Map<String, Object>> findAll() {
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
-            "SELECT id_producto, nombre_producto, tipo_producto FROM producto ORDER BY id_producto ASC"
+            "SELECT id_producto, nombre_producto, tipo_producto, COALESCE(NULLIF(TRIM(unidad_medida), ''), 'UNID') AS unidad_medida FROM producto ORDER BY id_producto ASC"
         );
         for (Map<String, Object> map : list) {
             String tipo = (String) map.get("tipo_producto");
             map.put("categoria", tipo != null && !tipo.isEmpty() ? tipo : "General");
+            if (map.get("unidad_medida") == null) {
+                map.put("unidad_medida", "UNID");
+            }
         }
         return list;
     }
@@ -33,7 +36,7 @@ public class ProductoDaoImpl implements ProductoDao {
     @Override
     public Map<String, Object> findById(Integer id) {
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
-            "SELECT id_producto, nombre_producto, tipo_producto FROM producto WHERE id_producto = ?",
+            "SELECT id_producto, nombre_producto, tipo_producto, COALESCE(NULLIF(TRIM(unidad_medida), ''), 'UNID') AS unidad_medida FROM producto WHERE id_producto = ?",
             id
         );
         if (list.isEmpty()) {
@@ -42,46 +45,90 @@ public class ProductoDaoImpl implements ProductoDao {
         Map<String, Object> res = list.get(0);
         String tipo = (String) res.get("tipo_producto");
         res.put("categoria", tipo != null && !tipo.isEmpty() ? tipo : "General");
+        if (res.get("unidad_medida") == null) {
+            res.put("unidad_medida", "UNID");
+        }
         return res;
     }
 
     @Override
     public Map<String, Object> save(String nombreProducto, String tipoProducto) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        return save(nombreProducto, tipoProducto, "UNID");
+    }
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO producto (nombre_producto, tipo_producto) VALUES (?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-            );
-            ps.setString(1, nombreProducto);
-            ps.setString(2, tipoProducto);
-            return ps;
-        }, keyHolder);
+    @Override
+    public Map<String, Object> save(String nombreProducto, String tipoProducto, String unidadMedida) {
+        String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
+        String finalTipo = (tipoProducto != null && !tipoProducto.trim().isEmpty()) ? tipoProducto.trim() : "General";
+        String finalNombre = (nombreProducto != null) ? nombreProducto.trim() : "";
 
-        Number newId = keyHolder.getKey();
-        int generatedId = newId != null ? newId.intValue() : 0;
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM producto WHERE LOWER(TRIM(nombre_producto)) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(tipo_producto, ''))) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(unidad_medida, 'UNID'))) = LOWER(TRIM(?))",
+            Integer.class,
+            finalNombre, finalTipo, finalUM
+        );
+        if (count != null && count > 0) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("error", "Ya existe un producto registrado con la misma descripción, tipo y unidad de medida.");
+            return err;
+        }
+
+        Integer nextId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(id_producto), 0) + 1 FROM producto", Integer.class);
+        if (nextId == null || nextId < 1) nextId = 1;
+        int generatedId = nextId;
+
+        jdbcTemplate.update(
+            "INSERT INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)",
+            generatedId, finalNombre, finalTipo, finalUM
+        );
 
         Map<String, Object> res = new HashMap<>();
         res.put("id_producto", generatedId);
-        res.put("nombre_producto", nombreProducto);
-        res.put("tipo_producto", tipoProducto);
-        res.put("categoria", tipoProducto);
+        res.put("nombre_producto", finalNombre);
+        res.put("tipo_producto", finalTipo);
+        res.put("categoria", finalTipo);
+        res.put("unidad_medida", finalUM);
+        res.put("success", true);
         return res;
     }
 
     @Override
     public Map<String, Object> update(Integer id, String nombreProducto, String tipoProducto) {
+        return update(id, nombreProducto, tipoProducto, "UNID");
+    }
+
+    @Override
+    public Map<String, Object> update(Integer id, String nombreProducto, String tipoProducto, String unidadMedida) {
+        String finalUM = (unidadMedida != null && !unidadMedida.trim().isEmpty()) ? unidadMedida.trim().toUpperCase() : "UNID";
+        String finalTipo = (tipoProducto != null && !tipoProducto.trim().isEmpty()) ? tipoProducto.trim() : "General";
+        String finalNombre = (nombreProducto != null) ? nombreProducto.trim() : "";
+
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM producto WHERE LOWER(TRIM(nombre_producto)) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(tipo_producto, ''))) = LOWER(TRIM(?)) AND LOWER(TRIM(COALESCE(unidad_medida, 'UNID'))) = LOWER(TRIM(?)) AND id_producto != ?",
+            Integer.class,
+            finalNombre, finalTipo, finalUM, id
+        );
+        if (count != null && count > 0) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("error", "Ya existe otro producto registrado con la misma descripción, tipo y unidad de medida.");
+            return err;
+        }
+
         jdbcTemplate.update(
-            "UPDATE producto SET nombre_producto = ?, tipo_producto = ? WHERE id_producto = ?",
-            nombreProducto, tipoProducto, id
+            "UPDATE producto SET nombre_producto = ?, tipo_producto = ?, unidad_medida = ? WHERE id_producto = ?",
+            finalNombre, finalTipo, finalUM, id
         );
 
         Map<String, Object> res = new HashMap<>();
         res.put("id_producto", id);
-        res.put("nombre_producto", nombreProducto);
-        res.put("tipo_producto", tipoProducto);
-        res.put("categoria", tipoProducto);
+        res.put("nombre_producto", finalNombre);
+        res.put("tipo_producto", finalTipo);
+        res.put("categoria", finalTipo);
+        res.put("unidad_medida", finalUM);
+        res.put("success", true);
         return res;
     }
 

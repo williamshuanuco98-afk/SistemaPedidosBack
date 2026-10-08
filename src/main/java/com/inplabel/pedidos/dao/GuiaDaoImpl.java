@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +27,32 @@ public class GuiaDaoImpl implements GuiaDao {
             "FROM guias g LEFT JOIN cliente c ON g.id_cliente = c.id_cliente LEFT JOIN pedido p ON g.id_pedido = p.id_pedido ORDER BY g.id_guia DESC"
         );
 
+        if (guias.isEmpty()) {
+            return guias;
+        }
+
+        // Optimización Nube: Traer todos los detalles de guías en 1 sola consulta batch
+        List<Map<String, Object>> todosDetalles = jdbcTemplate.queryForList(
+            "SELECT d.*, pr.nombre_producto, " +
+            "COALESCE(NULLIF(TRIM(d.unidad_medida), ''), NULLIF(TRIM(pr.unidad_medida), ''), 'UNID') AS unidad_medida, " +
+            "CONCAT('PROD-', d.id_producto) AS codigo_producto " +
+            "FROM detalle_guias d " +
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto " +
+            "ORDER BY d.id_guia DESC, d.id_detalle ASC"
+        );
+
+        // Agrupar en memoria por id_guia
+        Map<Integer, List<Map<String, Object>>> detallesPorGuia = new HashMap<>();
+        for (Map<String, Object> det : todosDetalles) {
+            Integer idG = (Integer) det.get("id_guia");
+            if (idG != null) {
+                detallesPorGuia.computeIfAbsent(idG, k -> new ArrayList<>()).add(det);
+            }
+        }
+
         for (Map<String, Object> guia : guias) {
             Integer idGuia = (Integer) guia.get("id_guia");
-            List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-                "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
-                "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
-                idGuia
-            );
+            List<Map<String, Object>> detalles = detallesPorGuia.getOrDefault(idGuia, new ArrayList<>());
             guia.put("detalles", detalles);
         }
 
@@ -49,8 +69,10 @@ public class GuiaDaoImpl implements GuiaDao {
         if (guias.isEmpty()) return null;
         Map<String, Object> guia = guias.get(0);
         List<Map<String, Object>> detalles = jdbcTemplate.queryForList(
-            "SELECT d.*, pr.nombre_producto, CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
-            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ?",
+            "SELECT d.*, pr.nombre_producto, " +
+            "COALESCE(NULLIF(TRIM(d.unidad_medida), ''), NULLIF(TRIM(pr.unidad_medida), ''), 'UNID') AS unidad_medida, " +
+            "CONCAT('PROD-', d.id_producto) AS codigo_producto FROM detalle_guias d " +
+            "LEFT JOIN producto pr ON d.id_producto = pr.id_producto WHERE d.id_guia = ? ORDER BY d.id_detalle ASC",
             id
         );
         guia.put("detalles", detalles);
@@ -86,23 +108,67 @@ public class GuiaDaoImpl implements GuiaDao {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> save(Map<String, Object> body) {
-        Number idClienteNum = (Number) body.get("id_cliente");
-        int idCliente = idClienteNum != null ? idClienteNum.intValue() : 0;
-        Number idPedidoNum = (Number) body.get("id_pedido");
-        Integer idPedido = idPedidoNum != null ? idPedidoNum.intValue() : null;
+        int idCliente = 0;
+        Object idClienteRaw = body.get("id_cliente");
+        if (idClienteRaw instanceof Number) {
+            idCliente = ((Number) idClienteRaw).intValue();
+        } else if (idClienteRaw instanceof String) {
+            try {
+                String str = ((String) idClienteRaw).replaceAll("[^0-9]", "");
+                if (!str.isEmpty()) idCliente = Integer.parseInt(str);
+            } catch (Exception ignored) {}
+        }
+
+        Integer idPedido = null;
+        Object idPedidoRaw = body.get("id_pedido");
+        if (idPedidoRaw instanceof Number) {
+            idPedido = ((Number) idPedidoRaw).intValue();
+        } else if (idPedidoRaw instanceof String) {
+            try {
+                String str = ((String) idPedidoRaw).replaceAll("[^0-9]", "");
+                if (!str.isEmpty()) idPedido = Integer.parseInt(str);
+            } catch (Exception ignored) {}
+        }
 
         String fecha = (String) body.getOrDefault("fecha_guia", LocalDate.now().toString());
         String nroGuia = (String) body.get("nro_guia");
         String establecimiento = (String) body.getOrDefault("establecimiento", "CARABAYLLO");
         String seriePrefix = "CARABAYLLO".equalsIgnoreCase(establecimiento) ? "GR001" : "GR002";
+        boolean esInterna = Boolean.TRUE.equals(body.get("es_interna")) || (body.containsKey("id_pedido") && body.get("id_pedido") != null);
 
-        if (nroGuia == null || nroGuia.isEmpty()) {
-            Map<String, String> nextRes = getNextNumber(seriePrefix);
-            nroGuia = nextRes.get("next_nro_guia");
+        if (nroGuia == null || nroGuia.trim().isEmpty()) {
+            if (esInterna) {
+                // Internal order shipment log: use internal ENV- correlative so GR001/GR002 series is never touched
+                int nextId = 1;
+                try {
+                    Integer maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id_guia), 0) FROM guias", Integer.class);
+                    if (maxId != null) nextId = maxId + 1;
+                } catch (Exception ignored) {}
+                nroGuia = String.format("ENV-%04d", nextId);
+            } else {
+                Map<String, String> nextRes = getNextNumber(seriePrefix);
+                nroGuia = nextRes.get("next_nro_guia");
+            }
+        } else {
+            nroGuia = nroGuia.trim();
         }
 
         String estado = (String) body.getOrDefault("estado", "EMITIDA");
         String docRef = (String) body.getOrDefault("doc_referencia", "");
+
+        if (idPedido == null && docRef != null && !docRef.trim().isEmpty()) {
+            try {
+                String cleanRef = docRef.trim();
+                List<Integer> matched = jdbcTemplate.queryForList(
+                    "SELECT id_pedido FROM pedido WHERE (nro_orden IS NOT NULL AND TRIM(nro_orden) = ?) OR (nro_pedido IS NOT NULL AND TRIM(nro_pedido) = ?)",
+                    Integer.class, cleanRef, cleanRef
+                );
+                if (!matched.isEmpty()) {
+                    idPedido = matched.get(0);
+                }
+            } catch (Exception ignored) {}
+        }
+
         String puntoPartida = (String) body.getOrDefault("punto_partida", "");
         String puntoLlegada = (String) body.getOrDefault("punto_llegada", "");
         String observaciones = (String) body.getOrDefault("observaciones", "");
@@ -110,6 +176,8 @@ public class GuiaDaoImpl implements GuiaDao {
 
         List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
 
+        final int finalIdCliente = idCliente;
+        final Integer finalIdPedido = idPedido;
         final String finalNroGuia = nroGuia;
         final String finalDocRef = docRef;
         final String finalPuntoPartida = puntoPartida;
@@ -126,8 +194,8 @@ public class GuiaDaoImpl implements GuiaDao {
                 "VALUES (?, ?, ?, ?, ?, TRUE, ?, ?, ?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS
             );
-            ps.setInt(1, idCliente);
-            if (idPedido != null) ps.setInt(2, idPedido); else ps.setNull(2, java.sql.Types.INTEGER);
+            ps.setInt(1, finalIdCliente);
+            if (finalIdPedido != null) ps.setInt(2, finalIdPedido); else ps.setNull(2, java.sql.Types.INTEGER);
             ps.setString(3, fecha);
             ps.setString(4, finalNroGuia);
             ps.setString(5, estado);
@@ -140,19 +208,61 @@ public class GuiaDaoImpl implements GuiaDao {
             return ps;
         }, keyHolder);
 
-        Number newIdNum = keyHolder.getKey();
+        Number newIdNum = null;
+        try {
+            newIdNum = keyHolder.getKey();
+        } catch (Exception e) {
+            if (keyHolder.getKeys() != null && !keyHolder.getKeys().isEmpty()) {
+                Object val = keyHolder.getKeys().get("GENERATED_KEY");
+                if (val == null) val = keyHolder.getKeys().values().iterator().next();
+                if (val instanceof Number) newIdNum = (Number) val;
+            }
+        }
         int newId = newIdNum != null ? newIdNum.intValue() : 0;
+        if (newId == 0) {
+            try {
+                Integer queryId = jdbcTemplate.queryForObject(
+                    "SELECT id_guia FROM guias WHERE nro_guia = ? ORDER BY id_guia DESC LIMIT 1",
+                    Integer.class, finalNroGuia
+                );
+                if (queryId != null) newId = queryId;
+            } catch (Exception ignored) {}
+        }
 
-        if (detalles != null) {
+        if (detalles != null && !detalles.isEmpty()) {
+            java.util.List<Object[]> prodBatch = new java.util.ArrayList<>();
+            java.util.List<Object[]> detalleBatch = new java.util.ArrayList<>();
+
             for (Map<String, Object> item : detalles) {
                 Number pIdNum = (Number) item.get("id_producto");
                 Number cantNum = (Number) item.get("cantidad");
+                String prodName = (String) item.get("nombre_producto");
+                String um = (String) item.get("unidad_medida");
+                if (um == null || um.trim().isEmpty()) um = "UNID";
+                um = um.trim().toUpperCase();
+
                 if (pIdNum != null) {
-                    jdbcTemplate.update(
-                        "INSERT INTO detalle_guias (id_guia, id_producto, cantidad) VALUES (?, ?, ?)",
-                        newId, pIdNum.intValue(), cantNum != null ? cantNum.intValue() : 1
-                    );
+                    int pId = pIdNum.intValue();
+                    if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
+                    prodBatch.add(new Object[]{pId, prodName, "MERCADERIA", um});
+                    detalleBatch.add(new Object[]{newId, pId, cantNum != null ? cantNum.intValue() : 1, um});
                 }
+            }
+
+            if (!prodBatch.isEmpty()) {
+                try {
+                    jdbcTemplate.batchUpdate(
+                        "INSERT IGNORE INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)",
+                        prodBatch
+                    );
+                } catch (Exception ignored) {}
+            }
+
+            if (!detalleBatch.isEmpty()) {
+                jdbcTemplate.batchUpdate(
+                    "INSERT INTO detalle_guias (id_guia, id_producto, cantidad, unidad_medida) VALUES (?, ?, ?, ?)",
+                    detalleBatch
+                );
             }
         }
 
@@ -216,15 +326,102 @@ public class GuiaDaoImpl implements GuiaDao {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Map<String, Object> update(int id, Map<String, Object> body) {
+        int idCliente = 0;
+        Object idClienteRaw = body.get("id_cliente");
+        if (idClienteRaw instanceof Number) {
+            idCliente = ((Number) idClienteRaw).intValue();
+        } else if (idClienteRaw instanceof String) {
+            try {
+                String str = ((String) idClienteRaw).replaceAll("[^0-9]", "");
+                if (!str.isEmpty()) idCliente = Integer.parseInt(str);
+            } catch (Exception ignored) {}
+        }
+
         String nroGuia = (String) body.get("nro_guia");
         String estado = (String) body.getOrDefault("estado", "EMITIDA");
         String fecha = (String) body.getOrDefault("fecha_guia", LocalDate.now().toString());
+        String docRef = (String) body.getOrDefault("doc_referencia", "");
+        String puntoPartida = (String) body.getOrDefault("punto_partida", "");
+        String puntoLlegada = (String) body.getOrDefault("punto_llegada", "");
+        String observaciones = (String) body.getOrDefault("observaciones", "");
+        String establecimiento = (String) body.get("establecimiento");
+        if (establecimiento == null || establecimiento.trim().isEmpty()) {
+            establecimiento = (nroGuia != null && nroGuia.toUpperCase().startsWith("GR002")) ? "COMAS" : "CARABAYLLO";
+        }
 
-        jdbcTemplate.update(
-            "UPDATE guias SET nro_guia = ?, estado = ?, fecha_guia = ? WHERE id_guia = ?",
-            nroGuia, estado, fecha, id
-        );
+        if (nroGuia != null && !nroGuia.trim().isEmpty()) {
+            jdbcTemplate.update(
+                "UPDATE guias SET id_cliente = ?, fecha_guia = ?, nro_guia = ?, estado = ?, doc_referencia = ?, punto_partida = ?, punto_llegada = ?, observaciones = ?, establecimiento = ? WHERE id_guia = ?",
+                idCliente > 0 ? idCliente : null, fecha, nroGuia.trim(), estado, docRef, puntoPartida, puntoLlegada, observaciones, establecimiento, id
+            );
+        } else {
+            jdbcTemplate.update(
+                "UPDATE guias SET id_cliente = ?, fecha_guia = ?, estado = ?, doc_referencia = ?, punto_partida = ?, punto_llegada = ?, observaciones = ?, establecimiento = ? WHERE id_guia = ?",
+                idCliente > 0 ? idCliente : null, fecha, estado, docRef, puntoPartida, puntoLlegada, observaciones, establecimiento, id
+            );
+        }
+
+        List<Map<String, Object>> detalles = (List<Map<String, Object>>) body.get("detalles");
+        if (detalles != null) {
+            jdbcTemplate.update("DELETE FROM detalle_guias WHERE id_guia = ?", id);
+            for (Map<String, Object> item : detalles) {
+                Number pIdNum = (Number) item.get("id_producto");
+                Number cantNum = (Number) item.get("cantidad");
+                String prodName = (String) item.get("nombre_producto");
+                String um = (String) item.get("unidad_medida");
+                if (um == null || um.trim().isEmpty()) um = "UNID";
+                um = um.trim().toUpperCase();
+                int pId = pIdNum != null ? pIdNum.intValue() : 0;
+
+                if (pId == 0 && prodName != null && !prodName.trim().isEmpty()) {
+                    String trimmedName = prodName.trim();
+                    try {
+                        List<Integer> existingIds = jdbcTemplate.queryForList(
+                            "SELECT id_producto FROM producto WHERE LOWER(TRIM(nombre_producto)) = ?",
+                            Integer.class, trimmedName.toLowerCase()
+                        );
+                        if (existingIds != null && !existingIds.isEmpty()) {
+                            pId = existingIds.get(0);
+                        } else {
+                            KeyHolder pKey = new GeneratedKeyHolder();
+                            final String finalPName = trimmedName;
+                            final String finalUM = um;
+                            jdbcTemplate.update(conn -> {
+                                PreparedStatement ps = conn.prepareStatement(
+                                    "INSERT INTO producto (nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?)",
+                                    Statement.RETURN_GENERATED_KEYS
+                                );
+                                ps.setString(1, finalPName);
+                                ps.setString(2, "MERCADERIA");
+                                ps.setString(3, finalUM);
+                                return ps;
+                            }, pKey);
+                            if (pKey.getKey() != null) pId = pKey.getKey().intValue();
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (pId > 0) {
+                    try {
+                        Integer exists = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM producto WHERE id_producto = ?", Integer.class, pId);
+                        if (exists == null || exists == 0) {
+                            if (prodName == null || prodName.trim().isEmpty()) prodName = "PRODUCTO #" + pId;
+                            jdbcTemplate.update("INSERT INTO producto (id_producto, nombre_producto, tipo_producto, unidad_medida) VALUES (?, ?, ?, ?)", pId, prodName, "MERCADERIA", um);
+                        }
+                    } catch (Exception ignored) {}
+
+                    jdbcTemplate.update("INSERT INTO detalle_guias (id_guia, id_producto, cantidad, unidad_medida) VALUES (?, ?, ?, ?)", id, pId, cantNum != null ? cantNum.intValue() : 1, um);
+                }
+            }
+        }
+
+        Map<String, Object> updated = findById(id);
+        if (updated != null) {
+            updated.put("success", true);
+            return updated;
+        }
 
         body.put("success", true);
         body.put("id_guia", id);

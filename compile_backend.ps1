@@ -88,4 +88,27 @@ Copy-Item -Path "..\SistemaWebPedidosFront\views" -Destination "src\main\resourc
 Write-Host "Copiando recursos estáticos..." -ForegroundColor Yellow
 Copy-Item -Path "src\main\resources\*" -Destination "target\classes\" -Recurse -Force
 
+$rootJar = "..\INPLABEL_SISTEMA.jar"
+if (Test-Path $rootJar) {
+  $absRootJar = (Resolve-Path $rootJar).Path
+  Write-Host "Actualizando ejecutable INPLABEL_SISTEMA.jar..." -ForegroundColor Yellow
+  $jarCmd = Get-Command jar.exe -ErrorAction SilentlyContinue
+  $jarExe = if ($jarCmd) { $jarCmd.Source } else { $null }
+  if (-not $jarExe) {
+    $jdkJar = Get-ChildItem -Path "C:\Program Files\Java" -Filter "jar.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+    if ($jdkJar) { $jarExe = $jdkJar }
+  }
+  if ($jarExe) {
+    $tempBoot = "target\temp_jar_boot"
+    if (Test-Path $tempBoot) { Remove-Item $tempBoot -Recurse -Force }
+    New-Item -ItemType Directory -Path "$tempBoot\BOOT-INF\classes" -Force | Out-Null
+    Copy-Item -Path "target\classes\*" -Destination "$tempBoot\BOOT-INF\classes\" -Recurse -Force
+    Push-Location $tempBoot
+    & $jarExe uf $absRootJar BOOT-INF
+    Pop-Location
+    Remove-Item $tempBoot -Recurse -Force
+    Write-Host "INPLABEL_SISTEMA.jar actualizado correctamente." -ForegroundColor Green
+  }
+}
+
 Write-Host "Compilación completada exitosamente." -ForegroundColor Green

@@ -26,31 +26,51 @@ public class ClienteDaoImpl implements ClienteDao {
 
     @Override
     public Map<String, Object> save(String tipoDocumento, String nroDocumento, String razonSocial, String direccion) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        if (nroDocumento != null && !nroDocumento.trim().isEmpty() && !nroDocumento.trim().equals("-")) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM cliente WHERE nro_documento = ?",
+                    Integer.class, nroDocumento.trim());
+            if (count != null && count > 0) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Ya existe un cliente registrado con el N° de Documento: " + nroDocumento.trim());
+                return err;
+            }
+        }
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO cliente (tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, tipoDocumento);
-            ps.setString(2, nroDocumento);
-            ps.setString(3, razonSocial);
-            ps.setString(4, direccion);
-            return ps;
-        }, keyHolder);
+        Integer nextId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(id_cliente), 0) + 1 FROM cliente", Integer.class);
+        if (nextId == null || nextId < 1) nextId = 1;
+        int generatedId = nextId;
 
-        Number newId = keyHolder.getKey();
+        jdbcTemplate.update(
+                "INSERT INTO cliente (id_cliente, tipo_documento, nro_documento, razon_social, direccion) VALUES (?, ?, ?, ?, ?)",
+                generatedId, tipoDocumento, nroDocumento, razonSocial, direccion);
+
         Map<String, Object> res = new HashMap<>();
-        res.put("id_cliente", newId != null ? newId.intValue() : 0);
+        res.put("id_cliente", generatedId);
         res.put("tipo_documento", tipoDocumento);
         res.put("nro_documento", nroDocumento);
         res.put("nombre_cliente", razonSocial);
         res.put("direccion", direccion);
+        res.put("success", true);
         return res;
     }
 
     @Override
     public Map<String, Object> update(int id, String tipoDocumento, String nroDocumento, String razonSocial, String direccion) {
+        if (nroDocumento != null && !nroDocumento.trim().isEmpty() && !nroDocumento.trim().equals("-")) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM cliente WHERE nro_documento = ? AND id_cliente != ?",
+                    Integer.class, nroDocumento.trim(), id);
+            if (count != null && count > 0) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Ya existe otro cliente registrado con el N° de Documento: " + nroDocumento.trim());
+                return err;
+            }
+        }
+
         jdbcTemplate.update(
                 "UPDATE cliente SET tipo_documento = ?, nro_documento = ?, razon_social = ?, direccion = ? WHERE id_cliente = ?",
                 tipoDocumento, nroDocumento, razonSocial, direccion, id);
@@ -61,6 +81,7 @@ public class ClienteDaoImpl implements ClienteDao {
         res.put("nro_documento", nroDocumento);
         res.put("nombre_cliente", razonSocial);
         res.put("direccion", direccion);
+        res.put("success", true);
         return res;
     }
 
