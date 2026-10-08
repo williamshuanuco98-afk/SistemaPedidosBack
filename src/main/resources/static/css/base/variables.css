@@ -12,11 +12,20 @@
   --text-muted: #94a3b8;
   --text-sidebar: #334155;
 
-  --accent-purple: #10b981;
-  --accent-purple-hover: #059669;
-  --accent-purple-glow: rgba(16, 185, 129, 0.25);
+  /* Operix Brand Identity Colors */
+  --brand-primary: #0052ff;
+  --brand-primary-hover: #0043d0;
+  --brand-sky: #00a3ff;
+  --brand-cyan: #00e5be;
+  --brand-cyan-dark: #00c4a2;
+  --brand-gradient: linear-gradient(135deg, #0052ff 0%, #00a3ff 60%, #00e5be 100%);
+  --brand-gradient-hover: linear-gradient(135deg, #0045d8 0%, #0090e3 60%, #00cfa9 100%);
 
-  --brand-accent: #059669;
+  --brand-accent: #0052ff;
+  --accent-purple: #0052ff;
+  --accent-purple-hover: #0043d0;
+  --accent-purple-glow: rgba(0, 82, 255, 0.25);
+  --accent-cyan-glow: rgba(0, 229, 190, 0.3);
   
   --border-color: #e2e8f0;
   --border-subtle: #f1f5f9;
@@ -36,20 +45,25 @@
 
 [data-theme="dark"] {
   --bg-main: #0b1329;
-  --bg-sidebar: #1e293b;
-  --bg-sidebar-hover: #334155;
-  --bg-card: #1e293b;
+  --bg-sidebar: #101935;
+  --bg-sidebar-hover: #1e293b;
+  --bg-card: #14203d;
 
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --text-sidebar: #e2e8f0;
 
-  --brand-accent: #34d399;
+  --brand-primary: #0052ff;
+  --brand-primary-hover: #3b82f6;
+  --brand-accent: #00a3ff;
+  --accent-purple: #00a3ff;
+  --accent-purple-hover: #38bdf8;
+  --accent-purple-glow: rgba(0, 163, 255, 0.35);
 
-  --border-color: #334155;
-  --border-subtle: #1e293b;
-  --border-dark: #475569;
+  --border-color: #1e293b;
+  --border-subtle: #141f36;
+  --border-dark: #334155;
 
-  --input-bg: #0f172a;
+  --input-bg: #0b1329;
 }

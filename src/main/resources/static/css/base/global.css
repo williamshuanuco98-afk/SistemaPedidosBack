@@ -118,7 +118,7 @@ body {
 }
 
 .theme-toggle-pill:hover {
-  border-color: #10b981;
+  border-color: var(--brand-sky, #00a3ff);
 }
 
 .theme-toggle-track {
@@ -159,7 +159,7 @@ body {
 }
 
 [data-theme="dark"] .theme-toggle-track {
-  background-color: #10b981;
+  background-color: var(--brand-primary, #0052ff);
 }
 
 [data-theme="dark"] .theme-toggle-handle {
@@ -272,8 +272,8 @@ body {
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25) !important;
+  border-color: var(--brand-sky, #00a3ff) !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 163, 255, 0.25) !important;
 }
 
 [data-theme="dark"] .modal-content {

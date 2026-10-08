@@ -90,9 +90,9 @@
   display: none !important;
 }
 
-/* Pale Green Square Accent Toggle Button */
+/* Operix Gradient Accent Toggle Button */
 .toggle-sidebar-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #0052ff 0%, #00a3ff 100%);
   border: none;
   color: #ffffff;
   width: 36px;
@@ -103,12 +103,12 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: var(--accent-purple-glow);
+  box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
   flex-shrink: 0;
 }
 
 .toggle-sidebar-btn:hover {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  background: linear-gradient(135deg, #0043d0 0%, #008be5 100%);
   transform: scale(1.05);
 }
 
@@ -181,13 +181,17 @@
 }
 
 .nav-item.active .icon {
-  color: #10b981 !important;
+  color: var(--brand-primary, #0052ff) !important;
 }
 
 [data-theme="dark"] .nav-item.active {
-  background-color: var(--bg-sidebar-hover, #334155) !important;
+  background-color: var(--bg-sidebar-hover, #1e293b) !important;
   color: #f8fafc !important;
   border: 1px solid transparent !important;
+}
+
+[data-theme="dark"] .nav-item.active .icon {
+  color: var(--brand-sky, #00a3ff) !important;
 }
 
 .theme-toggle-item .icon-dark {
@@ -196,7 +200,7 @@
 
 .theme-toggle-item .icon-light {
   display: inline-flex !important;
-  color: #10b981 !important;
+  color: var(--brand-primary, #0052ff) !important;
 }
 
 [data-theme="dark"] .theme-toggle-item .icon-light {
@@ -321,23 +325,23 @@
   bottom: 22%;
   width: 3.5px;
   border-radius: 0 4px 4px 0;
-  background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+  background: linear-gradient(180deg, #0052ff 0%, #00e5be 100%);
   opacity: 0.85;
   transition: all 0.25s ease;
 }
 
 .user-profile-card:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(16, 185, 129, 0.35);
+  border-color: rgba(0, 82, 255, 0.35);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 15px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 82, 255, 0.15);
 }
 
 .user-profile-card:hover::before {
   top: 14%;
   bottom: 14%;
   opacity: 1;
-  box-shadow: 0 0 10px #10b981;
+  box-shadow: 0 0 10px #00a3ff;
 }
 
 /* Avatar circular with glow ring */
@@ -352,7 +356,7 @@
   min-width: 38px;
   min-height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  background: linear-gradient(135deg, #0052ff 0%, #00a3ff 100%);
   color: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -361,38 +365,38 @@
   font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.82rem;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35), 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 0 2px rgba(0, 82, 255, 0.35), 0 4px 12px rgba(0, 82, 255, 0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .user-profile-card:hover .user-avatar-badge {
   transform: scale(1.06);
-  box-shadow: 0 0 0 2.5px rgba(16, 185, 129, 0.6), 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 0 2.5px rgba(0, 82, 255, 0.6), 0 6px 16px rgba(0, 82, 255, 0.4);
 }
 
-/* Live Online Status Indicator */
+/* Live Online Status Indicator (Operix Cyan Dot) */
 .user-status-online {
   position: absolute;
   bottom: 0;
   right: 0;
   width: 11px;
   height: 11px;
-  background-color: #10b981;
+  background-color: #00e5be;
   border: 2px solid var(--bg-sidebar, #0f172a);
   border-radius: 50%;
-  box-shadow: 0 0 6px #10b981;
+  box-shadow: 0 0 6px #00e5be;
   animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes pulseDot {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8), 0 0 6px #10b981;
+    box-shadow: 0 0 0 0 rgba(0, 229, 190, 0.8), 0 0 6px #00e5be;
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0), 0 0 6px #10b981;
+    box-shadow: 0 0 0 6px rgba(0, 229, 190, 0), 0 0 6px #00e5be;
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 0 6px #10b981;
+    box-shadow: 0 0 0 0 rgba(0, 229, 190, 0), 0 0 6px #00e5be;
   }
 }
 
@@ -426,11 +430,11 @@
 }
 
 .user-verified-icon {
-  color: #10b981;
+  color: #00a3ff;
   font-size: 0.8rem;
   flex-shrink: 0;
   display: inline-flex;
-  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+  filter: drop-shadow(0 0 4px rgba(0, 163, 255, 0.4));
 }
 
 .user-meta {
@@ -449,9 +453,9 @@
   letter-spacing: 0.5px;
   text-transform: uppercase;
   border-radius: 5px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(0, 82, 255, 0.12);
+  color: #0052ff;
+  border: 1px solid rgba(0, 82, 255, 0.25);
   line-height: 1.2;
 }
 
@@ -475,7 +479,7 @@
 
 .user-status-text .dot-pulse {
   font-size: 0.45rem;
-  color: #10b981;
+  color: #00e5be;
 }
 
 /* Light Mode Overrides */

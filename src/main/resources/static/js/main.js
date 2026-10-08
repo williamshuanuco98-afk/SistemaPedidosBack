@@ -310,10 +310,10 @@ class ModularSpaApp {
         }
         avatarEl.textContent = initials;
         avatarEl.style.background = isAdminUser
-          ? 'linear-gradient(135deg, #10b981 0%, #047857 100%)'
+          ? 'linear-gradient(135deg, #0052ff 0%, #00a3ff 100%)'
           : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
         avatarEl.style.boxShadow = isAdminUser
-          ? '0 0 0 2px rgba(16, 185, 129, 0.35), 0 4px 12px rgba(16, 185, 129, 0.3)'
+          ? '0 0 0 2px rgba(0, 82, 255, 0.35), 0 4px 12px rgba(0, 82, 255, 0.3)'
           : '0 0 0 2px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(245, 158, 11, 0.3)';
       }
 
