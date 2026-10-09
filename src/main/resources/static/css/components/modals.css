@@ -194,22 +194,22 @@
 /* ============================================================= */
 [data-theme="dark"] .modal-content,
 [data-bs-theme="dark"] .modal-content {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 1px rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="dark"] .modal-header,
 [data-bs-theme="dark"] .modal-header {
   padding: 18px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: rgba(15, 23, 42, 0.4) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  background: var(--bg-sidebar) !important;
 }
 
 [data-theme="dark"] .modal-header .modal-title,
 [data-bs-theme="dark"] .modal-header .modal-title {
-  color: #f8fafc !important;
+  color: var(--text-primary) !important;
 }
 
 [data-theme="dark"] .modal-header .btn-close,
@@ -220,32 +220,32 @@
 
 [data-theme="dark"] .modal-body,
 [data-bs-theme="dark"] .modal-body {
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
 }
 
 [data-theme="dark"] .modal-footer,
 [data-bs-theme="dark"] .modal-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: rgba(15, 23, 42, 0.3) !important;
+  border-top: 1px solid var(--border-color) !important;
+  background: var(--bg-sidebar) !important;
 }
 
 /* Sub-Tabs (Dark Mode) */
 [data-theme="dark"] .custom-detail-tabs,
 [data-bs-theme="dark"] .custom-detail-tabs {
-  background: rgba(15, 23, 42, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-sidebar) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 [data-theme="dark"] .custom-detail-tabs .nav-link,
 [data-bs-theme="dark"] .custom-detail-tabs .nav-link {
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
 }
 
 [data-theme="dark"] .custom-detail-tabs .nav-link:hover,
 [data-bs-theme="dark"] .custom-detail-tabs .nav-link:hover {
   color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-sidebar-hover) !important;
 }
 
 [data-theme="dark"] .custom-detail-tabs #tab-shipment-btn,

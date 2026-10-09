@@ -262,11 +262,13 @@ class ModularSpaApp {
     } catch (e) {}
 
     this.updateUserUI();
-    authModule.initInactivityTracker();
+    await authModule.restoreSession();
+    const expired = authModule.checkSessionTimeout();
+    if (!expired) authModule.initInactivityTracker();
     initGlobalZoomHandlers();
 
 
-    if (!authModule.isAuthenticated() || authModule.checkSessionTimeout()) {
+    if (!authModule.isAuthenticated() || expired) {
       await this.router.navigateTo('login');
       return;
     }
@@ -293,7 +295,7 @@ class ModularSpaApp {
       const displayName = user.nombreCompleto || user.username || 'Administrador';
       if (nameEl) nameEl.textContent = displayName;
 
-      const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+      const isAdminUser = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR';
 
       if (roleEl) {
         roleEl.textContent = (user.rol || (isAdminUser ? 'ADMIN' : 'OPERACIONES')).toUpperCase();
@@ -319,7 +321,7 @@ class ModularSpaApp {
 
       // Dynamic permission UI enforcement
       const perms = new Set(user.permisos || []);
-      const isAdmin = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR' || user.username === 'admin';
+      const isAdmin = user.rol === 'ADMIN' || user.rol === 'ADMINISTRADOR';
 
       const navUsuarios = document.getElementById('navItemUsuarios');
       if (navUsuarios) {
@@ -569,10 +571,10 @@ class ModularSpaApp {
         api.getGuias()
       ]);
 
-      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value) && results[0].value.length > 0) this.clients = results[0].value;
-      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value) && results[1].value.length > 0) this.products = results[1].value;
-      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value) && results[2].value.length > 0) this.orders = results[2].value;
-      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value) && results[3].value.length > 0) this.shipments = results[3].value;
+      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value)) this.clients = results[0].value;
+      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) this.products = results[1].value;
+      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) this.orders = results[2].value;
+      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value)) this.shipments = results[3].value;
     } catch (err) {
       console.warn("Backend Spring Boot offline o inalcanzable:", err);
     }
@@ -642,3 +644,10 @@ class ModularSpaApp {
 
 export const app = new ModularSpaApp();
 window.app = app;
+
+window.addEventListener('unhandledrejection', event => {
+  if (event.reason?.name === 'ApiError') {
+    event.preventDefault();
+    alert(event.reason.message);
+  }
+});

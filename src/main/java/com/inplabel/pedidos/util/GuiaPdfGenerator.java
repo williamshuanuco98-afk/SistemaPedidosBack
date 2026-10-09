@@ -16,6 +16,8 @@ import java.util.Map;
 
 @Component
 public class GuiaPdfGenerator {
+    @org.springframework.beans.factory.annotation.Autowired
+    private SecureStorage secureStorage;
 
     private static final Font FONT_COMP_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
     private static final Font FONT_COMP_SUB = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 5.2f, new Color(40, 40, 40));
@@ -86,35 +88,12 @@ public class GuiaPdfGenerator {
         }
     }
 
-    public String savePdfToDisk(Map<String, Object> guia, String baseDir, boolean useSubfolders) {
+    public String savePdfToDisk(Map<String, Object> guia, String ignoredClientPath, boolean useSubfolders) {
         try {
-            byte[] bytes = generatePdfBytes(guia);
-            String nroGuia = (String) guia.getOrDefault("nro_guia", "GR001-0001");
-            
-            String targetDir = (baseDir != null && !baseDir.trim().isEmpty()) ? baseDir.trim() : "C:\\Inplabel\\Guias";
-            
-            if (useSubfolders) {
-                LocalDate now = LocalDate.now();
-                targetDir = targetDir + File.separator + now.getYear() + File.separator + String.format("%02d", now.getMonthValue());
-            }
-
-            File dir = new File(targetDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String filename = "GUIA_" + nroGuia.replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
-            File targetFile = new File(dir, filename);
-
-            try (FileOutputStream fos = new FileOutputStream(targetFile)) {
-                fos.write(bytes);
-            }
-
-            return targetFile.getAbsolutePath();
-        } catch (Exception e) {
-            System.err.println("Advertencia al guardar PDF en disco: " + e.getMessage());
-            return null;
-        }
+            String number = String.valueOf(guia.getOrDefault("nro_guia", "documento"));
+            String filename = "GUIA_" + number.replaceAll("[^a-zA-Z0-9_-]", "_") + ".pdf";
+            return secureStorage.saveDocument("Guias", filename, useSubfolders, generatePdfBytes(guia));
+        } catch (java.io.IOException e) { throw new IllegalStateException("No se pudo guardar el documento", e); }
     }
 
     private PdfPTable buildSingleGuiaHalf(Map<String, Object> guia) {

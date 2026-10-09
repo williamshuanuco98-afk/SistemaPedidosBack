@@ -37,7 +37,7 @@ public class StatusDaoImpl implements StatusDao {
             response.put("counts", counts);
         } catch (Exception e) {
             response.put("connected", false);
-            response.put("error", e.getMessage());
+            response.put("error", "No se pudo consultar la base de datos");
         }
         return response;
     }

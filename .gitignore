@@ -7,3 +7,9 @@ target/
 sources.txt
 .DS_Store
 *.log
+
+storage/
+.env
+application-local.properties
+
+.local/

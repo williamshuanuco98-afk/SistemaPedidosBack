@@ -2,47 +2,31 @@ import { api } from '../api.js';
 import { showConfirmModal } from '../helpers.js';
 
 const STORAGE_KEY = 'inplabel_user';
+let verifiedUser = null;
 const LAST_ACTIVITY_KEY = 'inplabel_last_activity';
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas (7,200,000 ms)
 
-const DEFAULT_ADMIN = {
-  idUsuario: 1,
-  username: 'admin',
-  nombreCompleto: 'Administrador Operix',
-  rol: 'ADMIN',
-  establecimiento: 'CARABAYLLO',
-  permisos: [
-    'pedidos.view', 'pedidos.create', 'pedidos.edit', 'pedidos.cancel', 'pedidos.finish', 'pedidos.finances',
-    'envios.create', 'envios.view', 'guias.create', 'guias.view', 'produccion.view',
-    'clientes.manage', 'productos.manage', 'usuarios.manage'
-  ]
-};
 
-export function getCurrentUser() {
+export function getCurrentUser() { return verifiedUser; }
+export function isAuthenticated() { return verifiedUser !== null; }
+export async function restoreSession() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const u = JSON.parse(raw);
-      if (u && (u.username || u.rol)) {
-        if (!u.permisos || !Array.isArray(u.permisos) || u.permisos.length === 0) {
-          if (u.rol === 'ADMIN' || u.username === 'admin') {
-            u.permisos = DEFAULT_ADMIN.permisos;
-          }
-        }
-        if (!u.establecimiento) {
-          u.establecimiento = 'CARABAYLLO';
-        }
-        return u;
-      }
-    }
-  } catch (e) {}
-
-  return null;
+    verifiedUser = await api.session();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(verifiedUser));
+    return true;
+  } catch (error) { clearLocalSession(); return false; }
 }
-
-export function isAuthenticated() {
-  return getCurrentUser() !== null;
+export function clearLocalSession() {
+  verifiedUser = null;
+  ['user', 'last_activity', 'clientes', 'productos', 'pedidos', 'guias', 'letras'].forEach(key => localStorage.removeItem('inplabel_' + key));
+  if (window.app) {
+    window.app.clients = []; window.app.products = []; window.app.orders = []; window.app.shipments = [];
+  }
 }
+window.addEventListener('session-expired', () => {
+  clearLocalSession();
+  window.app?.navigateTo('login');
+});
 
 export function isAdmin() {
   const user = getCurrentUser();
@@ -74,8 +58,8 @@ export function checkSessionTimeout() {
   if (elapsed >= INACTIVITY_TIMEOUT_MS) {
     // Sesión expirada automáticamente por inactividad (más de 2 horas)
     console.warn("Sesión expirada automáticamente tras 2 horas de inactividad.");
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LAST_ACTIVITY_KEY);
+    api.logout().catch(() => {});
+    clearLocalSession();
 
     // Cerrar y destruir cualquier modal o ventana emergente abierta (guía emitida, letras, detalles, etc.)
     if (typeof window.closeAllOpenModals === 'function') {
@@ -151,6 +135,7 @@ export async function submitLogin(e) {
     const res = await api.login(username, password);
 
     if (res && res.success && res.user) {
+      verifiedUser = res.user;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(res.user));
       recordActivity();
       showLoginAlert('Acceso correcto. Redirigiendo...', 'success');
@@ -159,6 +144,7 @@ export async function submitLogin(e) {
         if (window.app && typeof window.app.navigateTo === 'function') {
           window.app.updateUserUI();
           window.app.navigateTo('dashboard');
+          window.app.refreshData();
         } else {
           window.location.reload();
         }
@@ -167,7 +153,7 @@ export async function submitLogin(e) {
       showLoginAlert(res?.message || 'Usuario o contraseña incorrectos.', 'danger');
     }
   } catch (err) {
-    showLoginAlert('Error de conexión con el servidor de autenticación.', 'danger');
+    showLoginAlert(err.message || 'Error de conexión con el servidor de autenticación.', 'danger');
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
@@ -193,9 +179,10 @@ export async function confirmLogout() {
   }
 }
 
-export function logout() {
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(LAST_ACTIVITY_KEY);
+export async function logout() {
+  try { await api.logout(); }
+  catch (error) { if (error.status !== 401) { alert('No se pudo cerrar la sesión en el servidor. Intente nuevamente.'); return; } }
+  clearLocalSession();
   if (typeof window.closeAllOpenModals === 'function') {
     window.closeAllOpenModals();
   }
@@ -211,7 +198,7 @@ export function showLoginAlert(msg, type = 'danger') {
   const alertEl = document.getElementById('loginAlert');
   if (!alertEl) return;
   alertEl.className = `alert alert-${type} py-2 px-3 small d-flex align-items-center gap-2 mb-3`;
-  alertEl.innerHTML = `<i class="bi ${type === 'danger' ? 'bi-exclamation-triangle-fill' : type === 'warning' ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill'}"></i> <span>${msg}</span>`;
+  alertEl.textContent = msg;
   alertEl.classList.remove('d-none');
 }
 

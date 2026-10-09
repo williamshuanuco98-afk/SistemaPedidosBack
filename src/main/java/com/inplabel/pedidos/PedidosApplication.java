@@ -11,6 +11,9 @@ import java.net.URI;
 @SpringBootApplication
 public class PedidosApplication {
 
+    @org.springframework.beans.factory.annotation.Value("${app.open-browser:true}")
+    private boolean openBrowser;
+
     public static void main(String[] args) {
         // En Windows sin cabezal gráfico para evitar problemas con java.awt.headless
         System.setProperty("java.awt.headless", "false");
@@ -20,6 +23,7 @@ public class PedidosApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void openBrowserOnStartup() {
+        if (!openBrowser) return;
         System.out.println("🚀 Abriendo navegador en http://localhost:8080...");
         try {
             String os = System.getProperty("os.name", "").toLowerCase();

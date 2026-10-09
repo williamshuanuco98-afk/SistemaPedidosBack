@@ -20,7 +20,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/letras")
-@CrossOrigin(origins = "*")
 public class LetraCambioController {
 
     @Autowired
@@ -201,9 +200,10 @@ public class LetraCambioController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Error al registrar lote de letras: " + e.getMessage()));
+                    .body(Map.of("error", "No se pudo registrar el lote. No se guardó ninguna letra."));
         }
     }
 
@@ -224,9 +224,7 @@ public class LetraCambioController {
             byte[] pdfBytes = letraPdfGenerator.generatePdfBytes(letra);
 
             // Auto-save to disk if storageDir passed
-            if (storageDir != null && !storageDir.trim().isEmpty()) {
-                letraPdfGenerator.savePdfToDisk(letra, storageDir, useSubfolders);
-            }
+            
 
             String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_")
                     + ".pdf";
@@ -240,7 +238,7 @@ public class LetraCambioController {
                     .body(pdfBytes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error al generar PDF de Letra: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("No se pudo generar el documento");
         }
     }
 
@@ -262,7 +260,7 @@ public class LetraCambioController {
                     .body(html);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error al generar HTML de Letra: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("No se pudo generar el documento");
         }
     }
 
@@ -281,9 +279,7 @@ public class LetraCambioController {
             Map<String, Object> letra = list.get(0);
             byte[] excelBytes = letraExcelGenerator.generateExcelBytes(letra);
 
-            if (storageDir != null && !storageDir.trim().isEmpty()) {
-                letraExcelGenerator.saveExcelToDisk(letra, storageDir, useSubfolders);
-            }
+            
 
             String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".xlsx";
 
@@ -294,7 +290,7 @@ public class LetraCambioController {
                     .body(excelBytes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error al generar Excel de Letra: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("No se pudo generar el documento");
         }
     }
 
@@ -316,7 +312,7 @@ public class LetraCambioController {
                     .body(excelBytes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error al generar Excel del Lote de Letras: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("No se pudo generar el documento");
         }
     }
 

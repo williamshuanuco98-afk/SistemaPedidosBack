@@ -167,26 +167,4 @@ public class UsuarioDaoImpl implements UsuarioDao {
         return rows > 0;
     }
 
-    @Override
-    public void initDefaultUsers() {
-        // 1. Usuario Administrador
-        if (findByUsername("admin").isEmpty()) {
-            List<String> fullPerms = List.of(
-                "pedidos.view", "pedidos.create", "pedidos.edit", "pedidos.cancel", "pedidos.finish", "pedidos.finances",
-                "envios.create", "envios.view", "guias.create", "guias.view", "produccion.view",
-                "clientes.manage", "productos.manage", "usuarios.manage"
-            );
-            createWithPermissions("admin", "admin123", "Administrador Inplabel", "ADMIN", fullPerms);
-            System.out.println(">>> Usuario 'admin' inicializado con matriz completa de permisos.");
-        }
-
-        // 2. Usuario Operaciones
-        if (findByUsername("operaciones").isEmpty()) {
-            List<String> opPerms = List.of(
-                "pedidos.view", "envios.create", "envios.view", "guias.create", "guias.view", "produccion.view"
-            );
-            createWithPermissions("operaciones", "operaciones123", "Área de Operaciones", "OPERACIONES", opPerms);
-            System.out.println(">>> Usuario 'operaciones' inicializado con matriz de permisos.");
-        }
-    }
 }

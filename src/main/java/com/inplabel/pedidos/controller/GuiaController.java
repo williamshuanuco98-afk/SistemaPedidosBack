@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/guias")
-@CrossOrigin(origins = "*")
 public class GuiaController {
 
     @Autowired
@@ -66,7 +65,7 @@ public class GuiaController {
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().body("ID de guía no válido: " + idStr);
         }
-        byte[] pdfBytes = guiaService.generatePdf(id, storageDir, useSubfolders);
+        byte[] pdfBytes = guiaService.generatePdf(id, null, useSubfolders);
         if (pdfBytes == null || pdfBytes.length == 0) {
             return ResponseEntity.notFound().build();
         }

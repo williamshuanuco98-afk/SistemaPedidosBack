@@ -1,37 +1,16 @@
-Write-Host "=========================================================="
-Write-Host "         AUDITORIA Y TEST DE SEGURIDAD EN VIVO           "
-Write-Host "=========================================================="
-
-Write-Host "`n[1] TEST DE CABECERAS DE SEGURIDAD HTTP Y RATE LIMIT:"
-$resp = curl.exe -i -s http://localhost:8080/api/status
-foreach ($line in ($resp -split "`r?`n")) {
-    if ($line -match "X-Content-Type|X-Frame-Options|X-XSS-Protection|X-RateLimit|HTTP/") {
-        Write-Host "   [+] $line" -ForegroundColor Green
+$ErrorActionPreference = 'Stop'
+function Assert-HttpStatus($Path, $Method, $Headers, $Expected) {
+    try {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri ('http://localhost:8080' + $Path) -Method $Method -Headers $Headers
+        $actual = [int]$response.StatusCode
+    } catch {
+        if (-not $_.Exception.Response) { throw }
+        $actual = [int]$_.Exception.Response.StatusCode
     }
+    if ($actual -ne $Expected) { throw "Fallo: $Method $Path devolvió $actual; se esperaba $Expected" }
+    Write-Host "OK: $Method $Path -> $Expected"
 }
-
-Write-Host "`n[2] TEST DE RESISTENCIA A INYECCION SQL (Parametrizacion):"
-$sqlTest = curl.exe -s "http://localhost:8080/api/letras?search=%27%20OR%201=1%20--"
-if ($sqlTest -match "\[\]" -or $sqlTest -match "\[") {
-    Write-Host "   [+] APROBADO: La consulta parametrizada neutralizo el payload SQL sin arrojar error de sintaxis." -ForegroundColor Green
-} else {
-    Write-Host "   [-] Respuesta: $sqlTest" -ForegroundColor Yellow
-}
-
-Write-Host "`n[3] TEST DE RESISTENCIA A RAFAGAS (Rate Limiter Tracking):"
-$startRemaining = 0
-for ($i = 1; $i -le 5; $i++) {
-    $r = curl.exe -i -s http://localhost:8080/api/status
-    $rem = ($r | Select-String "X-RateLimit-Remaining:\s*(\d+)").Matches.Groups[1].Value
-    Write-Host "   Peticion $i -> X-RateLimit-Remaining: $rem" -ForegroundColor Cyan
-}
-
-Write-Host "`n[4] TEST DE LIMITES DE TIMEOUT Y SLOWLORIS (application.properties):"
-Write-Host "   [+] server.tomcat.connection-timeout = 5000 ms (5s)" -ForegroundColor Green
-Write-Host "   [+] server.tomcat.threads.max = 100" -ForegroundColor Green
-Write-Host "   [+] server.tomcat.max-connections = 1000" -ForegroundColor Green
-Write-Host "   [+] spring.datasource.hikari.connection-timeout = 5000 ms" -ForegroundColor Green
-
-Write-Host "`n=========================================================="
-Write-Host "          RESULTADO GENERAL: SISTEMA PROTEGIDO            "
-Write-Host "=========================================================="
+Assert-HttpStatus '/api/usuarios' 'GET' @{} 401
+Assert-HttpStatus '/api/pedidos' 'GET' @{ 'X-User-Role' = 'ADMIN'; 'X-Username' = 'admin' } 401
+Assert-HttpStatus '/api/auth/login' 'POST' @{} 403
+Write-Host 'Comprobaciones de acceso anónimo correctas. No se modificaron datos.'

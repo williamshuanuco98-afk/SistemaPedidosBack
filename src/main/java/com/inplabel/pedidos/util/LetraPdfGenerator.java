@@ -10,6 +10,8 @@ import java.util.Map;
 
 @Component
 public class LetraPdfGenerator {
+    @org.springframework.beans.factory.annotation.Autowired
+    private SecureStorage secureStorage;
 
     private static final Color COLOR_TEXT = new Color(20, 20, 20);
 
@@ -35,35 +37,12 @@ public class LetraPdfGenerator {
         }
     }
 
-    public String savePdfToDisk(Map<String, Object> letra, String baseDir, boolean useSubfolders) {
+    public String savePdfToDisk(Map<String, Object> letra, String ignoredClientPath, boolean useSubfolders) {
         try {
-            byte[] bytes = generatePdfBytes(letra);
-            String nroLetra = (String) letra.getOrDefault("nro_letra", "261-2025");
-
-            String targetDir = (baseDir != null && !baseDir.trim().isEmpty()) ? baseDir.trim() : "C:\\Inplabel\\Letras";
-
-            if (useSubfolders) {
-                LocalDate now = LocalDate.now();
-                targetDir = targetDir + File.separator + now.getYear() + File.separator + String.format("%02d", now.getMonthValue());
-            }
-
-            File dir = new File(targetDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String filename = nroLetra.replaceAll("[^a-zA-Z0-9-_]", "_") + ".pdf";
-            File targetFile = new File(dir, filename);
-
-            try (FileOutputStream fos = new FileOutputStream(targetFile)) {
-                fos.write(bytes);
-            }
-
-            return targetFile.getAbsolutePath();
-        } catch (Exception e) {
-            System.err.println("Advertencia al guardar PDF de Letra en disco: " + e.getMessage());
-            return null;
-        }
+            String number = String.valueOf(letra.getOrDefault("nro_letra", "documento"));
+            String filename = "" + number.replaceAll("[^a-zA-Z0-9_-]", "_") + ".pdf";
+            return secureStorage.saveDocument("Letras", filename, useSubfolders, generatePdfBytes(letra));
+        } catch (java.io.IOException e) { throw new IllegalStateException("No se pudo guardar el documento", e); }
     }
 
     private byte[] loadTemplatePdfBytes() {

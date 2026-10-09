@@ -8,13 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import com.inplabel.pedidos.security.ApiSecurityFilter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
@@ -31,7 +33,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody(required = false) LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody(required = false) LoginRequest request, HttpServletRequest servletRequest) {
         if (request == null || request.getUsername() == null || request.getUsername().trim().isEmpty() ||
             request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             Map<String, Object> error = new HashMap<>();
@@ -62,6 +64,16 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
 
+        if (PasswordUtil.needsUpgrade(user.getPassword())) {
+            usuarioDao.updatePassword(user.getIdUsuario(), password);
+            user = usuarioDao.findById(user.getIdUsuario()).orElseThrow();
+        }
+        HttpSession previous = servletRequest.getSession(false);
+        if (previous != null) previous.invalidate();
+        HttpSession session = servletRequest.getSession(true);
+        session.setMaxInactiveInterval(7200);
+        session.setAttribute(ApiSecurityFilter.USER_ID, user.getIdUsuario());
+        session.setAttribute(ApiSecurityFilter.PASSWORD_VERSION, user.getPassword());
         Map<String, Object> userData = new HashMap<>();
         userData.put("idUsuario", user.getIdUsuario());
         userData.put("username", user.getUsername());
@@ -79,12 +91,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@RequestParam String username) {
-        Optional<Usuario> userOpt = usuarioDao.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Usuario user = userOpt.get();
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        Usuario user = (Usuario) request.getAttribute(ApiSecurityFilter.CURRENT_USER);
         Map<String, Object> userData = new HashMap<>();
         userData.put("idUsuario", user.getIdUsuario());
         userData.put("username", user.getUsername());
@@ -93,5 +101,11 @@ public class AuthController {
         userData.put("establecimiento", user.getEstablecimiento() != null ? user.getEstablecimiento() : "CARABAYLLO");
         userData.put("permisos", user.getPermisos());
         return ResponseEntity.ok(userData);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) session.invalidate();
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

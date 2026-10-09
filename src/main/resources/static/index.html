@@ -2,6 +2,14 @@
 <html lang="es">
 
 <head>
+  <script id="canonical-backend-origin">
+    // The local preview server cannot provide the authenticated API.
+    if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) && location.port === '3000') {
+      const destination = new URL(location.href);
+      destination.port = '8080';
+      location.replace(destination.href);
+    }
+  </script>
   <meta charset="UTF-8">
   <script>
     (function () {
@@ -54,7 +62,7 @@
   <link rel="stylesheet" href="css/flatpickr.dark.css">
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/styles.css?v=886.0">
+  <link rel="stylesheet" href="css/styles.css?v=887.0">
 
   <!-- Flatpickr DatePicker JS -->
   <script src="js/flatpickr.min.js"></script>

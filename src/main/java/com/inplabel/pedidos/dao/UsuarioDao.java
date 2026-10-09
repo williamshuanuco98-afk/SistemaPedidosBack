@@ -15,5 +15,4 @@ public interface UsuarioDao {
     boolean updateUser(int idUsuario, String username, String nombreCompleto, String rol, String establecimiento, Boolean activo, List<String> permisos, String newPassword);
     boolean toggleActive(int idUsuario);
     boolean updatePassword(int idUsuario, String newRawPassword);
-    void initDefaultUsers();
 }

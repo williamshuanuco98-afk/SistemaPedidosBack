@@ -1,39 +1,35 @@
-export const BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
-  ? (window.location.port === '8080' ? '/api' : `${window.location.protocol}//${window.location.hostname || 'localhost'}:8080/api`)
-  : 'http://localhost:8080/api';
-
+export const BASE_URL = '/api';
+export class ApiError extends Error {
+  constructor(message, status = 0) { super(message); this.name = 'ApiError'; this.status = status; }
+}
 async function fetchWithTimeout(resource, options = {}) {
   const { timeout = 10000, headers = {}, ...fetchOptions } = options;
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-
-  // Inyectar cabeceras de rol de usuario automáticamente (sanitizadas para cabeceras HTTP)
-  let authHeaders = { ...headers };
-  try {
-    const rawUser = localStorage.getItem('inplabel_user');
-    if (rawUser) {
-      const u = JSON.parse(rawUser);
-      if (u && u.rol) {
-        authHeaders['X-User-Role'] = encodeURIComponent(String(u.rol || ''));
-      }
-      if (u && u.username) {
-        authHeaders['X-Username'] = encodeURIComponent(String(u.username || ''));
-      }
-    }
-  } catch (e) {}
-
+  const timer = setTimeout(() => controller.abort(), timeout);
+  const internal = String(resource).startsWith(BASE_URL + '/');
+  const write = !['GET', 'HEAD'].includes((fetchOptions.method || 'GET').toUpperCase());
   try {
     const response = await fetch(resource, {
-      ...fetchOptions,
-      headers: authHeaders,
+      ...fetchOptions, credentials: internal ? 'same-origin' : 'omit',
+      headers: internal ? { ...headers, 'X-Requested-With': 'XMLHttpRequest' } : headers,
       signal: controller.signal
     });
-    clearTimeout(id);
+    if (internal && !response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const login = String(resource).endsWith('/auth/login');
+      if (login && response.status === 404) throw new ApiError('El servidor abierto no contiene la API de acceso. Abra http://localhost:8080.', 404);
+      if (response.status === 401 && !String(resource).endsWith('/auth/login')) {
+        window.dispatchEvent(new Event('session-expired'));
+      }
+      throw new ApiError(body.message || body.error || 'No se pudo completar la operación.', response.status);
+    }
     return response;
   } catch (error) {
-    clearTimeout(id);
+    if (error instanceof ApiError) throw error;
+    if (internal && String(resource).endsWith('/auth/login')) throw new ApiError('No se pudo conectar con el servidor de acceso. Inicie Sistema Inplabel y abra http://localhost:8080.');
+    if (internal && write) throw new ApiError('No se confirmó el guardado en el servidor. Compruebe los datos antes de reintentar.');
     throw error;
-  }
+  } finally { clearTimeout(timer); }
 }
 
 // Empty fallbacks - no dummy data injected
@@ -56,14 +52,14 @@ function getLocalData(key, fallback = []) {
         return parsed;
       }
     }
-  } catch (e) {}
+  } catch (e) { if (e instanceof ApiError) throw e;}
   return fallback;
 }
 
 function setLocalData(key, data) {
   try {
     localStorage.setItem('inplabel_' + key, JSON.stringify(data));
-  } catch (e) {}
+  } catch (e) { if (e instanceof ApiError) throw e;}
 }
 
 export const api = {
@@ -84,7 +80,7 @@ export const api = {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/status`, { timeout: 10000 });
       if (res && res.ok) return await res.json();
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
     return { connected: false, message: 'Spring Boot Backend Desconectado (Modo Local Activo)' };
   },
 
@@ -98,7 +94,7 @@ export const api = {
           return data;
         }
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
     return getLocalData('clientes', FALLBACK_CLIENTS);
   },
 
@@ -110,7 +106,7 @@ export const api = {
         body: JSON.stringify(clienteData),
         timeout: 10000
       });
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
       if (res.ok) {
         const current = getLocalData('clientes', []);
         const newClient = (data && (data.id_cliente || data.id)) ? data : { ...clienteData, id_cliente: Date.now() };
@@ -120,7 +116,7 @@ export const api = {
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Error de conexión al agregar cliente:", e);
     }
     // Fallback local storage
@@ -138,7 +134,7 @@ export const api = {
         body: JSON.stringify(clienteData),
         timeout: 10000
       });
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
       if (res.ok) {
         const current = getLocalData('clientes', []);
         const updated = current.map(c => String(c.id_cliente || c.id) === String(id) ? { ...c, ...clienteData } : c);
@@ -148,7 +144,7 @@ export const api = {
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error('Error al actualizar cliente en MySQL:', e);
     }
     const current = getLocalData('clientes', []);
@@ -166,7 +162,7 @@ export const api = {
       const current = getLocalData('clientes', []);
       setLocalData('clientes', current.filter(c => String(c.id_cliente || c.id) !== String(id)));
       if (res.ok) return await res.json();
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error('Error al eliminar cliente en MySQL:', e);
       const current = getLocalData('clientes', []);
       setLocalData('clientes', current.filter(c => String(c.id_cliente || c.id) !== String(id)));
@@ -184,7 +180,7 @@ export const api = {
         const data = await res.json();
         if (data && data.success) return data;
       }
-    } catch (e) {
+    } catch (e) { if (e instanceof ApiError) throw e;
       console.warn("Error consultando backend SUNAT RUC:", e);
     }
 
@@ -212,7 +208,7 @@ export const api = {
           };
         }
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
 
     return { success: false };
   },
@@ -227,7 +223,7 @@ export const api = {
         const data = await res.json();
         if (data && data.success) return data;
       }
-    } catch (e) {
+    } catch (e) { if (e instanceof ApiError) throw e;
       console.warn("Error consultando backend DNI:", e);
     }
 
@@ -246,7 +242,7 @@ export const api = {
           };
         }
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
 
     return { success: false };
   },
@@ -261,7 +257,7 @@ export const api = {
           return data;
         }
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
     return getLocalData('productos', FALLBACK_PRODUCTS);
   },
 
@@ -273,12 +269,12 @@ export const api = {
         body: JSON.stringify(productoData),
         timeout: 10000
       });
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
       if (res.ok) return data;
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Error al registrar producto:", e);
     }
     return { success: false, error: 'No se pudo conectar con el servidor para registrar el producto.' };
@@ -292,12 +288,12 @@ export const api = {
         body: JSON.stringify(productoData),
         timeout: 10000
       });
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
       if (res.ok) return data;
       if (data && (data.error || data.message)) {
         return { success: false, error: data.error || data.message };
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Error al actualizar producto:", e);
     }
     return { success: false, error: 'No se pudo actualizar el producto.' };
@@ -310,7 +306,7 @@ export const api = {
         timeout: 10000
       });
       if (res.ok) return await res.json();
-    } catch (e) {}
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');}
     let list = getLocalData('productos', FALLBACK_PRODUCTS);
     list = list.filter(p => String(p.id) !== String(id));
     setLocalData('productos', list);
@@ -327,7 +323,7 @@ export const api = {
           return data;
         }
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
     return getLocalData('pedidos', FALLBACK_ORDERS);
   },
 
@@ -346,7 +342,7 @@ export const api = {
         setLocalData('pedidos', list);
         return created;
       }
-    } catch (e) {}
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');}
     const list = getLocalData('pedidos', FALLBACK_ORDERS);
     const newOrder = {
       id_pedido: Date.now(),
@@ -375,7 +371,7 @@ export const api = {
         timeout: 2000
       });
       if (res.ok) return await res.json();
-    } catch (e) {}
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');}
     const list = getLocalData('pedidos', FALLBACK_ORDERS);
     const order = list.find(o => String(o.id_pedido) === String(idPedido));
     if (order) {
@@ -397,7 +393,7 @@ export const api = {
         const data = await res.json();
         if (Array.isArray(data)) return data;
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
     return getLocalData('guias', FALLBACK_SHIPMENTS);
   },
 
@@ -408,7 +404,7 @@ export const api = {
         const data = await res.json();
         if (data && data.next_nro_guia) return data.next_nro_guia;
       }
-    } catch (e) {}
+    } catch (e) { if (e instanceof ApiError) throw e;}
 
     const list = getLocalData('guias', FALLBACK_SHIPMENTS);
     const prefix = serie.toUpperCase().startsWith('GR002') ? 'GR002' : 'GR001';
@@ -448,7 +444,7 @@ export const api = {
         const errText = await res.text();
         throw new Error(errText || `Error del servidor HTTP ${res.status}`);
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error("Error al emitir guía en addGuia:", e);
       throw e;
     }
@@ -467,7 +463,7 @@ export const api = {
         timeout: 3000
       });
       if (res.ok) return await res.json();
-    } catch (e) {}
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');}
     return null;
   },
 
@@ -493,7 +489,7 @@ export const api = {
         }
         return data;
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Error actualizando guía en backend:", e);
     }
 
@@ -516,7 +512,7 @@ export const api = {
         timeout: 2000
       });
       if (res.ok) return await res.json();
-    } catch (e) {}
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');}
 
     const list = getLocalData('guias', FALLBACK_SHIPMENTS);
     const g = list.find(x => String(x.id_guia) === String(id));
@@ -546,7 +542,7 @@ export const api = {
         setLocalData('letras', data);
         return data;
       }
-    } catch (e) {
+    } catch (e) { if (e instanceof ApiError) throw e;
       console.warn("Backend offline or error in getLetras, using localStorage:", e);
     }
     return getLocalData('letras', []);
@@ -558,7 +554,7 @@ export const api = {
       if (res.ok) {
         return await res.json();
       }
-    } catch (e) {
+    } catch (e) { if (e instanceof ApiError) throw e;
       console.warn("Backend offline, calculating local correlativo:", e);
     }
     const list = getLocalData('letras', []);
@@ -591,7 +587,7 @@ export const api = {
         setLocalData('letras', merged);
         return result;
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Backend offline, saving letras batch locally:", e);
     }
 
@@ -624,7 +620,7 @@ export const api = {
         }
         return data;
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Backend offline, updating letra locally:", e);
     }
 
@@ -653,7 +649,7 @@ export const api = {
         setLocalData('letras', list);
         return data;
       }
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.warn("Backend offline, updating lote locally:", e);
     }
 
@@ -666,43 +662,24 @@ export const api = {
   },
 
   async login(username, password) {
-    const cleanUser = String(username || '').trim().toLowerCase();
-    try {
-      const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: cleanUser, password }),
-        timeout: 6000
-      });
-      if (res) {
-        return await res.json();
-      }
-    } catch (e) {
-      console.warn("Backend login error, attempting offline auth fallback:", e);
-    }
-
-    if (cleanUser === 'admin' && password === 'admin123') {
-      return {
-        success: true,
-        message: 'Inicio de sesión (Administrador)',
-        user: { idUsuario: 1, username: 'admin', nombreCompleto: 'Administrador Operix', rol: 'ADMIN' }
-      };
-    } else if (cleanUser === 'operaciones' && password === 'operaciones123') {
-      return {
-        success: true,
-        message: 'Inicio de sesión (Operaciones)',
-        user: { idUsuario: 2, username: 'operaciones', nombreCompleto: 'Área de Operaciones', rol: 'OPERACIONES' }
-      };
-    }
-
-    return { success: false, message: 'Usuario o contraseña incorrectos.' };
+    const res = await fetchWithTimeout(BASE_URL + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: String(username || '').trim().toLowerCase(), password }), timeout: 10000
+    });
+    return res.json();
   },
-
+  async session() {
+    const res = await fetchWithTimeout(BASE_URL + '/auth/me');
+    return res.json();
+  },
+  async logout() {
+    await fetchWithTimeout(BASE_URL + '/auth/logout', { method: 'POST' });
+  },
   async getUsers() {
     try {
       const res = await fetchWithTimeout(`${BASE_URL}/usuarios`, { timeout: 8000 });
       if (res.ok) return await res.json();
-    } catch (e) {
+    } catch (e) { if (e instanceof ApiError) throw e;
       console.warn("Error fetching users from API:", e);
     }
     return [];
@@ -717,7 +694,7 @@ export const api = {
         timeout: 8000
       });
       return await res.json();
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error("Error creating user:", e);
       return { message: "Error al conectar con el servidor." };
     }
@@ -732,7 +709,7 @@ export const api = {
         timeout: 8000
       });
       return await res.json();
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error("Error updating user:", e);
       return { message: "Error al conectar con el servidor." };
     }
@@ -745,7 +722,7 @@ export const api = {
         timeout: 8000
       });
       return await res.json();
-    } catch (e) {
+    } catch (e) { throw e instanceof ApiError ? e : new ApiError('No se pudo confirmar la operación en el servidor.');
       console.error("Error toggling user active state:", e);
       return { message: "Error al conectar con el servidor." };
     }

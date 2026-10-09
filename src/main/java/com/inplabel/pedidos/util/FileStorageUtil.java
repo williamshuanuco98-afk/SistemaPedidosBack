@@ -1,61 +1,47 @@
 package com.inplabel.pedidos.util;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class FileStorageUtil {
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private final SecureStorage storage;
+    private final ObjectMapper mapper = new ObjectMapper();
+    public FileStorageUtil(SecureStorage storage) { this.storage = storage; }
     @SuppressWarnings("unchecked")
-    public String saveAttachedFiles(Object adjuntosObj, String storagePath, boolean useSubfolders, String folderName) {
-        if (adjuntosObj == null) return "";
-
-        String adjuntosJson = "";
-        try {
-            adjuntosJson = objectMapper.writeValueAsString(adjuntosObj);
-        } catch (Exception ignored) {}
-
-        if (adjuntosObj instanceof List) {
-            List<Map<String, Object>> filesList = (List<Map<String, Object>>) adjuntosObj;
-            for (Map<String, Object> f : filesList) {
-                String fileName = (String) f.get("name");
-                String base64Data = (String) f.get("data");
-
-                if (fileName != null && base64Data != null && base64Data.contains(",")) {
-                    try {
-                        String base64Content = base64Data.substring(base64Data.indexOf(",") + 1);
-                        byte[] decodedBytes = Base64.getDecoder().decode(base64Content);
-
-                        File targetDir = new File(storagePath);
-                        if (useSubfolders && folderName != null && !folderName.isEmpty()) {
-                            targetDir = new File(targetDir, folderName);
-                        }
-                        if (!targetDir.exists()) {
-                            targetDir.mkdirs();
-                        }
-
-                        File outFile = new File(targetDir, fileName);
-                        Files.write(outFile.toPath(), decodedBytes);
-                        f.put("saved_path", outFile.getAbsolutePath());
-                    } catch (Exception ex) {
-                        System.err.println("Error al guardar archivo en disco: " + ex.getMessage());
-                    }
-                }
-            }
-            try {
-                return objectMapper.writeValueAsString(filesList);
-            } catch (Exception e) {
-                return adjuntosJson;
-            }
+    public String saveAttachedFiles(Object attachments, String ignoredClientPath, boolean subfolders, String folder) {
+        if (attachments == null) return "";
+        if (!(attachments instanceof List<?> list) || list.size() > 20) throw new IllegalArgumentException("Adjuntos inválidos");
+        List<Map<String,Object>> validated = new ArrayList<>();
+        List<byte[]> contents = new ArrayList<>();
+        long total = 0;
+        for (Object item : list) {
+            if (!(item instanceof Map<?,?>)) throw new IllegalArgumentException("Adjunto inválido");
+            Map<String,Object> file = new HashMap<>((Map<String,Object>) item);
+            String name = String.valueOf(file.getOrDefault("name", ""));
+            String data = String.valueOf(file.getOrDefault("data", ""));
+            if (name.contains("/") || name.contains("\\") || name.contains(":") || name.contains(".."))
+                throw new IllegalArgumentException("Nombre de adjunto no permitido");
+            String ext = name.contains(".") ? name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT) : "";
+            if (!Set.of("pdf", "png", "jpg", "jpeg", "doc", "docx", "xls", "xlsx", "csv", "txt").contains(ext))
+                throw new IllegalArgumentException("Tipo de adjunto no permitido");
+            if (!data.startsWith("data:") || !data.contains(";base64,") || data.length() > 7_000_000)
+                throw new IllegalArgumentException("Adjunto inválido o mayor de 5 MB");
+            byte[] bytes = Base64.getDecoder().decode(data.substring(data.indexOf(',') + 1));
+            total += bytes.length;
+            if (bytes.length > 5 * 1024 * 1024 || total > 10 * 1024 * 1024)
+                throw new IllegalArgumentException("Máximo 5 MB por archivo y 10 MB por pedido");
+            file.remove("saved_path");
+            file.put("stored_name", UUID.randomUUID() + "." + ext);
+            validated.add(file); contents.add(bytes);
         }
-        return adjuntosJson;
+        try {
+            for (int i=0; i<validated.size(); i++) {
+                Map<String,Object> file=validated.get(i);
+                file.put("saved_path", storage.write("Pedidos", subfolders ? folder : null,
+                    (String) file.get("stored_name"), contents.get(i)).toString());
+            }
+            return mapper.writeValueAsString(validated);
+        } catch (java.io.IOException e) { throw new IllegalStateException("No se pudieron guardar los adjuntos", e); }
     }
 }

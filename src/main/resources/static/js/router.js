@@ -538,7 +538,7 @@ const EMBEDDED_VIEWS = {
                       <i class="bi bi-wallet2 text-primary fs-5"></i>
                       <div>
                         <strong class="d-block text-primary fs-7">Adelantos de Pago</strong>
-                        <span class="text-muted small">(Opcional - Presione el botón para registrar abonos o pagos por adelantado)</span>
+                       
                       </div>
                     </div>
                     <button type="button" class="btn btn-outline-primary btn-sm px-3"
@@ -2127,7 +2127,7 @@ const EMBEDDED_VIEWS = {
 
 </div>
 `,
-usuarios: `
+  usuarios: `
 <div class="content-card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title mb-0"><i class="bi bi-shield-lock-fill text-primary me-1"></i> Administración de Usuarios y Matriz de Permisos</h3>
@@ -2387,9 +2387,9 @@ export class Router {
     }
 
     // Strict Route Guard: if not authenticated, redirect to login
-    const isAuth = window.authModule && typeof window.authModule.isAuthenticated === 'function' 
-      ? window.authModule.isAuthenticated() 
-      : Boolean(localStorage.getItem('inplabel_user'));
+    const isAuth = window.authModule && typeof window.authModule.isAuthenticated === 'function'
+      ? window.authModule.isAuthenticated()
+      : false;
 
     if (!isAuth) {
       route = 'login';

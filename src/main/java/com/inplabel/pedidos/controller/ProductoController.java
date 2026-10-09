@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "*")
 public class ProductoController {
 
     @Autowired
@@ -48,16 +47,8 @@ public class ProductoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProducto(
-            @PathVariable Integer id,
-            @RequestHeader(value = "X-User-Role", required = false) String role) {
+            @PathVariable Integer id) {
 
-        if (role != null && "OPERACIONES".equalsIgnoreCase(role.trim())) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "Acceso denegado: El rol OPERACIONES no tiene permisos para eliminar productos.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-        }
-
-        return ResponseEntity.ok(productoService.deleteProducto(id));
+return ResponseEntity.ok(productoService.deleteProducto(id));
     }
 }

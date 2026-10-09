@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/clientes")
-@CrossOrigin(origins = "*")
 public class ClienteController {
 
     @Autowired
@@ -53,16 +52,8 @@ public class ClienteController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCliente(
-            @PathVariable int id,
-            @RequestHeader(value = "X-User-Role", required = false) String role) {
+            @PathVariable int id) {
 
-        if (role != null && "OPERACIONES".equalsIgnoreCase(role.trim())) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "Acceso denegado: El rol OPERACIONES no tiene permisos para eliminar clientes.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-        }
-
-        return ResponseEntity.ok(clienteService.deleteCliente(id));
+return ResponseEntity.ok(clienteService.deleteCliente(id));
     }
 }

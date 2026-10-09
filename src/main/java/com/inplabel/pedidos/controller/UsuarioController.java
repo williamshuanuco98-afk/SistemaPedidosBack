@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -44,6 +43,8 @@ public class UsuarioController {
         try {
             String username = (String) body.get("username");
             String password = (String) body.get("password");
+            if (password != null && !password.isEmpty() && (password.length() < 12 || password.length() > 1024))
+                return ResponseEntity.badRequest().body(Map.of("message", "La contraseña debe tener entre 12 y 1024 caracteres."));
             String nombreCompleto = (String) body.get("nombreCompleto");
             String rol = (String) body.get("rol");
             List<String> permisos = (List<String>) body.get("permisos");
@@ -72,7 +73,7 @@ public class UsuarioController {
             }
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", "Error: " + e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("message", "No se pudo guardar el usuario"));
         }
     }
 
@@ -82,6 +83,8 @@ public class UsuarioController {
         try {
             String username = (String) body.get("username");
             String password = (String) body.get("password");
+            if (password != null && !password.isEmpty() && (password.length() < 12 || password.length() > 1024))
+                return ResponseEntity.badRequest().body(Map.of("message", "La contraseña debe tener entre 12 y 1024 caracteres."));
             String nombreCompleto = (String) body.get("nombreCompleto");
             String rol = (String) body.get("rol");
             String establecimiento = (String) body.get("establecimiento");
@@ -106,7 +109,7 @@ public class UsuarioController {
             }
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", "Error: " + e.getMessage()));
+            return ResponseEntity.internalServerError().body(Map.of("message", "No se pudo guardar el usuario"));
         }
     }
 

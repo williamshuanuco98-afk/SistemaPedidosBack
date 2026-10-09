@@ -21,23 +21,26 @@ public class SunatClientUtil {
     @Value("${sunat.api.token:}")
     private String sunatToken;
 
+    @Value("${apiperu.api.token:}")
+    private String apiperuToken;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private HttpClient createHttpClient() {
         return HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(4))
-                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
     }
 
-    private String getEffectiveToken() {
-        if (decolectaToken != null && !decolectaToken.trim().isEmpty()) {
-            return decolectaToken.trim();
-        }
-        if (sunatToken != null && !sunatToken.trim().isEmpty()) {
-            return sunatToken.trim();
-        }
-        return "";
+    private String tokenForHost(String host) {
+        String token = switch (host) {
+            case "api.decolecta.com" -> decolectaToken;
+            case "api.apis.net.pe" -> sunatToken;
+            case "apiperu.dev" -> apiperuToken;
+            default -> null;
+        };
+        return token == null ? "" : token.trim();
     }
 
     public Map<String, Object> consultarRuc(String ruc) {
@@ -55,7 +58,6 @@ public class SunatClientUtil {
             return response;
         }
 
-        String token = getEffectiveToken();
         HttpClient client = createHttpClient();
 
         // 1. Intentar apis.net.pe v1 (Público y rápido)
@@ -67,6 +69,7 @@ public class SunatClientUtil {
                     .timeout(Duration.ofSeconds(4))
                     .GET();
 
+            String token = tokenForHost(reqBuilder.build().uri().getHost());
             if (!token.isEmpty()) {
                 reqBuilder.header("Authorization", "Bearer " + token);
             }
@@ -93,6 +96,7 @@ public class SunatClientUtil {
                     .timeout(Duration.ofSeconds(4))
                     .GET();
 
+            String token = tokenForHost(reqBuilder.build().uri().getHost());
             if (!token.isEmpty()) {
                 reqBuilder.header("Authorization", "Bearer " + token);
             }
@@ -119,6 +123,7 @@ public class SunatClientUtil {
                     .timeout(Duration.ofSeconds(4))
                     .GET();
 
+            String token = tokenForHost(reqBuilder.build().uri().getHost());
             if (!token.isEmpty()) {
                 reqBuilder.header("Authorization", "Bearer " + token);
             }
@@ -271,7 +276,6 @@ public class SunatClientUtil {
             return response;
         }
 
-        String token = getEffectiveToken();
         HttpClient client = createHttpClient();
 
         // 1. Intentar apis.net.pe v1 DNI (Público y rápido)
@@ -283,6 +287,7 @@ public class SunatClientUtil {
                     .timeout(Duration.ofSeconds(4))
                     .GET();
 
+            String token = tokenForHost(reqBuilder.build().uri().getHost());
             if (!token.isEmpty()) {
                 reqBuilder.header("Authorization", "Bearer " + token);
             }
@@ -318,6 +323,7 @@ public class SunatClientUtil {
                     .timeout(Duration.ofSeconds(4))
                     .GET();
 
+            String token = tokenForHost(reqBuilder.build().uri().getHost());
             if (!token.isEmpty()) {
                 reqBuilder.header("Authorization", "Bearer " + token);
             }

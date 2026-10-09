@@ -17,6 +17,8 @@ import java.util.Map;
 
 @Component
 public class LetraExcelGenerator {
+    @org.springframework.beans.factory.annotation.Autowired
+    private SecureStorage secureStorage;
 
     private static final String TEMPLATE_PATH = "templates/plantilla_letra.xlsx";
     private static final String FALLBACK_DESKTOP_PATH = "C:\\Users\\User\\OneDrive\\Escritorio\\nueva letra.xlsx";
@@ -87,37 +89,12 @@ public class LetraExcelGenerator {
         }
     }
 
-    public String saveExcelToDisk(Map<String, Object> letra, String baseDir, boolean useSubfolders) {
+    public String saveExcelToDisk(Map<String, Object> letra, String ignoredClientPath, boolean useSubfolders) {
         try {
-            byte[] bytes = generateExcelBytes(letra);
-            String nroLetra = (String) letra.getOrDefault("nro_letra", "LETRA");
-
-            String targetDir = (baseDir != null && !baseDir.trim().isEmpty()) ? baseDir.trim()
-                    : "C:\\Inplabel\\Letras_Excel";
-
-            if (useSubfolders) {
-                LocalDate now = LocalDate.now();
-                targetDir = targetDir + File.separator + now.getYear() + File.separator
-                        + String.format("%02d", now.getMonthValue());
-            }
-
-            File dir = new File(targetDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String filename = nroLetra.replaceAll("[^a-zA-Z0-9-_]", "_") + ".xlsx";
-            File targetFile = new File(dir, filename);
-
-            try (FileOutputStream fos = new FileOutputStream(targetFile)) {
-                fos.write(bytes);
-            }
-
-            return targetFile.getAbsolutePath();
-        } catch (Exception e) {
-            System.err.println("Advertencia al guardar Excel de Letra en disco: " + e.getMessage());
-            return null;
-        }
+            String number = String.valueOf(letra.getOrDefault("nro_letra", "documento"));
+            String filename = "" + number.replaceAll("[^a-zA-Z0-9_-]", "_") + ".xlsx";
+            return secureStorage.saveDocument("LetrasExcel", filename, useSubfolders, generateExcelBytes(letra));
+        } catch (java.io.IOException e) { throw new IllegalStateException("No se pudo guardar el documento", e); }
     }
 
     private void fillSheetWithLetra(Sheet sheet, Map<String, Object> letra) {

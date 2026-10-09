@@ -1,0 +1,222 @@
+/* Shared dark palette. Scoped to dark mode so the light theme stays independent. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-main: #162235;
+  --bg-sidebar: #20324a;
+  --bg-card: #263852;
+  --bg-sidebar-hover: #304968;
+  --input-bg: #142238;
+  --text-primary: #f1f5f9;
+  --text-secondary: #c0cad8;
+  --text-muted: #94a3b8;
+  --text-sidebar: #c0cad8;
+  --border-subtle: #354b66;
+  --border-color: #48627e;
+  --border-dark: #20324a;
+  --brand-primary: #3974d8;
+  --brand-primary-hover: #3268c5;
+  --brand-accent: #93bbff;
+  --brand-sky: #93bbff;
+  --brand-cyan: #71d4c1;
+  --brand-cyan-dark: #4eb6a2;
+  --accent-purple: #93bbff;
+  --accent-purple-hover: #b7d2ff;
+  --accent-purple-glow: rgba(96, 156, 255, .14);
+  --accent-cyan-glow: rgba(113, 212, 193, .1);
+  --brand-gradient: linear-gradient(135deg, #356dd0, #3974d8);
+  --brand-gradient-hover: linear-gradient(135deg, #2e60b9, #3268c5);
+  --tone-blue-bg: #1e3a8a;
+  --tone-blue-fg: #60a5fa;
+  --tone-green-bg: #064e3b;
+  --tone-green-fg: #34d399;
+  --tone-amber-bg: #3f3828;
+  --tone-amber-fg: #e7bd63;
+  --tone-red-bg: #5b2029;
+  --tone-red-fg: #ff7182;
+  --tone-purple-bg: #581c87;
+  --tone-purple-fg: #c084fc;
+  --bs-body-bg: var(--bg-main);
+  --bs-body-color: var(--text-primary);
+  --bs-secondary-color: var(--text-secondary);
+  --bs-tertiary-color: var(--text-muted);
+  --bs-border-color: var(--border-color);
+  --bs-tertiary-bg: var(--bg-sidebar);
+  --bs-secondary-bg: var(--bg-card);
+  --bs-link-color: #a9cbff;
+  --bs-link-hover-color: #c7ddff;
+}
+
+html[data-theme="dark"] .text-primary { color: var(--tone-blue-fg) !important; }
+html[data-theme="dark"] .text-success { color: var(--tone-green-fg) !important; }
+html[data-theme="dark"] .text-warning { color: var(--tone-amber-fg) !important; }
+html[data-theme="dark"] .text-danger { color: var(--tone-red-fg) !important; }
+html[data-theme="dark"] .text-info { color: #a1d7e6 !important; }
+html[data-theme="dark"] .sidebar .nav-item.active { background: #1e4771 !important; border-color: transparent !important; color: #f1f5f9 !important; box-shadow: inset 3px 0 0 #60a5fa !important; }
+html[data-theme="dark"] .sidebar .nav-item.active .icon { color: var(--tone-blue-fg) !important; }
+html[data-theme="dark"] .sidebar { border-right: none !important; box-shadow: 10px 0 30px rgba(0, 0, 0, .18) !important; }
+
+/* Restore the original login panel appearance. */
+html[data-theme="dark"] .modern-login-wrapper { background: #0b1329 !important; }
+html[data-theme="dark"] .login-card {
+  background: rgba(30, 41, 59, .82) !important;
+  border-color: rgba(255, 255, 255, .08) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .05) !important;
+}
+html[data-theme="dark"] .login-title { color: #f8fafc !important; }
+html[data-theme="dark"] .login-subtitle,
+html[data-theme="dark"] .login-field-label { color: #cbd5e1 !important; }
+html[data-theme="dark"] .login-subtitle { color: #94a3b8 !important; }
+html[data-theme="dark"] .login-input {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .login-input:focus {
+  background-color: #14203d !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .25) !important;
+}
+html[data-theme="dark"] .login-card-footer { border-top-color: #1e293b !important; }
+html[data-theme="dark"] .btn-login-cta {
+  background: linear-gradient(135deg, #0052ff 0%, #00a3ff 100%) !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .btn-login-cta:hover { background: linear-gradient(135deg, #0043d0 0%, #008be5 100%) !important; }
+html[data-theme="dark"] :is(.text-muted, .login-subtitle, .form-text) { color: var(--text-muted) !important; }
+html[data-theme="dark"] .text-secondary { color: var(--text-secondary) !important; }
+html[data-theme="dark"] :is(.form-control, .form-select, .login-input)::placeholder { color: var(--text-muted) !important; opacity: 1; }
+html[data-theme="dark"] :is(.form-control, .form-select):disabled { background: #242d39 !important; color: var(--text-muted) !important; }
+html[data-theme="dark"] :is(.form-control, .form-select, .login-input):focus {
+  border-color: #93bbff !important;
+  box-shadow: 0 0 0 3px rgba(147, 187, 255, .18) !important;
+}
+html[data-theme="dark"] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #93bbff; outline-offset: 3px; }
+
+html[data-theme="dark"] :is(.btn-primary, .btn-login-cta, .toggle-sidebar-btn) {
+  background: var(--brand-primary) !important; color: #fff !important;
+  border-color: var(--brand-primary) !important; box-shadow: none !important;
+}
+html[data-theme="dark"] :is(.btn-primary, .btn-login-cta, .toggle-sidebar-btn):hover { background: var(--brand-primary-hover) !important; }
+html[data-theme="dark"] .btn-outline-primary { color: var(--tone-blue-fg) !important; border-color: #648dc5 !important; background: transparent !important; }
+html[data-theme="dark"] .btn-outline-primary:hover { background: var(--tone-blue-bg) !important; }
+html[data-theme="dark"] :is(.login-card, #globalConfirmModal .modal-content) {
+  background: var(--bg-card) !important; border-color: var(--border-color) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .24) !important;
+}
+html[data-theme="dark"] .login-ambient-glow { opacity: .12; }
+html[data-theme="dark"] .security-dot { background: var(--tone-green-fg); box-shadow: none; }
+html[data-theme="dark"] .login-input-group:focus-within .input-leading-icon { color: var(--tone-blue-fg); }
+
+/* Low-saturation surfaces make numbers and status labels the focal point. */
+html[data-theme="dark"] .metric-card { border: 1px solid rgba(255,255,255,.18) !important; box-shadow: 0 8px 22px rgba(0,0,0,.2) !important; }
+html[data-theme="dark"] .metric-card.card-blue { background: linear-gradient(135deg, #1d4ed8, #2563eb 55%, #3b82f6) !important; }
+html[data-theme="dark"] .metric-card.card-amber { background: linear-gradient(135deg, #b45309, #d97706 55%, #f59e0b) !important; }
+html[data-theme="dark"] .metric-card.card-emerald { background: linear-gradient(135deg, #047857, #059669 55%, #10b981) !important; }
+html[data-theme="dark"] .metric-card.card-indigo { background: linear-gradient(135deg, #4338ca, #4f46e5 55%, #6366f1) !important; }
+html[data-theme="dark"] .metric-card.card-cyan { background: linear-gradient(135deg, #0e7490, #0891b2 55%, #06b6d4) !important; }
+html[data-theme="dark"] .metric-card.card-purple { background: linear-gradient(135deg, #7e22ce, #9333ea 55%, #a855f7) !important; }
+html[data-theme="dark"] .metric-card .metric-info h4,
+html[data-theme="dark"] .metric-card .metric-value { color: #fff !important; }
+html[data-theme="dark"] .metric-card .metric-icon-box { background: rgba(255,255,255,.2) !important; color: #fff !important; border-color: rgba(255,255,255,.35) !important; }
+html[data-theme="dark"] :is(.table, .custom-table) th { background: #202c3b !important; color: var(--text-secondary) !important; }
+html[data-theme="dark"] :is(.table, .custom-table) td { color: var(--text-primary) !important; }
+
+html[data-theme="dark"] :is(.status-badge.PENDIENTE, .badge.bg-warning, .badge.bg-amber, .bg-warning-subtle, .alert-warning, .metric-amber) { background: var(--tone-amber-bg) !important; color: var(--tone-amber-fg) !important; border-color: #66583b !important; }
+html[data-theme="dark"] :is(.status-badge.EN_PROCESO, .status-badge.PROCESO, .status-badge.EN_TRANSITO, .badge.bg-primary, .bg-primary-subtle, .metric-blue) { background: var(--tone-blue-bg) !important; color: var(--tone-blue-fg) !important; border-color: #405c83 !important; }
+html[data-theme="dark"] :is(.status-badge.COMPLETADO, .status-badge.ENTREGADO, .status-badge.ACTIVA, .badge.bg-success, .badge.bg-emerald, .bg-success-subtle, .alert-success, .metric-emerald) { background: var(--tone-green-bg) !important; color: var(--tone-green-fg) !important; border-color: #3b6055 !important; }
+html[data-theme="dark"] :is(.status-badge.FUERA_DE_TIEMPO, .status-badge.FUERA_DE_PLAZO, .badge.bg-danger, .bg-danger-subtle, .alert-danger) { background: var(--tone-red-bg) !important; color: var(--tone-red-fg) !important; border-color: #8e3b4b !important; }
+html[data-theme="dark"] :is(.status-badge.FINALIZADO, .badge.bg-purple, .metric-indigo) { background: var(--tone-purple-bg) !important; color: var(--tone-purple-fg) !important; }
+html[data-theme="dark"] :is(.status-badge.CANCELADO, .status-badge.ANULADO, .badge.bg-secondary) { background: #4b5563 !important; color: #f3f4f6 !important; }
+html[data-theme="dark"] :is(.badge.bg-info, .badge.bg-info.text-dark, .bg-info-subtle, .alert-info) { background: #213944 !important; color: #a1d7e6 !important; border-color: #41616e !important; }
+
+html[data-theme="dark"] .btn-action-solid { background: #29384b !important; color: #c9d8ed !important; box-shadow: none; }
+html[data-theme="dark"] .btn-action-solid:is(.btn-view) { background: var(--tone-blue-bg) !important; color: var(--tone-blue-fg) !important; }
+html[data-theme="dark"] .btn-action-solid:is(.btn-pdf, .btn-finish) { background: var(--tone-green-bg) !important; color: var(--tone-green-fg) !important; }
+html[data-theme="dark"] .btn-action-solid:is(.btn-delete, .btn-cancel) { background: var(--tone-red-bg) !important; color: var(--tone-red-fg) !important; }
+html[data-theme="dark"] .btn-action-solid:is(.btn-edit, .btn-envio) { background: #bd7914 !important; color: #fff4d6 !important; }
+html[data-theme="dark"] .btn-action-solid:is(.btn-edit, .btn-envio):hover { background: #d89122 !important; color: #ffffff !important; }
+html[data-theme="dark"] .btn-action-solid:hover { filter: brightness(1.2); }
+
+/* GitHub login design must win over the app-wide dark-mode rules above. */
+html[data-theme="dark"] .modern-login-wrapper .login-ambient-glow { opacity: .4 !important; }
+html[data-theme="dark"] .modern-login-wrapper .login-card {
+  background: rgba(7, 14, 27, .99) !important;
+  border: none !important;
+  box-shadow: 0 25px 55px -12px rgba(0, 0, 0, .7) !important;
+}
+html[data-theme="dark"] body:has(.modern-login-wrapper) { background: #0b1329 !important; }
+html[data-theme="dark"]:has(.modern-login-wrapper),
+html[data-theme="dark"]:has(.modern-login-wrapper) body,
+html[data-theme="dark"]:has(.modern-login-wrapper) .app-container,
+html[data-theme="dark"]:has(.modern-login-wrapper) .main-content {
+  background: #0b1329 !important;
+}
+html[data-theme="dark"] body:has(.modern-login-wrapper) #viewContainer.page-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  background: #0b1329 !important;
+}
+html[data-theme="dark"] .modern-login-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border: none !important;
+  outline: none !important;
+  overflow: hidden !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .btn-floating-login-theme {
+  top: 16px !important;
+  right: 16px !important;
+  margin: 0 !important;
+  width: 42px !important;
+  height: 42px !important;
+  background: #1b304d !important;
+  border: 1px solid #365474 !important;
+  color: #f4c95d !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28) !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .btn-floating-login-theme:hover {
+  background: #264466 !important;
+  transform: none !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .login-input {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .login-input:focus {
+  background-color: #14203d !important;
+  border-color: #0052ff !important;
+  box-shadow: 0 0 0 4px rgba(0, 82, 255, .18) !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .btn-login-cta {
+  background: linear-gradient(135deg, #0052ff 0%, #00a3ff 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 20px -4px rgba(0, 82, 255, .35) !important;
+}
+html[data-theme="dark"] .modern-login-wrapper .btn-login-cta:hover {
+  background: linear-gradient(135deg, #0043d0 0%, #008be5 100%) !important;
+  box-shadow: 0 12px 26px -4px rgba(0, 82, 255, .5) !important;
+}
+
+/* Dark mode surfaces use contrast and elevation instead of pale outlines. */
+html[data-theme="dark"] :is(.content-card, .metric-card, .card, .modal-content, .custom-detail-tabs, .user-profile-card) {
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16) !important;
+}
+html[data-theme="dark"] :is(.card-header, .modal-header, .modal-footer, .card-footer) {
+  border-color: rgba(255, 255, 255, .06) !important;
+}
+html[data-theme="dark"] :is(.table, .custom-table) :is(th, td) {
+  border-color: rgba(255, 255, 255, .035) !important;
+}
+html[data-theme="dark"] :is(.table, .custom-table) tbody tr {
+  border-color: transparent !important;
+}
+html[data-theme="dark"] :is(.table-bordered, .table-bordered th, .table-bordered td) {
+  border-color: rgba(255, 255, 255, .035) !important;
+}

@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
 $m2Base = "$env:USERPROFILE\.m2\repository"
@@ -71,7 +72,9 @@ $sources = Get-ChildItem -Path "src\main\java" -Filter "*.java" -Recurse | ForEa
 [System.IO.File]::WriteAllLines("sources.txt", $sources)
 
 Write-Host "Compilando clases Java con Java 21..." -ForegroundColor Yellow
-javac -parameters --release 21 -cp $cpString -d target/classes "@sources.txt"
+$compilerBinary = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/javac.exe' } else { 'javac' }
+& $compilerBinary -encoding UTF-8 -parameters --release 21 -cp $cpString -d target/classes "@sources.txt"
+if ($LASTEXITCODE -ne 0) { throw 'Falló la compilación. No se actualizarán los recursos ni el ejecutable.' }
 
 
 

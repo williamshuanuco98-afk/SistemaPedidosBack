@@ -1,3 +1,18 @@
+$ErrorActionPreference = 'Stop'
+if (-not $env:SPRING_DATASOURCE_PASSWORD -and -not $env:DB_PASSWORD) {
+    $savedSecret = Join-Path $PSScriptRoot '.local/db-password.dpapi'
+    if (Test-Path -LiteralPath $savedSecret) {
+        $dbSecret = (Get-Content -LiteralPath $savedSecret -Raw).Trim() | ConvertTo-SecureString
+    } else {
+        $dbSecret = Read-Host 'Contraseña de conexión a la base de datos (NO la contraseña del usuario admin)' -AsSecureString
+    }
+    $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', $dbSecret).Password
+    if (-not $env:DB_PASSWORD) { throw 'La contraseña de base de datos es obligatoria.' }
+}
+if (-not $env:JAVA_HOME) {
+    $installedJdk = Get-ChildItem 'C:\Program Files\Java' -Directory -Filter 'jdk-21*' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($installedJdk) { $env:JAVA_HOME = $installedJdk.FullName }
+}
 Set-Location $PSScriptRoot
 
 # Stop any existing process on port 8080
@@ -80,7 +95,9 @@ foreach ($j in $requiredJars) {
 
 $cpString = $cpList -join ";"
 Write-Host "Starting Spring Boot on port 8080..."
-java -cp "$cpString" com.inplabel.pedidos.PedidosApplication
+$javaBinary = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/java.exe' } else { 'java' }
+& $javaBinary -cp "$cpString" com.inplabel.pedidos.PedidosApplication
+if ($LASTEXITCODE -ne 0) { throw 'El servidor terminó con un error.' }
 
 
 
