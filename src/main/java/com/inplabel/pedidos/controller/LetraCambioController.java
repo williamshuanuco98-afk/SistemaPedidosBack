@@ -112,10 +112,10 @@ public class LetraCambioController {
                 Integer maxSeq = null;
                 try {
                     maxSeq = jdbcTemplate.queryForObject(
-                        "SELECT MAX(CAST(SUBSTRING_INDEX(id_lote, 'OP-', -1) AS UNSIGNED)) FROM letras_cambio WHERE id_lote LIKE 'OP-%'",
-                        Integer.class
-                    );
-                } catch (Exception ignored) {}
+                            "SELECT MAX(CAST(SUBSTRING_INDEX(id_lote, 'OP-', -1) AS UNSIGNED)) FROM letras_cambio WHERE id_lote LIKE 'OP-%'",
+                            Integer.class);
+                } catch (Exception ignored) {
+                }
                 int nextOp = (maxSeq != null && maxSeq > 0) ? maxSeq + 1 : 1;
                 idLote = String.format("OP-%04d", nextOp);
             }
@@ -200,7 +200,8 @@ public class LetraCambioController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus()
+                    .setRollbackOnly();
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "No se pudo registrar el lote. No se guardó ninguna letra."));
@@ -224,7 +225,6 @@ public class LetraCambioController {
             byte[] pdfBytes = letraPdfGenerator.generatePdfBytes(letra);
 
             // Auto-save to disk if storageDir passed
-            
 
             String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_")
                     + ".pdf";
@@ -271,7 +271,8 @@ public class LetraCambioController {
             @RequestParam(required = false, defaultValue = "true") boolean useSubfolders) {
 
         try {
-            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?", id);
+            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_letra = ?",
+                    id);
             if (list.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -279,14 +280,14 @@ public class LetraCambioController {
             Map<String, Object> letra = list.get(0);
             byte[] excelBytes = letraExcelGenerator.generateExcelBytes(letra);
 
-            
-
-            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_") + ".xlsx";
+            String filename = ((String) letra.getOrDefault("nro_letra", "LE" + id)).replaceAll("[^a-zA-Z0-9-_]", "_")
+                    + ".xlsx";
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentType(MediaType
+                            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(excelBytes);
         } catch (Exception e) {
             e.printStackTrace();
@@ -297,7 +298,8 @@ public class LetraCambioController {
     @GetMapping("/lote/{idLote}/excel")
     public ResponseEntity<?> getLoteLetrasExcel(@PathVariable String idLote) {
         try {
-            List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM letras_cambio WHERE id_lote = ? ORDER BY id_letra ASC", idLote);
+            List<Map<String, Object>> list = jdbcTemplate
+                    .queryForList("SELECT * FROM letras_cambio WHERE id_lote = ? ORDER BY id_letra ASC", idLote);
             if (list.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -308,7 +310,8 @@ public class LetraCambioController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentType(MediaType
+                            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(excelBytes);
         } catch (Exception e) {
             e.printStackTrace();

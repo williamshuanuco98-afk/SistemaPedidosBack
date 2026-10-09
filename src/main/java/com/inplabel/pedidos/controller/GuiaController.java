@@ -27,7 +27,8 @@ public class GuiaController {
         try {
             int id = Integer.parseInt(idStr);
             Map<String, Object> guia = guiaService.getGuiaById(id);
-            if (guia != null) return ResponseEntity.ok(guia);
+            if (guia != null)
+                return ResponseEntity.ok(guia);
             return ResponseEntity.notFound().build();
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "ID de guía inválido: " + idStr));

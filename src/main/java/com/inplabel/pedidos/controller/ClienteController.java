@@ -54,6 +54,6 @@ public class ClienteController {
     public ResponseEntity<?> deleteCliente(
             @PathVariable int id) {
 
-return ResponseEntity.ok(clienteService.deleteCliente(id));
+        return ResponseEntity.ok(clienteService.deleteCliente(id));
     }
 }
