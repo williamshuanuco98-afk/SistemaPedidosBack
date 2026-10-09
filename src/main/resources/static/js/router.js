@@ -93,7 +93,7 @@ const EMBEDDED_VIEWS = {
     <div class="content-card p-3 h-100">
       <div class="card-header border-0 pb-0 bg-transparent">
         <h3 class="card-title d-flex align-items-center">
-          <i class="bi bi-graph-up-arrow text-success me-2"></i>
+          <i class="bi bi-graph-up-arrow text-primary me-2"></i>
           <span>Cantidad de Pedidos al Mes</span>
         </h3>
       </div>

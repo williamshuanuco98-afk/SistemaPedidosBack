@@ -86,11 +86,14 @@ html[data-theme="dark"] :is(.text-muted, .login-subtitle, .form-text) { color: v
 html[data-theme="dark"] .text-secondary { color: var(--text-secondary) !important; }
 html[data-theme="dark"] :is(.form-control, .form-select, .login-input)::placeholder { color: var(--text-muted) !important; opacity: 1; }
 html[data-theme="dark"] :is(.form-control, .form-select):disabled { background: #242d39 !important; color: var(--text-muted) !important; }
-html[data-theme="dark"] :is(.form-control, .form-select, .login-input):focus {
-  border-color: #93bbff !important;
-  box-shadow: 0 0 0 3px rgba(147, 187, 255, .18) !important;
+html[data-theme="dark"] :is(.form-control, .form-select, .login-input, input, select, textarea):focus,
+html[data-theme="dark"] :is(.form-control, .form-select, .login-input, input, select, textarea):focus-visible {
+  border-color: #0052ff !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
-html[data-theme="dark"] :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #93bbff; outline-offset: 3px; }
+html[data-theme="dark"] :is(button, a):focus-visible { outline: 2px solid #93bbff; outline-offset: 2px; }
 
 html[data-theme="dark"] :is(.btn-primary, .btn-login-cta, .toggle-sidebar-btn) {
   background: var(--brand-primary) !important; color: #fff !important;

@@ -279,6 +279,10 @@ function renderMonthlyOrdersChart(orders) {
       }
     });
 
+    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(0, 82, 255, 0.25)');
+    gradient.addColorStop(1, 'rgba(0, 82, 255, 0.02)');
+
     window.monthlyOrdersChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -286,13 +290,19 @@ function renderMonthlyOrdersChart(orders) {
         datasets: [{
           label: 'Pedidos Registrados',
           data: monthlyCounts,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.18)',
+          borderColor: '#0052ff',
+          backgroundColor: gradient,
           fill: true,
           tension: 0.35,
-          pointBackgroundColor: '#10b981',
+          pointBackgroundColor: '#0052ff',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
           pointRadius: 4,
-          pointHoverRadius: 6
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#00a3ff',
+          pointHoverBorderColor: '#ffffff',
+          pointHoverBorderWidth: 2,
+          borderWidth: 2.5
         }]
       },
       options: {
